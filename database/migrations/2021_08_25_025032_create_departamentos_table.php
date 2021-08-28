@@ -15,9 +15,15 @@ class CreateDepartamentosTable extends Migration
     {
         Schema::create('departamentos', function (Blueprint $table) {
             $table->id();
-            $table->string('nombre', 255);
-            $table->boolean('estado')->default(1);
+            $table->string('name', 255);
+            /* $table->foreignId('country_id'); */
+            $table->mediumInteger('country_id');
+            $table->char('country_code', 2);
+            $table->string('state_code', 255);
+            $table->decimal('latitude', $precision = 10, $scale = 8);
+            $table->decimal('longitude', $precision = 11, $scale = 8);
             $table->timestamps();
+            /* $table->foreign('country_id')->references('id')->on('paises'); */
         });
     }
 
