@@ -14,7 +14,7 @@ class DepartamentosSeeder extends Seeder
      */
     public function run()
     {
-        DB::table('departamentos')->insert([
+        DB::table('departamentos')->insert([[
             "id"=> 3901,
             "name"=> "Badakhshan",
             "country_id"=> 1,
@@ -53715,6 +53715,6 @@ class DepartamentosSeeder extends Seeder
             "longitude"=> "29.60354950",
             "created_at" => date('Y-m-d H:m:s'),
             "updated_at" => date('Y-m-d H:m:s'),
-        ]);
+        ]]);
     }
 }
