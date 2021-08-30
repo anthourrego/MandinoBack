@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\PaisesController;
 
 /*
 |--------------------------------------------------------------------------
@@ -31,4 +32,6 @@ Route::middleware(['guest'])->group(function () {
     //Route::get('platos/dia', 'PlatosController@platosDia');
     //Route::get('promo/lista', 'PromocionesController@show');
     //Route::post('pedidos/crear', 'PedidoController@realizarPedido');
+
+    Route::post('obtenerPaises', [PaisesController::class, 'show']);
   });
