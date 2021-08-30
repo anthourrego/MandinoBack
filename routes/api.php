@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\UserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,6 +15,20 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+Route::middleware(['guest'])->group(function () {
+    //Rutas a las que se permitirá acceso
+    Route::get('login/{nroDoc}/{pass}', [UserController::class, 'inicioSesion']);
+    
+    /* Route::get('login/{nroDoc}/{pass}', 'UserController@inicioSesion'); */
+    /* Route::get('listaPlatos', 'PlatosController@listaPlatos'); */
+    /* Route::get('validarToken/{tiempoToken}', 'UserController@validarToken');  */
+    //Route::post('registrarse', 'UsuariosController@registrarse');
+    //Route::get('platos/lista', 'PlatosController@show');
+    //Route::get('platos/dia', 'PlatosController@platosDia');
+    //Route::get('promo/lista', 'PromocionesController@show');
+    //Route::post('pedidos/crear', 'PedidoController@realizarPedido');
+  });
