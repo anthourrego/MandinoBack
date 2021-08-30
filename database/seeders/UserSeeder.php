@@ -18,7 +18,7 @@ class UserSeeder extends Seeder
             'id' => 0
             ,'nro_documento' => "0000"
             ,'usuario' => 'admin'
-            ,'password' => '$2y$15$Pbu7Qq9uCceP7wAJ/ZGW3uaJklO89Xk5.ZzKeFfJ63NPdUvbPzxaO'
+            ,'password' => '$2y$15$Ui5AQTHCS4pkuOFyOAq61OlsjnQdx9rWzmXPDHtol9B0lHj34pU/i'
             ,'nombre1' => 'admin'
             ,'apellido1' => 'admin'
             ,'email' => 'admin@admin.com'
