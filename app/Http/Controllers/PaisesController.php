@@ -44,10 +44,15 @@ class PaisesController extends Controller
      * @param  \App\Models\Paises  $paises
      * @return \Illuminate\Http\Response
      */
-    public function show(Paises $paises)
-    {
-        //
-        return datatables()->of(Paises::query())->toJson();
+    public function show(Request $request, Paises $paises){
+
+        if ($request->estado != '') {
+            $query = Paises::where("flag", $request->estado);
+        } else {
+            $query = Paises::query();
+        }
+
+        return datatables()->eloquent($query)->toJson();
     }
 
     /**
