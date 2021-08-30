@@ -47,6 +47,7 @@ class PaisesController extends Controller
     public function show(Paises $paises)
     {
         //
+        return datatables()->of(Paises::query())->toJson();
     }
 
     /**
