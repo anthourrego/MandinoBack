@@ -32,6 +32,10 @@ Route::middleware(['guest'])->group(function () {
     //Route::get('platos/dia', 'PlatosController@platosDia');
     //Route::get('promo/lista', 'PromocionesController@show');
     //Route::post('pedidos/crear', 'PedidoController@realizarPedido');
-
-    Route::post('obtenerPaises', [PaisesController::class, 'show']);
+    
+    //Paises
+    Route::prefix('paises')->group(function () {
+        Route::post('obtener', [PaisesController::class, 'show']);
+        Route::post('cambiarEstado', [PaisesController::class, 'cambiarEstado']);
+    });
   });
