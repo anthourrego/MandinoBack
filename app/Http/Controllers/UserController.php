@@ -11,7 +11,7 @@ class UserController extends Controller {
     //
     public function inicioSesion($nroDoc, $pass){
         $resp["success"]= false;
-        //Validaos por numero de documento 
+        //Validaos por numero de documento, email y usuario
         $usuario = User::where(function($query) use ($nroDoc) {
             $query->orWhere('nro_documento', $nroDoc)
                 ->orWhere('email', $nroDoc)

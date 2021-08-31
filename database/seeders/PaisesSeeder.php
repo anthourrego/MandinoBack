@@ -5767,5 +5767,7 @@ class PaisesSeeder extends Seeder
                 "updated_at" => date('Y-m-d H:m:s'),                        
             ]
         ]);
+
+        DB::table('paises')->where('id', '!=', 48)->update(['flag' => 0]);
     }
 }

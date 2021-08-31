@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Paises;
 use Illuminate\Http\Request;
+use DB;
 
 class PaisesController extends Controller
 {
@@ -44,10 +45,15 @@ class PaisesController extends Controller
      * @param  \App\Models\Paises  $paises
      * @return \Illuminate\Http\Response
      */
-    public function show(Paises $paises)
-    {
-        //
-        return datatables()->of(Paises::query())->toJson();
+    public function show(Request $request, Paises $paises){
+
+        if ($request->estado != '') {
+            $query = Paises::where("flag", $request->estado);
+        } else {
+            $query = Paises::query();
+        }
+
+        return datatables()->eloquent($query)->toJson();
     }
 
     /**
@@ -83,4 +89,26 @@ class PaisesController extends Controller
     {
         //
     }
+
+    public function cambiarEstado(Request $request){
+        $resp["success"] = false;
+        $pais = Paises::find($request->id);
+        
+        if(is_object($pais)){
+            DB::beginTransaction();
+            $pais->flag = $request->estado;
+        
+            if ($pais->save()) {
+                $resp["success"] = true;
+                $resp["msj"] = "El país " . $pais->name . " se ha " . ($request->estado == 1 ? 'habilitado' : 'deshabilitado') . " correctamente.";
+                DB::commit();
+            }else{
+                DB::rollBack();
+                $resp["msj"] = "No se han guardado cambios";
+            }
+        }else{
+            $resp["msj"] = "No se ha encontrado el pais";
+        }
+        return $resp; 
+      }
 }
