@@ -27,8 +27,8 @@ class CreatePaisesTable extends Migration
             $table->string("native", 255)->nullable();
             $table->string("region", 255)->nullable();
             $table->string("subregion", 255)->nullable();
-            $table->text("timezones");
-            $table->text("translations");
+            $table->text("timezones")->nullable();
+            $table->text("translations")->nullable();
             $table->decimal('latitude', $precision = 10, $scale = 8)->nullable();
             $table->decimal('longitude', $precision = 11, $scale = 8)->nullable();
             $table->string("emoji", 191)->nullable();

@@ -37,5 +37,6 @@ Route::middleware(['guest'])->group(function () {
     Route::prefix('paises')->group(function () {
         Route::post('obtener', [PaisesController::class, 'show']);
         Route::post('cambiarEstado', [PaisesController::class, 'cambiarEstado']);
+        Route::post('crear', [PaisesController::class, 'crear']);
     });
   });
