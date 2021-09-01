@@ -21,8 +21,9 @@ class CreateDepartamentosTable extends Migration
             $table->string('state_code', 255);
             $table->decimal('latitude', $precision = 10, $scale = 8)->nullable();
             $table->decimal('longitude', $precision = 11, $scale = 8)->nullable();
-            $table->timestamps();
             $table->foreign('country_id')->references('id')->on('paises');
+            $table->boolean("flag")->default(1);
+            $table->timestamps();
         });
     }
 

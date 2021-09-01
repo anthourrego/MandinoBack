@@ -90,6 +90,30 @@ class PaisesController extends Controller
         //
     }
 
+    public function crear(Request $request){
+        $resp["success"] = false;
+        $validar = Paises::where('name', $request->name)->get();
+
+        if($validar->isEmpty()){
+            $pais = new Paises;
+            $pais->name = $request->name;
+            $pais->numeric_code = $request->numeric_code;
+            $pais->phone_code = $request->phone_code;
+            $pais->flag = $request->flag;
+            
+            if($pais->save()){
+                $resp["success"] = true;
+                $resp["msj"] = "Se ha creado el pais correctamente.";
+            }else{
+                $resp["msj"] = "No se ha creado el el pais " . $request->name;
+            }
+        }else{
+            $resp["msj"] = "El pais " . $request->name . " ya se encuentra registrado.";
+        }
+
+        return $resp;
+    }
+
     public function cambiarEstado(Request $request){
         $resp["success"] = false;
         $pais = Paises::find($request->id);

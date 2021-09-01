@@ -22,6 +22,7 @@ class CreateMunicipiosTable extends Migration
             $table->decimal('latitude', $precision = 10, $scale = 8)->nullable();
             $table->decimal('longitude', $precision = 11, $scale = 8)->nullable();
             $table->foreignId('state_id');
+            $table->boolean("flag")->default(1);
             $table->timestamps();
             $table->foreign('state_id')->references('id')->on('departamentos');
         });
