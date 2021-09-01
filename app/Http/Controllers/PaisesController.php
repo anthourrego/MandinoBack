@@ -62,9 +62,8 @@ class PaisesController extends Controller
      * @param  \App\Models\Paises  $paises
      * @return \Illuminate\Http\Response
      */
-    public function edit(Paises $paises)
-    {
-        //
+    public function edit(Paises $paises){
+        
     }
 
     /**
@@ -74,9 +73,42 @@ class PaisesController extends Controller
      * @param  \App\Models\Paises  $paises
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Paises $paises)
-    {
-        //
+    public function update(Request $request, Paises $paises){   
+        $resp["success"] = false;
+        $validar = Paises::where([
+            ['id', '<>', $request->id],
+            ['name', $request->name]
+          ])->get();
+  
+        if ($validar->isEmpty()) {
+
+            $pais = Paises::find($request->id);
+
+            if(!empty($pais)){
+                if ($request->name !=  $pais->name || $request->numeric_code !=  $pais->numeric_code || $request->phone_code !=  $pais->phone_code || $request->flag !=  $pais->flag) {
+                    
+                    $pais->name = $request->name;
+                    $pais->numeric_code = $request->numeric_code;
+                    $pais->phone_code = $request->phone_code;
+                    $pais->flag = $request->flag;
+                    
+                    if ($pais->save()) {
+                        $resp["success"] = true;
+                        $resp["msj"] = "Se han actualizado los datos";
+                    }else{
+                        $resp["msj"] = "No se han guardado cambios";
+                    }
+                } else {
+                    $resp["msj"] = "Por favor realice algún cambio";
+                }
+            }else{
+                $resp["msj"] = "No se ha encontrado el país";
+            }
+        }else{
+            $resp["msj"] = "El país " . $request->name . " ya se encuentra registrado";
+        }
+        
+        return $resp;
     }
 
     /**
