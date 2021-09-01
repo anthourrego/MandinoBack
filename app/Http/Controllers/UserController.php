@@ -125,7 +125,7 @@ class UserController extends Controller {
         return $resp; 
     }
 
-    public function actualizar(Request $request){
+    public function editar(Request $request){
         $resp["success"] = false;
         $validar = User::where([
                   ['id', '<>', $request->id],
