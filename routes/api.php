@@ -40,4 +40,12 @@ Route::middleware(['guest'])->group(function () {
         Route::post('crear', [PaisesController::class, 'crear']);
         Route::post('actualizar', [PaisesController::class, 'update']);
     });
+
+    Route::prefix('usuarios')->group(function () {
+        Route::post('obtener', [UserController::class, 'obtener']);
+        Route::post('cambiarEstado', [UserController::class, 'cambiarEstado']);
+        Route::post('crear', [UserController::class, 'crear']);
+        Route::post('eliminar', [UserController::class, 'eliminar']);
+        Route::post('editar', [UserController::class, 'editar']);
+    });
   });
