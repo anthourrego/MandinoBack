@@ -45,7 +45,7 @@ class UserController extends Controller {
                     $usuario = new User;
                     $usuario->nro_documento = $request->nro_documento;
                     $usuario->usuario = $request->usuario;
-                    $usuario->password = Hash::make($request->password, ['rounds' => 15]);
+                    $usuario->password = Hash::make($request->documento, ['rounds' => 15]);
                     $usuario->nombre1 = $request->nombre1;
                     $usuario->nombre2 = $request->nombre2;
                     $usuario->apellido1 = $request->apellido1;
