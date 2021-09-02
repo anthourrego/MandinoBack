@@ -39,17 +39,7 @@ class DepartamentosController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\departamentos  $departamentos
-     * @return \Illuminate\Http\Response
-     */
-    public function show(departamentos $departamentos)
-    {
-        //
-    }
-
-    /**
+     * 
      * Show the form for editing the specified resource.
      *
      * @param  \App\Models\departamentos  $departamentos
@@ -81,5 +71,16 @@ class DepartamentosController extends Controller
     public function destroy(departamentos $departamentos)
     {
         //
+    }
+
+    public function show(Request $request, departamentos $paises){
+
+        if ($request->estado != '') {
+            $query = departamentos::where(["flag", $request->estado]);
+        } else {
+            $query = departamentos::query();
+        }
+
+        return datatables()->eloquent($query)->toJson();
     }
 }
