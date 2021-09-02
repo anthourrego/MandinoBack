@@ -39,6 +39,7 @@ Route::middleware(['guest'])->group(function () {
         Route::post('cambiarEstado', [PaisesController::class, 'cambiarEstado']);
         Route::post('crear', [PaisesController::class, 'crear']);
         Route::post('actualizar', [PaisesController::class, 'update']);
+        Route::get('lista', [PaisesController::class, 'lista']);
     });
 
     //Departamentos
