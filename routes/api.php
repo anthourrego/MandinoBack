@@ -41,6 +41,14 @@ Route::middleware(['guest'])->group(function () {
         Route::post('actualizar', [PaisesController::class, 'update']);
     });
 
+    //Departamentos
+    Route::prefix('departamentos')->group(function () {
+        Route::post('obtener', [PaisesController::class, 'show']);
+        /* Route::post('cambiarEstado', [PaisesController::class, 'cambiarEstado']);
+        Route::post('crear', [PaisesController::class, 'crear']);
+        Route::post('actualizar', [PaisesController::class, 'update']); */
+    });
+
     Route::prefix('usuarios')->group(function () {
         Route::post('obtener', [UserController::class, 'obtener']);
         Route::post('cambiarEstado', [UserController::class, 'cambiarEstado']);
