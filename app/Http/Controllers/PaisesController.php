@@ -166,5 +166,9 @@ class PaisesController extends Controller
             $resp["msj"] = "No se ha encontrado el pais";
         }
         return $resp; 
-      }
+    }
+
+    public function lista(){
+        return Paises::select('id', 'name')->where("flag", 1)->get();
+    }
 }

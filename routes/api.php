@@ -4,7 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PaisesController;
-
+use App\Http\Controllers\DepartamentosController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -39,11 +39,12 @@ Route::middleware(['guest'])->group(function () {
         Route::post('cambiarEstado', [PaisesController::class, 'cambiarEstado']);
         Route::post('crear', [PaisesController::class, 'crear']);
         Route::post('actualizar', [PaisesController::class, 'update']);
+        Route::get('lista', [PaisesController::class, 'lista']);
     });
 
     //Departamentos
     Route::prefix('departamentos')->group(function () {
-        Route::post('obtener', [PaisesController::class, 'show']);
+        Route::post('obtener', [DepartamentosController::class, 'show']);
         /* Route::post('cambiarEstado', [PaisesController::class, 'cambiarEstado']);
         Route::post('crear', [PaisesController::class, 'crear']);
         Route::post('actualizar', [PaisesController::class, 'update']); */

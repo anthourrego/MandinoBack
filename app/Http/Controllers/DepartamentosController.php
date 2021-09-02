@@ -76,7 +76,9 @@ class DepartamentosController extends Controller
     public function show(Request $request, departamentos $paises){
 
         if ($request->estado != '') {
-            $query = departamentos::where(["flag", $request->estado]);
+            $query = departamentos::where([
+                ["flag", $request->estado]
+            ]);
         } else {
             $query = departamentos::query();
         }
