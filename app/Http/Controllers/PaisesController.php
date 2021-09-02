@@ -169,6 +169,6 @@ class PaisesController extends Controller
     }
 
     public function lista(){
-        return Paises::where("flag", 1)->get();
+        return Paises::select('id', 'name')->where("flag", 1)->get();
     }
 }
