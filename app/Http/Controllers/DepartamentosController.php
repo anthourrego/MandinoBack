@@ -109,15 +109,17 @@ class DepartamentosController extends Controller
 
     public function show(Request $request, departamentos $paises){
         // var_dump(count($request->paises));
-        $query = departamentos::select("*");
-
+        $query = departamentos::select("departamentos.*");
+        $query->join('paises', 'departamentos.country_id', '=', 'paises.id');
         if(isset($request->paises)) {
-            $query->whereIn("country_id", $request->paises);
+            $query->whereIn("departamentos.country_id", $request->paises);
         }
 
         if ($request->estado != '') {
-            $query->where("flag", $request->estado);
+            $query->where("departamentos.flag", $request->estado);
         }
+
+        $query->where("paises.flag", 1);
 
         return datatables()->eloquent($query)->toJson();
     }
