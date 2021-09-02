@@ -57,9 +57,43 @@ class DepartamentosController extends Controller
      * @param  \App\Models\departamentos  $departamentos
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, departamentos $departamentos)
-    {
-        //
+    public function update(Request $request, departamentos $departamentos) {
+        $resp["success"] = false;
+        $validar = departamentos::where([
+            ['id', '<>', $request->id],
+            ['country_id', $request->country_id],
+            ['name', $request->name]
+          ])->get();
+  
+        if ($validar->isEmpty()) {
+
+            $departamento = departamentos::find($request->id);
+
+            if(!empty($pais)){
+                if ($departamento->name != $request->name || $departamento->country_id != $request->country_id || $departamento->state_code != $request->state_code || $departamento->flag != $request->flag) {
+
+                    $departamento->name = $request->name;
+                    $departamento->country_id = $request->country_id;
+                    $departamento->state_code = $request->state_code;
+                    $departamento->flag = $request->flag;
+                    
+                    if ($pais->save()) {
+                        $resp["success"] = true;
+                        $resp["msj"] = "Se han actualizado los datos";
+                    }else{
+                        $resp["msj"] = "No se han guardado cambios";
+                    }
+                } else {
+                    $resp["msj"] = "Por favor realice algún cambio";
+                }
+            }else{
+                $resp["msj"] = "No se ha encontrado el departamento";
+            }
+        }else{
+            $resp["msj"] = "El departamento " . $request->name . " ya se encuentra registrado";
+        }
+        
+        return $resp;
     }
 
     /**
@@ -74,15 +108,45 @@ class DepartamentosController extends Controller
     }
 
     public function show(Request $request, departamentos $paises){
+        // var_dump(count($request->paises));
+        $query = departamentos::select("*");
+
+        if(isset($request->paises)) {
+            $query->whereIn("country_id", $request->paises);
+        }
 
         if ($request->estado != '') {
-            $query = departamentos::where([
-                ["flag", $request->estado]
-            ]);
-        } else {
-            $query = departamentos::query();
+            $query->where("flag", $request->estado);
         }
 
         return datatables()->eloquent($query)->toJson();
     }
+
+    public function crear(Request $request){
+        $resp["success"] = false;
+        $validar = departamentos::where([
+            ['name', $request->name], 
+            ["country_id", $request->country_id]
+        ])->get();
+
+        if($validar->isEmpty()){
+            $departamento = new departamentos;
+            $departamento->name = $request->name;
+            $departamento->country_id = $request->country_id;
+            $departamento->state_code = $request->state_code;
+            $departamento->flag = $request->flag;
+            
+            if($pais->save()){
+                $resp["success"] = true;
+                $resp["msj"] = "Se ha creado el pais correctamente.";
+            }else{
+                $resp["msj"] = "No se ha creado el el departamento " . $request->name;
+            }
+        }else{
+            $resp["msj"] = "El departamento " . $request->name . " ya se encuentra registrado.";
+        }
+
+        return $resp;
+    }
+
 }
