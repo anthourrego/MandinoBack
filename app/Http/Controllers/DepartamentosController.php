@@ -132,7 +132,7 @@ class DepartamentosController extends Controller
         ])->get();
 
         if($validar->isEmpty()){
-            $departamento = new v;
+            $departamento = new departamentos;
             $departamento->name = $request->name;
             $departamento->country_id = $request->country_id;
             $departamento->state_code = $request->state_code;
