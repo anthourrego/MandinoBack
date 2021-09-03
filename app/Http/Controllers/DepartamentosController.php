@@ -109,15 +109,17 @@ class DepartamentosController extends Controller
 
     public function show(Request $request, departamentos $paises){
         // var_dump(count($request->paises));
-        $query = departamentos::select("*");
-
+        $query = departamentos::select("departamentos.*");
+        $query->join('paises', 'departamentos.country_id', '=', 'paises.id');
         if(isset($request->paises)) {
-            $query->whereIn("country_id", $request->paises);
+            $query->whereIn("departamentos.country_id", $request->paises);
         }
 
         if ($request->estado != '') {
-            $query->where("flag", $request->estado);
+            $query->where("departamentos.flag", $request->estado);
         }
+
+        $query->where("paises.flag", 1);
 
         return datatables()->eloquent($query)->toJson();
     }
@@ -130,7 +132,7 @@ class DepartamentosController extends Controller
         ])->get();
 
         if($validar->isEmpty()){
-            $departamento = new departamentos;
+            $departamento = new v;
             $departamento->name = $request->name;
             $departamento->country_id = $request->country_id;
             $departamento->state_code = $request->state_code;
@@ -148,5 +150,28 @@ class DepartamentosController extends Controller
 
         return $resp;
     }
+
+    public function cambiarEstado(Request $request){
+        $resp["success"] = false;
+        $dep = departamentos::find($request->id);
+        
+        if(is_object($dep)){
+            DB::beginTransaction();
+            $dep->flag = $request->estado;
+        
+            if ($dep->save()) {
+                $resp["success"] = true;
+                $resp["msj"] = "El departamento " . $dep->name . " se ha " . ($request->estado == 1 ? 'habilitado' : 'deshabilitado') . " correctamente.";
+                DB::commit();
+            }else{
+                DB::rollBack();
+                $resp["msj"] = "No se han guardado cambios";
+            }
+        }else{
+            $resp["msj"] = "No se ha encontrado el departamento";
+        }
+        return $resp; 
+    }
+
 
 }
