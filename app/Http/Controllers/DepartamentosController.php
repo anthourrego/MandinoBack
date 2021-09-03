@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\departamentos;
 use Illuminate\Http\Request;
+use DB;
 
 class DepartamentosController extends Controller
 {
@@ -69,7 +70,7 @@ class DepartamentosController extends Controller
 
             $departamento = departamentos::find($request->id);
 
-            if(!empty($pais)){
+            if(!empty($departamento)){
                 if ($departamento->name != $request->name || $departamento->country_id != $request->country_id || $departamento->state_code != $request->state_code || $departamento->flag != $request->flag) {
 
                     $departamento->name = $request->name;
@@ -77,7 +78,7 @@ class DepartamentosController extends Controller
                     $departamento->state_code = $request->state_code;
                     $departamento->flag = $request->flag;
                     
-                    if ($pais->save()) {
+                    if ($departamento->save()) {
                         $resp["success"] = true;
                         $resp["msj"] = "Se han actualizado los datos";
                     }else{
@@ -107,8 +108,7 @@ class DepartamentosController extends Controller
         //
     }
 
-    public function show(Request $request, departamentos $paises){
-        // var_dump(count($request->paises));
+    public function show(Request $request){
         $query = departamentos::select("departamentos.*");
         $query->join('paises', 'departamentos.country_id', '=', 'paises.id');
         if(isset($request->paises)) {
@@ -138,9 +138,9 @@ class DepartamentosController extends Controller
             $departamento->state_code = $request->state_code;
             $departamento->flag = $request->flag;
             
-            if($pais->save()){
+            if($departamento->save()){
                 $resp["success"] = true;
-                $resp["msj"] = "Se ha creado el pais correctamente.";
+                $resp["msj"] = "Se ha creado el departamento correctamente.";
             }else{
                 $resp["msj"] = "No se ha creado el el departamento " . $request->name;
             }
