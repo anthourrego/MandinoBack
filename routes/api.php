@@ -47,7 +47,7 @@ Route::middleware(['guest'])->group(function () {
         Route::post('obtener', [DepartamentosController::class, 'show']);
         Route::post('crear', [DepartamentosController::class, 'crear']);
         Route::post('actualizar', [DepartamentosController::class, 'update']);
-        /* Route::post('cambiarEstado', [PaisesController::class, 'cambiarEstado']);*/
+        Route::post('cambiarEstado', [DepartamentosController::class, 'cambiarEstado']);
     });
 
     Route::prefix('usuarios')->group(function () {

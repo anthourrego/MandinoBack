@@ -132,7 +132,7 @@ class DepartamentosController extends Controller
         ])->get();
 
         if($validar->isEmpty()){
-            $departamento = new departamentos;
+            $departamento = new v;
             $departamento->name = $request->name;
             $departamento->country_id = $request->country_id;
             $departamento->state_code = $request->state_code;
@@ -150,5 +150,28 @@ class DepartamentosController extends Controller
 
         return $resp;
     }
+
+    public function cambiarEstado(Request $request){
+        $resp["success"] = false;
+        $dep = departamentos::find($request->id);
+        
+        if(is_object($dep)){
+            DB::beginTransaction();
+            $dep->flag = $request->estado;
+        
+            if ($dep->save()) {
+                $resp["success"] = true;
+                $resp["msj"] = "El departamento " . $dep->name . " se ha " . ($request->estado == 1 ? 'habilitado' : 'deshabilitado') . " correctamente.";
+                DB::commit();
+            }else{
+                DB::rollBack();
+                $resp["msj"] = "No se han guardado cambios";
+            }
+        }else{
+            $resp["msj"] = "No se ha encontrado el departamento";
+        }
+        return $resp; 
+    }
+
 
 }
