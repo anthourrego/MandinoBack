@@ -17,7 +17,7 @@ class CreateDepartamentosTable extends Migration
             $table->id();
             $table->string('name', 255);
             $table->foreignId('country_id');
-            $table->char('country_code', 2);
+            $table->char('country_code', 2)->nullable();;
             $table->string('state_code', 255);
             $table->decimal('latitude', $precision = 10, $scale = 8)->nullable();
             $table->decimal('longitude', $precision = 11, $scale = 8)->nullable();
