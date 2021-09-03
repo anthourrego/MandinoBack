@@ -82,4 +82,27 @@ class MunicipiosController extends Controller
     {
         //
     }
+
+
+        /**
+     * lista los departamentos de un país especifico
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function lista(Request $request){
+        return municipios::select('id', 'name')->where("country_id", $request->idPais)->where("state_id", $request->idDepto)->get();
+    }
+
+
+    /**
+     * regresa ids de pais y departamento
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function ubicacion(Request $request){
+        return municipios::select('id', 'name')->where("country_id", $request->idPais)->where("state_id", $request->idDepto)->get();
+    }
+
 }

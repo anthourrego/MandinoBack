@@ -151,4 +151,18 @@ class DepartamentosController extends Controller
         return $resp;
     }
 
+
+    /**
+     * lista los departamentos de un país especifico
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function lista(Request $request){
+
+        return departamentos::select('id', 'name')->where("country_id", $request->idPais)->get();
+    }
+
+
+
 }
