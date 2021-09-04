@@ -57,8 +57,8 @@ Route::middleware(['guest'])->group(function () {
         Route::post('obtener', [MunicipiosController::class, 'show']);
         Route::post('cambiarEstado', [MunicipiosController::class, 'cambiarEstado']);
         Route::post('crear', [MunicipiosController::class, 'crear']);
-        /* Route::post('actualizar', [DepartamentosController::class, 'update']);
-        Route::get('lista/{pais}', [DepartamentosController::class, 'lista']); */
+        Route::post('actualizar', [MunicipiosController::class, 'update']);
+        /* Route::get('lista/{pais}', [DepartamentosController::class, 'lista']); */
     });
 
     //Usuarios
