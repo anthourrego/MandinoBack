@@ -58,6 +58,7 @@ class DepartamentosController extends Controller {
         $query = departamentos::select(
                 "departamentos.id"
                 ,"departamentos.name"
+                ,"departamentos.state_code"
                 ,"paises.id AS country_id"
                 ,"paises.name AS nombre_pais"
                 ,"departamentos.created_at"

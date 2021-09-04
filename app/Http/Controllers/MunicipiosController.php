@@ -56,27 +56,26 @@ class MunicipiosController extends Controller {
         return $resp;
     }
 
-    /* public function update(Request $request, municipios $municipios) {
+    public function update(Request $request) {
         $resp["success"] = false;
         $validar = municipios::where([
             ['id', '<>', $request->id],
-            ['country_id', $request->country_id],
+            ['state_id', $request->state_id],
             ['name', $request->name]
           ])->get();
   
         if ($validar->isEmpty()) {
 
-            $departamento = municipios::find($request->id);
+            $muni = municipios::find($request->id);
 
-            if(!empty($departamento)){
-                if ($departamento->name != $request->name || $departamento->country_id != $request->country_id || $departamento->state_code != $request->state_code || $departamento->flag != $request->flag) {
+            if(!empty($muni)){
+                if ($muni->name != $request->name || $muni->state_id != $request->state_id || $muni->flag != $request->flag) {
 
-                    $departamento->name = $request->name;
-                    $departamento->country_id = $request->country_id;
-                    $departamento->state_code = $request->state_code;
-                    $departamento->flag = $request->flag;
+                    $muni->name = $request->name;
+                    $muni->state_id = $request->state_id;
+                    $muni->flag = $request->flag;
                     
-                    if ($departamento->save()) {
+                    if ($muni->save()) {
                         $resp["success"] = true;
                         $resp["msj"] = "Se han actualizado los datos";
                     }else{
@@ -86,14 +85,14 @@ class MunicipiosController extends Controller {
                     $resp["msj"] = "Por favor realice algún cambio";
                 }
             }else{
-                $resp["msj"] = "No se ha encontrado el departamento";
+                $resp["msj"] = "No se ha encontrado la ciudad";
             }
         }else{
-            $resp["msj"] = "El departamento " . $request->name . " ya se encuentra registrado";
+            $resp["msj"] = "La ciudad " . $request->name . " ya se encuentra registrado";
         }
         
         return $resp;
-    } */
+    }
 
     /**
      * Display the specified resource.
