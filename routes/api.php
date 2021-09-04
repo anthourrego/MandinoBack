@@ -48,6 +48,7 @@ Route::middleware(['guest'])->group(function () {
         Route::post('crear', [DepartamentosController::class, 'crear']);
         Route::post('actualizar', [DepartamentosController::class, 'update']);
         Route::post('cambiarEstado', [DepartamentosController::class, 'cambiarEstado']);
+        Route::get('lista/{pais}', [DepartamentosController::class, 'lista']);
     });
 
     Route::prefix('usuarios')->group(function () {
