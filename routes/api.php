@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PaisesController;
 use App\Http\Controllers\DepartamentosController;
+use App\Http\Controllers\MunicipiosController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -51,6 +52,16 @@ Route::middleware(['guest'])->group(function () {
         Route::get('lista/{pais}', [DepartamentosController::class, 'lista']);
     });
 
+    //Cuidades
+    Route::prefix('ciudades')->group(function () {
+        Route::post('obtener', [MunicipiosController::class, 'show']);
+        /* Route::post('crear', [DepartamentosController::class, 'crear']);
+        Route::post('actualizar', [DepartamentosController::class, 'update']);
+        Route::post('cambiarEstado', [DepartamentosController::class, 'cambiarEstado']);
+        Route::get('lista/{pais}', [DepartamentosController::class, 'lista']); */
+    });
+
+    //Usuarios
     Route::prefix('usuarios')->group(function () {
         Route::post('obtener', [UserController::class, 'obtener']);
         Route::post('cambiarEstado', [UserController::class, 'cambiarEstado']);
