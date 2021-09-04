@@ -61,6 +61,7 @@ class DepartamentosController extends Controller {
                 ,"departamentos.state_code"
                 ,"paises.id AS country_id"
                 ,"paises.name AS nombre_pais"
+                ,"departamentos.flag"
                 ,"departamentos.created_at"
             );
         $query->join('paises', 'departamentos.country_id', '=', 'paises.id');
