@@ -55,9 +55,9 @@ Route::middleware(['guest'])->group(function () {
     //Cuidades
     Route::prefix('ciudades')->group(function () {
         Route::post('obtener', [MunicipiosController::class, 'show']);
-        /* Route::post('crear', [DepartamentosController::class, 'crear']);
-        Route::post('actualizar', [DepartamentosController::class, 'update']);
-        Route::post('cambiarEstado', [DepartamentosController::class, 'cambiarEstado']);
+        Route::post('cambiarEstado', [MunicipiosController::class, 'cambiarEstado']);
+        Route::post('crear', [MunicipiosController::class, 'crear']);
+        /* Route::post('actualizar', [DepartamentosController::class, 'update']);
         Route::get('lista/{pais}', [DepartamentosController::class, 'lista']); */
     });
 
