@@ -6,38 +6,94 @@ use App\Models\municipios;
 use Illuminate\Http\Request;
 use DB;
 
-class MunicipiosController extends Controller
-{
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
-    {
-        //
+class MunicipiosController extends Controller {
+    
+    public function cambiarEstado(Request $request){
+        $resp["success"] = false;
+        $ciudad = municipios::find($request->id);
+        
+        if(is_object($ciudad)){
+            DB::beginTransaction();
+            $ciudad->flag = $request->estado;
+        
+            if ($ciudad->save()) {
+                $resp["success"] = true;
+                $resp["msj"] = "La ciudad " . $ciudad->name . " se ha " . ($request->estado == 1 ? 'habilitado' : 'deshabilitado') . " correctamente.";
+                DB::commit();
+            }else{
+                DB::rollBack();
+                $resp["msj"] = "No se han guardado cambios";
+            }
+        }else{
+            $resp["msj"] = "No se ha encontrado la ciudad";
+        }
+        return $resp; 
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
+    public function crear(Request $request){
+        $resp["success"] = false;
+        $validar = municipios::where([
+            ['name', $request->name], 
+            ["state_id", $request->state_id]
+        ])->get();
+
+        if($validar->isEmpty()){
+            $ciudad = new municipios;
+            $ciudad->name = $request->name;
+            $ciudad->state_id = $request->state_id;
+            $ciudad->flag = $request->estado;
+            
+            if($ciudad->save()){
+                $resp["success"] = true;
+                $resp["msj"] = "Se ha creado la ciudad correctamente.";
+            }else{
+                $resp["msj"] = "No se ha creado la ciudad " . $request->name;
+            }
+        }else{
+            $resp["msj"] = "La ciudad " . $request->name . " ya se encuentra registrado.";
+        }
+
+        return $resp;
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        //
-    }
+    /* public function update(Request $request, municipios $municipios) {
+        $resp["success"] = false;
+        $validar = municipios::where([
+            ['id', '<>', $request->id],
+            ['country_id', $request->country_id],
+            ['name', $request->name]
+          ])->get();
+  
+        if ($validar->isEmpty()) {
+
+            $departamento = municipios::find($request->id);
+
+            if(!empty($departamento)){
+                if ($departamento->name != $request->name || $departamento->country_id != $request->country_id || $departamento->state_code != $request->state_code || $departamento->flag != $request->flag) {
+
+                    $departamento->name = $request->name;
+                    $departamento->country_id = $request->country_id;
+                    $departamento->state_code = $request->state_code;
+                    $departamento->flag = $request->flag;
+                    
+                    if ($departamento->save()) {
+                        $resp["success"] = true;
+                        $resp["msj"] = "Se han actualizado los datos";
+                    }else{
+                        $resp["msj"] = "No se han guardado cambios";
+                    }
+                } else {
+                    $resp["msj"] = "Por favor realice algún cambio";
+                }
+            }else{
+                $resp["msj"] = "No se ha encontrado el departamento";
+            }
+        }else{
+            $resp["msj"] = "El departamento " . $request->name . " ya se encuentra registrado";
+        }
+        
+        return $resp;
+    } */
 
     /**
      * Display the specified resource.
@@ -75,40 +131,6 @@ class MunicipiosController extends Controller
             ,["d.flag", 1]
         ])->orderBy('m.name', 'asc');
 
-        return datatables()->query($query)->toJson();
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\municipios  $municipios
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(municipios $municipios)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\municipios  $municipios
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, municipios $municipios)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\municipios  $municipios
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(municipios $municipios)
-    {
-        //
+        return datatables()->query($query)->rawColumns(['m.name', 'nombre_departamento', 'nombre_pais'])->make(true);
     }
 }

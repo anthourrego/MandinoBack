@@ -6,50 +6,7 @@ use App\Models\departamentos;
 use Illuminate\Http\Request;
 use DB;
 
-class DepartamentosController extends Controller
-{
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
-    {
-        //
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * 
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\departamentos  $departamentos
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(departamentos $departamentos)
-    {
-        //
-    }
+class DepartamentosController extends Controller {
 
     /**
      * Update the specified resource in storage.
@@ -97,19 +54,14 @@ class DepartamentosController extends Controller
         return $resp;
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\departamentos  $departamentos
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(departamentos $departamentos)
-    {
-        //
-    }
-
     public function show(Request $request){
-        $query = departamentos::select("departamentos.*");
+        $query = departamentos::select(
+                "departamentos.id"
+                ,"departamentos.name"
+                ,"paises.id AS country_id"
+                ,"paises.name AS nombre_pais"
+                ,"departamentos.created_at"
+            );
         $query->join('paises', 'departamentos.country_id', '=', 'paises.id');
         if(isset($request->paises)) {
             $query->whereIn("departamentos.country_id", $request->paises);
@@ -121,7 +73,7 @@ class DepartamentosController extends Controller
 
         $query->where("paises.flag", 1);
 
-        return datatables()->eloquent($query)->toJson();
+        return datatables()->eloquent($query)->rawColumns(['departamentos.name', 'nombre_pais'])->make(true);
     }
 
     public function crear(Request $request){
