@@ -6,6 +6,8 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\PaisesController;
 use App\Http\Controllers\DepartamentosController;
 use App\Http\Controllers\MunicipiosController;
+use App\Http\Controllers\EscuelasController;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -58,7 +60,14 @@ Route::middleware(['guest'])->group(function () {
         Route::post('cambiarEstado', [MunicipiosController::class, 'cambiarEstado']);
         Route::post('crear', [MunicipiosController::class, 'crear']);
         Route::post('actualizar', [MunicipiosController::class, 'update']);
-        /* Route::get('lista/{pais}', [DepartamentosController::class, 'lista']); */
+    });
+
+    //Cuidades
+    Route::prefix('escuelas')->group(function () {
+        Route::post('obtener', [EscuelasController::class, 'show']);
+        Route::post('cambiarEstado', [EscuelasController::class, 'cambiarEstado']);
+        Route::post('crear', [EscuelasController::class, 'crear']);
+        Route::post('actualizar', [EscuelasController::class, 'actualizar']);
     });
 
     //Usuarios
