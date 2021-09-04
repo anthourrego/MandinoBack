@@ -18,7 +18,7 @@ class PermisosSistema extends Migration
             $table->foreignId('fk_usuario');
             $table->foreignId('fk_perfil')->nullable();
             $table->foreignId('fk_permiso')->nullable();
-            $table->foreignId('fk_curso')->nullable();
+            $table->foreignId('fk_escuelas')->nullable();
             $table->integer('tipo');
             $table->boolean('estado')->default(1);        
             $table->timestamps();
@@ -26,7 +26,7 @@ class PermisosSistema extends Migration
             $table->foreign('fk_usuario')->references('id')->on('users');
             $table->foreign('fk_perfil')->references('id')->on('perfiles');
             $table->foreign('fk_permiso')->references('id')->on('permisos');
-            $table->foreign('fk_curso')->references('id')->on('cursos');
+            $table->foreign('fk_escuelas')->references('id')->on('escuelas');
 
         });
     }
