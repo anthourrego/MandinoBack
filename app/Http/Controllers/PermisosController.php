@@ -15,17 +15,21 @@ class PermisosController extends Controller {
      */
     public function show($permiso = null){
 
+        $query = permisos::addSelect(['contHijos' => DB::table("permisos AS per")->selectRaw('count(*)')
+                            ->whereColumn('per.fk_permiso', 'permisos.id')
+                            ->where("per.estado", 1)
+                        ])->where("estado", 1);
+                        
         if ($permiso == null) {
-            $query = permisos::where("estado", 1)
-                            ->whereNull('fk_permiso')
-                            ->get();
+            $query = $query->whereNull('fk_permiso');
         } else {
-            $query = permisos::where("estado", 1)->where('fk_permiso', $permiso)->get();
+            $query = $query->where('fk_permiso', $permiso);
         }
 
+        $query = $query->get();
+
         foreach ($query as $per) {
-            $cont = permisos::where("fk_permiso", $per->id)->count();
-            if ($cont > 0) {
+            if ($per->contHijos > 0) {
                 $per->hijos = $this->show($per->id);
             }
         }
