@@ -20,6 +20,7 @@ class CreatePermisosTable extends Migration
             $table->string('icono');
             $table->text('ruta')->nullable();
             $table->unsignedBigInteger('fk_permiso')->nullable();
+            $table->boolean("estado")->default(1);
             $table->timestamps();
         });
     }

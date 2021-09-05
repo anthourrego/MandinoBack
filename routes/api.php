@@ -7,6 +7,8 @@ use App\Http\Controllers\PaisesController;
 use App\Http\Controllers\DepartamentosController;
 use App\Http\Controllers\MunicipiosController;
 use App\Http\Controllers\EscuelasController;
+use App\Http\Controllers\PermisosController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -68,6 +70,11 @@ Route::middleware(['guest'])->group(function () {
         Route::post('cambiarEstado', [EscuelasController::class, 'cambiarEstado']);
         Route::post('crear', [EscuelasController::class, 'crear']);
         Route::post('actualizar', [EscuelasController::class, 'actualizar']);
+    });
+
+    //Permisos
+    Route::prefix('permisos')->group(function () {
+        Route::get('obtener', [PermisosController::class, 'show']);
     });
 
     //Usuarios

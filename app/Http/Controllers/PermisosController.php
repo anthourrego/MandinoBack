@@ -5,81 +5,31 @@ namespace App\Http\Controllers;
 use App\Models\permisos;
 use Illuminate\Http\Request;
 
-class PermisosController extends Controller
-{
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
-    {
-        //
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
+class PermisosController extends Controller {
     /**
      * Display the specified resource.
      *
      * @param  \App\Models\permisos  $permisos
      * @return \Illuminate\Http\Response
      */
-    public function show(permisos $permisos)
-    {
-        //
+    public function show($permiso = null){
+
+        if ($permiso == null) {
+            $query = permisos::where("estado", 1)
+                            ->whereNull('fk_permiso')
+                            ->get();
+        } else {
+            $query = permisos::where("estado", 1)->where('fk_permiso', $permiso)->get();
+        }
+
+        foreach ($query as $per) {
+            $cont = permisos::where("fk_permiso", $per->id)->count();
+            if ($cont > 0) {
+                $per->hijos = $this->show($per->id);
+            }
+        }
+
+        return $query; 
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\permisos  $permisos
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(permisos $permisos)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\permisos  $permisos
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, permisos $permisos)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\permisos  $permisos
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(permisos $permisos)
-    {
-        //
-    }
 }
