@@ -102,7 +102,10 @@ class MunicipiosController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function ubicacion(Request $request){
-        return municipios::select('id', 'name')->where("country_id", $request->idPais)->where("state_id", $request->idDepto)->get();
+
+        /* const $query = municipios::select('municipios.*','departamentos.*');
+        $query->join('departamentos', 'municipios.state_id', '=', $request->idMunicipio);
+        $query->join('departamentos', 'departamentos.id', '=', $request->idMunicipio); */
     }
 
 }
