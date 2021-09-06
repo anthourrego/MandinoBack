@@ -6,12 +6,9 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\PaisesController;
 use App\Http\Controllers\DepartamentosController;
 use App\Http\Controllers\MunicipiosController;
-<<<<<<< HEAD
-=======
 use App\Http\Controllers\EscuelasController;
 use App\Http\Controllers\PermisosController;
 
->>>>>>> master
 
 /*
 |--------------------------------------------------------------------------
@@ -55,8 +52,9 @@ Route::middleware(['guest'])->group(function () {
         Route::post('obtener', [DepartamentosController::class, 'show']);
         Route::post('crear', [DepartamentosController::class, 'crear']);
         Route::post('actualizar', [DepartamentosController::class, 'update']);
-<<<<<<< HEAD
         Route::post('lista', [DepartamentosController::class, 'lista']);
+        Route::post('cambiarEstado', [DepartamentosController::class, 'cambiarEstado']);
+        Route::get('lista/{pais}', [DepartamentosController::class, 'lista']);
 
         /* Route::post('cambiarEstado', [PaisesController::class, 'cambiarEstado']);*/
     });
@@ -67,10 +65,7 @@ Route::middleware(['guest'])->group(function () {
     });
 
 
-=======
-        Route::post('cambiarEstado', [DepartamentosController::class, 'cambiarEstado']);
-        Route::get('lista/{pais}', [DepartamentosController::class, 'lista']);
-    });
+
 
     //Cuidades
     Route::prefix('ciudades')->group(function () {
@@ -97,7 +92,6 @@ Route::middleware(['guest'])->group(function () {
     });
 
     //Usuarios
->>>>>>> master
     Route::prefix('usuarios')->group(function () {
         Route::post('obtener', [UserController::class, 'obtener']);
         Route::post('cambiarEstado', [UserController::class, 'cambiarEstado']);
