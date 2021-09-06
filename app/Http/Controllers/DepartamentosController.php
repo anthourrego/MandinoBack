@@ -4,51 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\departamentos;
 use Illuminate\Http\Request;
+use DB;
 
-class DepartamentosController extends Controller
-{
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
-    {
-        //
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * 
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\departamentos  $departamentos
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(departamentos $departamentos)
-    {
-        //
-    }
+class DepartamentosController extends Controller {
 
     /**
      * Update the specified resource in storage.
@@ -69,7 +27,7 @@ class DepartamentosController extends Controller
 
             $departamento = departamentos::find($request->id);
 
-            if(!empty($pais)){
+            if(!empty($departamento)){
                 if ($departamento->name != $request->name || $departamento->country_id != $request->country_id || $departamento->state_code != $request->state_code || $departamento->flag != $request->flag) {
 
                     $departamento->name = $request->name;
@@ -77,7 +35,7 @@ class DepartamentosController extends Controller
                     $departamento->state_code = $request->state_code;
                     $departamento->flag = $request->flag;
                     
-                    if ($pais->save()) {
+                    if ($departamento->save()) {
                         $resp["success"] = true;
                         $resp["msj"] = "Se han actualizado los datos";
                     }else{
@@ -96,20 +54,16 @@ class DepartamentosController extends Controller
         return $resp;
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\departamentos  $departamentos
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(departamentos $departamentos)
-    {
-        //
-    }
-
-    public function show(Request $request, departamentos $paises){
-        // var_dump(count($request->paises));
-        $query = departamentos::select("departamentos.*");
+    public function show(Request $request){
+        $query = departamentos::select(
+                "departamentos.id"
+                ,"departamentos.name"
+                ,"departamentos.state_code"
+                ,"paises.id AS country_id"
+                ,"paises.name AS nombre_pais"
+                ,"departamentos.flag"
+                ,"departamentos.created_at"
+            );
         $query->join('paises', 'departamentos.country_id', '=', 'paises.id');
         if(isset($request->paises)) {
             $query->whereIn("departamentos.country_id", $request->paises);
@@ -121,7 +75,7 @@ class DepartamentosController extends Controller
 
         $query->where("paises.flag", 1);
 
-        return datatables()->eloquent($query)->toJson();
+        return datatables()->eloquent($query)->rawColumns(['departamentos.name', 'nombre_pais'])->make(true);
     }
 
     public function crear(Request $request){
@@ -138,9 +92,9 @@ class DepartamentosController extends Controller
             $departamento->state_code = $request->state_code;
             $departamento->flag = $request->flag;
             
-            if($pais->save()){
+            if($departamento->save()){
                 $resp["success"] = true;
-                $resp["msj"] = "Se ha creado el pais correctamente.";
+                $resp["msj"] = "Se ha creado el departamento correctamente.";
             }else{
                 $resp["msj"] = "No se ha creado el el departamento " . $request->name;
             }
@@ -158,11 +112,36 @@ class DepartamentosController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function lista(Request $request){
-
-        return departamentos::select('id', 'name')->where("country_id", $request->idPais)->get();
+    public function lista($pais){
+        return departamentos::select('id', 'name')
+            ->where([
+                ["flag", 1]
+                ,["country_id", $pais]
+            ])->orderBy('name', 'asc')->get();
     }
 
 
+    public function cambiarEstado(Request $request){
+        $resp["success"] = false;
+        $dep = departamentos::find($request->id);
+        
+        if(is_object($dep)){
+            DB::beginTransaction();
+            $dep->flag = $request->estado;
+        
+            if ($dep->save()) {
+                $resp["success"] = true;
+                $resp["msj"] = "El departamento " . $dep->name . " se ha " . ($request->estado == 1 ? 'habilitado' : 'deshabilitado') . " correctamente.";
+                DB::commit();
+            }else{
+                DB::rollBack();
+                $resp["msj"] = "No se han guardado cambios";
+            }
+        }else{
+            $resp["msj"] = "No se ha encontrado el departamento";
+        }
+        return $resp; 
+    }
 
+    
 }
