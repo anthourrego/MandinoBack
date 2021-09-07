@@ -75,6 +75,9 @@ Route::middleware(['guest'])->group(function () {
     //Permisos
     Route::prefix('permisos')->group(function () {
         Route::get('obtener', [PermisosController::class, 'show']);
+        Route::post('crear', [PermisosController::class, 'crear']);
+        Route::post('cambiarEstado', [PermisosController::class, 'cambiarEstado']);
+        Route::post('actualizar', [PermisosController::class, 'update']);
     });
 
     //Usuarios
