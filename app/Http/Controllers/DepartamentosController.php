@@ -115,8 +115,7 @@ class DepartamentosController extends Controller {
     public function lista($pais){
         return departamentos::select('id', 'name')
             ->where([
-                ["flag", 1]
-                ,["country_id", $pais]
+                ["country_id", $pais]
             ])->orderBy('name', 'asc')->get();
     }
 

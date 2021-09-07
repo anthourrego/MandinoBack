@@ -151,11 +151,17 @@ class MunicipiosController extends Controller {
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function ubicacion(Request $request){
+    public function ubicacion($idMunicipio){
 
-        /* const $query = municipios::select('municipios.*','departamentos.*');
-        $query->join('departamentos', 'municipios.state_id', '=', $request->idMunicipio);
-        $query->join('departamentos', 'departamentos.id', '=', $request->idMunicipio); */
+        // SELECT p.id as pais, d.id as departamento FROM municipios m JOIN departamentos d ON m.state_id = d.id JOIN paises p ON d.country_id = p.id WHERE m.id = 21195
+
+
+        $query = municipios::select("paises.id as pais", "departamentos.id as depto");
+        $query->join('departamentos', 'municipios.state_id', '=', 'departamentos.id');
+        $query->join('paises', 'departamentos.country_id', '=', 'paises.id');
+        $query->where('municipios.id',$idMunicipio);
+
+        return $query->get();
     }
 
 }
