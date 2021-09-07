@@ -17,8 +17,7 @@ class PermisosController extends Controller {
 
         $query = permisos::addSelect(['contHijos' => DB::table("permisos AS per")->selectRaw('count(*)')
                             ->whereColumn('per.fk_permiso', 'permisos.id')
-                            ->where("per.estado", 1)
-                        ])->where("estado", 1);
+                        ]);
                         
         if ($permiso == null) {
             $query = $query->whereNull('fk_permiso');
