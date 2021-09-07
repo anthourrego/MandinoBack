@@ -62,6 +62,7 @@ Route::middleware(['guest'])->group(function () {
         Route::post('cambiarEstado', [MunicipiosController::class, 'cambiarEstado']);
         Route::post('crear', [MunicipiosController::class, 'crear']);
         Route::post('actualizar', [MunicipiosController::class, 'update']);
+        Route::post('lista', [MunicipiosController::class, 'lista']);
     });
 
     //Cuidades

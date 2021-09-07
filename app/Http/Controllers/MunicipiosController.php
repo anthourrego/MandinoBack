@@ -132,4 +132,23 @@ class MunicipiosController extends Controller {
 
         return datatables()->query($query)->rawColumns(['m.name', 'nombre_departamento', 'nombre_pais'])->make(true);
     }
+
+    public function lista(Request $request){
+        $query = DB::table("municipios AS m")
+                ->select("m.id", "m.name")
+                ->join('departamentos AS d', 'm.state_id', '=', 'd.id')
+                ->join('paises AS p', 'd.country_id', '=', 'p.id');
+
+        if(isset($request->departamentos)) {
+            $query = $query->whereIn("d.id", $request->departamentos);
+        }
+
+        $query = $query->where([
+            ["p.flag", 1]
+            ,["d.flag", 1]
+            ,["m.flag", 1]
+        ])->orderBy('m.name', 'asc');
+
+        return $query->get();
+    }
 }
