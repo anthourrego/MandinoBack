@@ -127,12 +127,19 @@ class DepartamentosController extends Controller {
         return $resp; 
     }
 
-    public function lista($pais){
-        return departamentos::select('id', 'name')
+    public function lista(Request $request){
+        $query = departamentos::select('departamentos.id', 'departamentos.name')
+            ->join("paises AS p", "departamentos.country_id", "p.id")
             ->where([
-                ["flag", 1]
-                ,["country_id", $pais]
-            ])->orderBy('name', 'asc')->get();
+                ["departamentos.flag", 1]
+                ,["p.flag", 1]
+            ]);
+        
+        if (isset($request->pais)) {
+            $query = $query->whereIn("departamentos.country_id", $request->pais);
+        }
+
+        return  $query->orderBy('departamentos.name', 'asc')->get();
     }
 
 }
