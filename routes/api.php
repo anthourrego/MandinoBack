@@ -53,7 +53,7 @@ Route::middleware(['guest'])->group(function () {
         Route::post('crear', [DepartamentosController::class, 'crear']);
         Route::post('actualizar', [DepartamentosController::class, 'update']);
         Route::post('cambiarEstado', [DepartamentosController::class, 'cambiarEstado']);
-        Route::get('lista/{pais}', [DepartamentosController::class, 'lista']);
+        Route::post('lista', [DepartamentosController::class, 'lista']);
     });
 
     //Cuidades
@@ -87,5 +87,6 @@ Route::middleware(['guest'])->group(function () {
         Route::post('crear', [UserController::class, 'crear']);
         Route::post('eliminar', [UserController::class, 'eliminar']);
         Route::post('editar', [UserController::class, 'editar']);
+        Route::get('permisos/{idUsuario}', [UserController::class, 'permisos']);
     });
   });
