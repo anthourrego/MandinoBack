@@ -151,4 +151,35 @@ class MunicipiosController extends Controller {
 
         return $query->get();
     }
+
+        /**
+     * lista los departamentos de un país especifico
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    /* public function lista(Request $request){
+        return municipios::select('id', 'name')->where("country_id", $request->idPais)->where("state_id", $request->idDepto)->get();
+    } */
+
+
+    /**
+     * regresa ids de pais y departamento
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function ubicacion($idMunicipio){
+
+        // SELECT p.id as pais, d.id as departamento FROM municipios m JOIN departamentos d ON m.state_id = d.id JOIN paises p ON d.country_id = p.id WHERE m.id = 21195
+
+
+        $query = municipios::select("paises.id as pais", "departamentos.id as depto");
+        $query->join('departamentos', 'municipios.state_id', '=', 'departamentos.id');
+        $query->join('paises', 'departamentos.country_id', '=', 'paises.id');
+        $query->where('municipios.id',$idMunicipio);
+
+        return $query->get();
+    }
+
 }

@@ -105,6 +105,20 @@ class DepartamentosController extends Controller {
         return $resp;
     }
 
+
+    /**
+     * lista los departamentos de un país especifico
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    /* public function lista($pais){
+        return departamentos::select('id', 'name')
+            ->where([
+                ["country_id", $pais]
+            ])->orderBy('name', 'asc')->get();
+    } */
+
     public function cambiarEstado(Request $request){
         $resp["success"] = false;
         $dep = departamentos::find($request->id);
@@ -142,4 +156,5 @@ class DepartamentosController extends Controller {
         return  $query->orderBy('departamentos.name', 'asc')->get();
     }
 
+    
 }

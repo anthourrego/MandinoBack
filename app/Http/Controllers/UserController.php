@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use DB;
 
 class UserController extends Controller {
@@ -56,6 +57,7 @@ class UserController extends Controller {
                     $usuario->fk_municipio = $request->fk_municipio;
 
                     /*Queda pendiente la validacion de la foto*/
+
                     
                     if($usuario->save()){
                         $resp["success"] = true;
@@ -180,7 +182,7 @@ class UserController extends Controller {
                     ['email', $request->email]
                 ])->get();
                 if ($validar->isEmpty()) {
-                    $usuario = Usuarios::find($request->id);
+                    $usuario = User::find($request->id);
                     if(!empty($usuario)){
                         if ($usuario->nro_documento != $request->nro_documento || $usuario->usuario != $request->usuario || $usuario->nombre1 != $request->nombre1 || $usuario->nombre2 != $request->nombre2 || $usuario->apellido1 != $request->apellido1 || $usuario->apellido2 != $request->apellido2 || $usuario->email != $request->email || $usuario->telefono != $request->telefono || $usuario->estado != $request->estado || $usuario->fk_municipio != $request->fk_municipio) {
                         
