@@ -111,12 +111,12 @@ class UserController extends Controller {
             $query = $query->where("users.estado", $request->estado);
         }
 
-        if (isset($request->pais)) {
-            $query = $query->whereIn("p.id", $request->pais);
+        if (isset($request->paises)) {
+            $query = $query->whereIn("p.id", $request->paises);
         }
 
-        if (isset($request->departamento)) {
-            $query = $query->whereIn("d.id", $request->departamento);
+        if (isset($request->departamentos)) {
+            $query = $query->whereIn("d.id", $request->departamentos);
         }
 
         if (isset($request->ciudad)) {
