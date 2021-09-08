@@ -54,6 +54,12 @@ Route::middleware(['guest'])->group(function () {
         Route::post('actualizar', [DepartamentosController::class, 'update']);
         Route::post('cambiarEstado', [DepartamentosController::class, 'cambiarEstado']);
         Route::post('lista', [DepartamentosController::class, 'lista']);
+        /* Route::get('lista/{pais}', [DepartamentosController::class, 'lista']); */
+    });
+
+    Route::prefix('municipios')->group(function () {
+        Route::post('lista', [MunicipiosController::class, 'lista']);
+        Route::get('ubicacion/{idMunicipio}', [MunicipiosController::class, 'ubicacion']);
     });
 
     //Cuidades
@@ -62,6 +68,7 @@ Route::middleware(['guest'])->group(function () {
         Route::post('cambiarEstado', [MunicipiosController::class, 'cambiarEstado']);
         Route::post('crear', [MunicipiosController::class, 'crear']);
         Route::post('actualizar', [MunicipiosController::class, 'update']);
+        Route::post('lista', [MunicipiosController::class, 'lista']);
     });
 
     //Cuidades

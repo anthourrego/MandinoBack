@@ -15,7 +15,7 @@ class PermisosSistema extends Migration
     {
         Schema::create('permisos_sistema', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('fk_usuario');
+            $table->foreignId('fk_usuario')->nullable();
             $table->foreignId('fk_perfil')->nullable();
             $table->foreignId('fk_permiso')->nullable();
             $table->foreignId('fk_escuelas')->nullable();
