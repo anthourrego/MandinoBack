@@ -82,4 +82,8 @@ class PerfilesController extends Controller
     {
         //
     }
+
+    public function lista(){
+        return perfiles::select("id", "nombre")->where("estado", 1)->get();
+    }
 }

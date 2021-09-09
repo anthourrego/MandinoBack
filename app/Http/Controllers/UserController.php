@@ -21,6 +21,8 @@ class UserController extends Controller {
 
         if (is_object($usuario)){
             if(Hash::check($pass, $usuario->password)){
+                $usuario->nombreCompleto = $usuario->nombre1 . ' ' . (strlen($usuario->nombre2) > 0 ? $usuario->nombre2 . ' ' : '') . $usuario->apellido1 . (strlen($usuario->apellido2) > 0 ? ' ' . $usuario->apellido2 : '');
+
                 $resp['success'] = true;
                 $resp['menu'] = $this->permisos($usuario->id, true);
                 $resp['permisos'] = $this->permisos($usuario->id, true, null, false);

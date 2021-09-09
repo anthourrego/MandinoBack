@@ -8,7 +8,7 @@ use App\Http\Controllers\DepartamentosController;
 use App\Http\Controllers\MunicipiosController;
 use App\Http\Controllers\EscuelasController;
 use App\Http\Controllers\PermisosController;
-
+use App\Http\Controllers\PerfilesController;
 
 /*
 |--------------------------------------------------------------------------
@@ -95,5 +95,10 @@ Route::middleware(['guest'])->group(function () {
         Route::post('eliminar', [UserController::class, 'eliminar']);
         Route::post('editar', [UserController::class, 'editar']);
         Route::get('permisos/{idUsuario}', [UserController::class, 'permisos']);
+    });
+
+    //Perfiles
+    Route::prefix('perfiles')->group(function () {
+        Route::get('lista', [PerfilesController::class, 'lista']);
     });
   });
