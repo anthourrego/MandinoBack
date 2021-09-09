@@ -60,10 +60,8 @@ class UserController extends Controller {
                     $usuario->estado = $request->estado;
                     $usuario->fk_municipio = $request->fk_municipio;
                     $usuario->foto = $request->foto;
+                    $usuario->fk_perfil = $request->fk_perfil;
 
-                    /*Queda pendiente la validacion de la foto*/
-
-                    
                     if($usuario->save()){
                         $resp["success"] = true;
                         $resp["msj"] = "Se ha creado el usuario";
@@ -190,18 +188,19 @@ class UserController extends Controller {
                     $usuario = User::find($request->id);
                     if(!empty($usuario)){
                         if (
-                             $usuario->nro_documento != $request->nro_documento ||
-                             $usuario->usuario != $request->usuario ||
-                             $usuario->nombre1 != $request->nombre1 ||
-                             $usuario->nombre2 != $request->nombre2 ||
-                             $usuario->apellido1 != $request->apellido1 ||
-                             $usuario->apellido2 != $request->apellido2 ||
-                             $usuario->email != $request->email ||
-                             $usuario->telefono != $request->telefono ||
-                             $usuario->estado != $request->estado ||
-                             $usuario->fk_municipio != $request->fk_municipio ||
-                             $usuario->foto != $request->foto
-                            ) {
+                            $usuario->nro_documento != $request->nro_documento ||
+                            $usuario->usuario != $request->usuario ||
+                            $usuario->nombre1 != $request->nombre1 ||
+                            $usuario->nombre2 != $request->nombre2 ||
+                            $usuario->apellido1 != $request->apellido1 ||
+                            $usuario->apellido2 != $request->apellido2 ||
+                            $usuario->email != $request->email ||
+                            $usuario->telefono != $request->telefono ||
+                            $usuario->estado != $request->estado ||
+                            $usuario->fk_municipio != $request->fk_municipio ||
+                            $usuario->foto != $request->foto ||
+                            $usuario->fk_perfil != $request->fk_perfil
+                        ) {
                         
                         $usuario->nro_documento = $request->nro_documento;
                         $usuario->usuario = $request->usuario;
@@ -214,8 +213,8 @@ class UserController extends Controller {
                         $usuario->estado = $request->estado; 
                         $usuario->fk_municipio = $request->fk_municipio;
                         $usuario->foto = $request->foto;
+                        $usuario->fk_perfil = $request->fk_perfil;
 
-                        
                         if ($usuario->save()) {
                             $resp["success"] = true;
                             $resp["msj"] = "Se han actualizado los datos";
