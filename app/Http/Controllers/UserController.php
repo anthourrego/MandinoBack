@@ -57,6 +57,7 @@ class UserController extends Controller {
                     $usuario->telefono = $request->telefono;
                     $usuario->estado = $request->estado;
                     $usuario->fk_municipio = $request->fk_municipio;
+                    $usuario->foto = $request->foto;
 
                     /*Queda pendiente la validacion de la foto*/
 
@@ -186,7 +187,19 @@ class UserController extends Controller {
                 if ($validar->isEmpty()) {
                     $usuario = User::find($request->id);
                     if(!empty($usuario)){
-                        if ($usuario->nro_documento != $request->nro_documento || $usuario->usuario != $request->usuario || $usuario->nombre1 != $request->nombre1 || $usuario->nombre2 != $request->nombre2 || $usuario->apellido1 != $request->apellido1 || $usuario->apellido2 != $request->apellido2 || $usuario->email != $request->email || $usuario->telefono != $request->telefono || $usuario->estado != $request->estado || $usuario->fk_municipio != $request->fk_municipio) {
+                        if (
+                             $usuario->nro_documento != $request->nro_documento ||
+                             $usuario->usuario != $request->usuario ||
+                             $usuario->nombre1 != $request->nombre1 ||
+                             $usuario->nombre2 != $request->nombre2 ||
+                             $usuario->apellido1 != $request->apellido1 ||
+                             $usuario->apellido2 != $request->apellido2 ||
+                             $usuario->email != $request->email ||
+                             $usuario->telefono != $request->telefono ||
+                             $usuario->estado != $request->estado ||
+                             $usuario->fk_municipio != $request->fk_municipio ||
+                             $usuario->foto != $request->foto
+                            ) {
                         
                         $usuario->nro_documento = $request->nro_documento;
                         $usuario->usuario = $request->usuario;
@@ -197,7 +210,9 @@ class UserController extends Controller {
                         $usuario->email = $request->email; 
                         $usuario->telefono = $request->telefono; 
                         $usuario->estado = $request->estado; 
-                        $usuario->fk_municipio = $request->fk_municipio; 
+                        $usuario->fk_municipio = $request->fk_municipio;
+                        $usuario->foto = $request->foto;
+
                         
                         if ($usuario->save()) {
                             $resp["success"] = true;
