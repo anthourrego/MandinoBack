@@ -247,6 +247,7 @@ class UserController extends Controller {
                         ,"p.nombre"
                         ,"p.tag"
                         ,"p.icono"
+                        ,"p.ruta"
                     )->addSelect(['contHijos' => DB::table("permisos AS per")->selectRaw('count(*)')->whereColumn('per.fk_permiso', 'p.id')])
                     ->selectRaw("(CASE WHEN ps.fk_usuario IS NULL THEN 0 ELSE 1 END) AS aplicaPermiso")
                     ->leftjoin("permisos_sistema as ps", function ($join) use ($idUsuario) {
