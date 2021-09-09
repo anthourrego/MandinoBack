@@ -15,7 +15,7 @@ class UserSeeder extends Seeder
     public function run()
     {
         DB::table('users')->insert([
-            'id' => 0
+            'id' => 1
             ,'nro_documento' => "0000"
             ,'usuario' => 'admin'
             ,'password' => '$2y$15$Ui5AQTHCS4pkuOFyOAq61OlsjnQdx9rWzmXPDHtol9B0lHj34pU/i'
