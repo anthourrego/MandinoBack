@@ -249,6 +249,7 @@ class UserController extends Controller {
                         ,"p.tag"
                         ,"p.icono"
                         ,"p.ruta"
+                        ,"p.fk_permiso"
                     )->addSelect(['contHijos' => DB::table("permisos AS per")->selectRaw('count(*)')->whereColumn('per.fk_permiso', 'p.id')])
                     ->selectRaw("(CASE WHEN ps.fk_usuario IS NULL THEN 0 ELSE 1 END) AS aplicaPermiso")
                     ->leftjoin("permisos_sistema as ps", function ($join) use ($idUsuario) {
@@ -279,5 +280,18 @@ class UserController extends Controller {
         }
 
         return $query; 
+    }
+
+    public function guardarPermiso(Request $request){
+        var_dump($request->idUsuario);
+        var_dump($request->permisos);
+
+        foreach ($request->permisos as $value) {
+            
+        }
+        /* DB::table('paises')->insert([
+
+        ]); */
+
     }
 }
