@@ -22,6 +22,8 @@ class UserController extends Controller {
         if (is_object($usuario)){
             if(Hash::check($pass, $usuario->password)){
                 $resp['success'] = true;
+                $resp['menu'] = $this->permisos($usuario->id, true);
+                $resp['permisos'] = $this->permisos($usuario->id, true, null, false);
                 $resp['msj'] = $usuario;
             }else{
                 $resp["msj"] = 'Contraseña incorrecta';
@@ -111,12 +113,12 @@ class UserController extends Controller {
             $query = $query->where("users.estado", $request->estado);
         }
 
-        if (isset($request->pais)) {
-            $query = $query->whereIn("p.id", $request->pais);
+        if (isset($request->paises)) {
+            $query = $query->whereIn("p.id", $request->paises);
         }
 
-        if (isset($request->departamento)) {
-            $query = $query->whereIn("d.id", $request->departamento);
+        if (isset($request->departamentos)) {
+            $query = $query->whereIn("d.id", $request->departamentos);
         }
 
         if (isset($request->ciudad)) {
@@ -223,7 +225,7 @@ class UserController extends Controller {
         return $resp; 
     }
 
-    public function permisos($idUsuario, $permiso = null){
+    public function permisos($idUsuario, $menu = false, $permiso = null, $hijos = true){
         $query = DB::table("permisos AS p")
                     ->select(
                         "p.id"
@@ -236,18 +238,26 @@ class UserController extends Controller {
                         $join->on('p.id', 'ps.fk_permiso')
                         ->where('ps.fk_usuario', $idUsuario);
                     });
-                        
-        if ($permiso == null) {
-            $query = $query->whereNull('p.fk_permiso');
-        } else {
-            $query = $query->where('p.fk_permiso', $permiso);
+        
+        if ($menu == true) {
+            $query = $query->whereNotNull('ps.fk_usuario');
+        }
+
+        if ($hijos){
+            if ($permiso == null) {
+                $query = $query->whereNull('p.fk_permiso');
+            } else {
+                $query = $query->where('p.fk_permiso', $permiso);
+            }
         }
 
         $query = $query->get();
 
-        foreach ($query as $per) {
-            if ($per->contHijos > 0) {
-                $per->hijos = $this->permisos($idUsuario, $per->id);
+        if ($hijos){ 
+            foreach ($query as $per) {
+                if ($per->contHijos > 0) {
+                    $per->hijos = $this->permisos($idUsuario, $menu, $per->id);
+                }
             }
         }
 
