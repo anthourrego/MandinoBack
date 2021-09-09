@@ -19,6 +19,12 @@ class CreatePerfilesTable extends Migration
             $table->boolean('estado')->default(1);
             $table->timestamps();
         });
+
+        Schema::table('users', function (Blueprint $table) {
+            $table->foreignId('fk_perfil')->nullable();
+
+            $table->foreign('fk_perfil')->references('id')->on('perfiles');
+        });
     }
 
     /**
@@ -26,8 +32,13 @@ class CreatePerfilesTable extends Migration
      *
      * @return void
      */
-    public function down()
-    {
+    public function down() {
+        if (Schema::hasColumn('users', 'fk_perfil')){
+            Schema::table('users', function (Blueprint $table) {
+                $table->dropForeign(['fk_perfil']);
+            });
+        }
+
         Schema::dropIfExists('perfiles');
     }
 }

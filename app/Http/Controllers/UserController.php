@@ -21,6 +21,8 @@ class UserController extends Controller {
 
         if (is_object($usuario)){
             if(Hash::check($pass, $usuario->password)){
+                $usuario->nombreCompleto = $usuario->nombre1 . ' ' . (strlen($usuario->nombre2) > 0 ? $usuario->nombre2 . ' ' : '') . $usuario->apellido1 . (strlen($usuario->apellido2) > 0 ? ' ' . $usuario->apellido2 : '');
+
                 $resp['success'] = true;
                 $resp['menu'] = $this->permisos($usuario->id, true);
                 $resp['permisos'] = $this->permisos($usuario->id, true, null, false);
@@ -58,10 +60,8 @@ class UserController extends Controller {
                     $usuario->estado = $request->estado;
                     $usuario->fk_municipio = $request->fk_municipio;
                     $usuario->foto = $request->foto;
+                    $usuario->fk_perfil = $request->fk_perfil;
 
-                    /*Queda pendiente la validacion de la foto*/
-
-                    
                     if($usuario->save()){
                         $resp["success"] = true;
                         $resp["msj"] = "Se ha creado el usuario";
@@ -188,18 +188,19 @@ class UserController extends Controller {
                     $usuario = User::find($request->id);
                     if(!empty($usuario)){
                         if (
-                             $usuario->nro_documento != $request->nro_documento ||
-                             $usuario->usuario != $request->usuario ||
-                             $usuario->nombre1 != $request->nombre1 ||
-                             $usuario->nombre2 != $request->nombre2 ||
-                             $usuario->apellido1 != $request->apellido1 ||
-                             $usuario->apellido2 != $request->apellido2 ||
-                             $usuario->email != $request->email ||
-                             $usuario->telefono != $request->telefono ||
-                             $usuario->estado != $request->estado ||
-                             $usuario->fk_municipio != $request->fk_municipio ||
-                             $usuario->foto != $request->foto
-                            ) {
+                            $usuario->nro_documento != $request->nro_documento ||
+                            $usuario->usuario != $request->usuario ||
+                            $usuario->nombre1 != $request->nombre1 ||
+                            $usuario->nombre2 != $request->nombre2 ||
+                            $usuario->apellido1 != $request->apellido1 ||
+                            $usuario->apellido2 != $request->apellido2 ||
+                            $usuario->email != $request->email ||
+                            $usuario->telefono != $request->telefono ||
+                            $usuario->estado != $request->estado ||
+                            $usuario->fk_municipio != $request->fk_municipio ||
+                            $usuario->foto != $request->foto ||
+                            $usuario->fk_perfil != $request->fk_perfil
+                        ) {
                         
                         $usuario->nro_documento = $request->nro_documento;
                         $usuario->usuario = $request->usuario;
@@ -212,8 +213,8 @@ class UserController extends Controller {
                         $usuario->estado = $request->estado; 
                         $usuario->fk_municipio = $request->fk_municipio;
                         $usuario->foto = $request->foto;
+                        $usuario->fk_perfil = $request->fk_perfil;
 
-                        
                         if ($usuario->save()) {
                             $resp["success"] = true;
                             $resp["msj"] = "Se han actualizado los datos";
@@ -248,6 +249,7 @@ class UserController extends Controller {
                         ,"p.tag"
                         ,"p.icono"
                         ,"p.ruta"
+                        ,"p.fk_permiso"
                     )->addSelect(['contHijos' => DB::table("permisos AS per")->selectRaw('count(*)')->whereColumn('per.fk_permiso', 'p.id')])
                     ->selectRaw("(CASE WHEN ps.fk_usuario IS NULL THEN 0 ELSE 1 END) AS aplicaPermiso")
                     ->leftjoin("permisos_sistema as ps", function ($join) use ($idUsuario) {
@@ -278,5 +280,18 @@ class UserController extends Controller {
         }
 
         return $query; 
+    }
+
+    public function guardarPermiso(Request $request){
+        var_dump($request->idUsuario);
+        var_dump($request->permisos);
+
+        foreach ($request->permisos as $value) {
+            
+        }
+        /* DB::table('paises')->insert([
+
+        ]); */
+
     }
 }
