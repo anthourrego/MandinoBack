@@ -254,7 +254,8 @@ class UserController extends Controller {
                     ->selectRaw("(CASE WHEN ps.fk_usuario IS NULL THEN 0 ELSE 1 END) AS aplicaPermiso")
                     ->leftjoin("permisos_sistema as ps", function ($join) use ($idUsuario) {
                         $join->on('p.id', 'ps.fk_permiso')
-                        ->where('ps.fk_usuario', $idUsuario);
+                        ->where('ps.fk_usuario', $idUsuario)
+                        ->where('ps.estado', 1);
                     });
         
         if ($menu == true) {
@@ -283,15 +284,37 @@ class UserController extends Controller {
     }
 
     public function guardarPermiso(Request $request){
-        var_dump($request->idUsuario);
-        var_dump($request->permisos);
+        $resp["success"] = false;
+        //var_dump($request->idUsuario);
+        //var_dump($request->permisos);
+        DB::beginTransaction();
 
+        DB::table('permisos_sistema')->where("fk_usuario", $request->idUsuario)->delete(); 
+        
+        $cont = 0;
         foreach ($request->permisos as $value) {
-            
+            try {
+                DB::table('permisos_sistema')->insert([
+                    "fk_usuario" => $request->idUsuario
+                    ,"fk_permiso" => $value
+                    ,"tipo" => 0
+                ]);
+            } catch (\Exception $e) {
+                DB::rollback();
+                $cont++;
+                break;
+            }
         }
-        /* DB::table('paises')->insert([
 
-        ]); */
+        if ($cont == 0) {
+            DB::commit();
+            $resp["success"] = true;
+            $resp["msj"] = "Permisos actualizados correctamente.";
+        } else {
+            DB::rollback();
+            $resp["msj"] = "Error al actualizar los permisos.";
+        }
 
+        return $resp;
     }
 }
