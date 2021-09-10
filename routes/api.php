@@ -95,6 +95,7 @@ Route::middleware(['guest'])->group(function () {
         Route::post('eliminar', [UserController::class, 'eliminar']);
         Route::post('editar', [UserController::class, 'editar']);
         Route::get('permisos/{idUsuario}', [UserController::class, 'permisos']);
+        Route::post('guardarPermiso', [UserController::class, 'guardarPermiso']);
     });
 
     //Perfiles
