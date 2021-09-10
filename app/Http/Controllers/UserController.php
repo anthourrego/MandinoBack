@@ -96,6 +96,7 @@ class UserController extends Controller {
             ,"users.telefono"
             ,"users.estado"
             ,"users.fk_municipio"
+            ,"users.fk_perfil"
             ,"m.name AS ciudad_nombre"
             ,"d.id AS dep_id"
             ,"d.name AS dep_nombre"
@@ -122,8 +123,8 @@ class UserController extends Controller {
             $query = $query->whereIn("d.id", $request->departamentos);
         }
 
-        if (isset($request->ciudad)) {
-            $query = $query->whereIn("m.id", $request->ciudad);
+        if (isset($request->ciudades)) {
+            $query = $query->whereIn("m.id", $request->ciudades);
         }
         
         return datatables()->eloquent($query)->toJson();
