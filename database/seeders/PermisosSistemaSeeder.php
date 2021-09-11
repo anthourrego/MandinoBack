@@ -68,6 +68,12 @@ class PermisosSistemaSeeder extends Seeder
                 ,"tipo" => '0'
                 ,'created_at' => date('Y-m-d H:m:s')
                 ,'updated_at' => date('Y-m-d H:m:s')
+            ],[
+                "fk_usuario" => 1
+                ,"fk_permiso" => 10
+                ,"tipo" => '0'
+                ,'created_at' => date('Y-m-d H:m:s')
+                ,'updated_at' => date('Y-m-d H:m:s')
             ]
         ]);
     }
