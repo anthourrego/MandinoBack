@@ -101,5 +101,9 @@ Route::middleware(['guest'])->group(function () {
     //Perfiles
     Route::prefix('perfiles')->group(function () {
         Route::get('lista', [PerfilesController::class, 'lista']);
+        Route::post('crear', [PerfilesController::class, 'crear']);
+        Route::post('actualizar', [PerfilesController::class, 'actualizar']);
+        Route::post('cambiarEstado', [PerfilesController::class, 'cambiarEstado']);
+        Route::post('obtener', [PerfilesController::class, 'show']);
     });
   });
