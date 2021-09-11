@@ -135,5 +135,38 @@ class PerfilesController extends Controller {
         return $query; 
     }
 
+    public function guardarPermiso(Request $request){
+        $resp["success"] = false;
+        DB::beginTransaction();
+
+        DB::table('permisos_sistema')->where("fk_perfil", $request->idPerfil)->delete(); 
+        
+        $cont = 0;
+        foreach ($request->permisos as $value) {
+            try {
+                DB::table('permisos_sistema')->insert([
+                    "fk_perfil" => $request->idPerfil
+                    ,"fk_permiso" => $value
+                    ,"tipo" => 0
+                ]);
+            } catch (\Exception $e) {
+                DB::rollback();
+                $cont++;
+                break;
+            }
+        }
+
+        if ($cont == 0) {
+            DB::commit();
+            $resp["success"] = true;
+            $resp["msj"] = "Permisos actualizados correctamente.";
+        } else {
+            DB::rollback();
+            $resp["msj"] = "Error al actualizar los permisos.";
+        }
+
+        return $resp;
+    }
+
 
 }

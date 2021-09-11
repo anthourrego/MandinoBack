@@ -286,8 +286,6 @@ class UserController extends Controller {
 
     public function guardarPermiso(Request $request){
         $resp["success"] = false;
-        //var_dump($request->idUsuario);
-        //var_dump($request->permisos);
         DB::beginTransaction();
 
         DB::table('permisos_sistema')->where("fk_usuario", $request->idUsuario)->delete(); 
