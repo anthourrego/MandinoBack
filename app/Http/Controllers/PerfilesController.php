@@ -104,4 +104,36 @@ class PerfilesController extends Controller {
         return datatables()->eloquent($query)->rawColumns(['nombre'])->make(true);
     }
 
+    public function arbol($idPerfil, $permiso = null){
+        $query = DB::table("permisos AS p")
+                    ->select(
+                        "p.id AS value"
+                        ,"p.tag AS text"
+                    )->addSelect(['contHijos' => DB::table("permisos AS per")->selectRaw('count(*)')->whereColumn('per.fk_permiso', 'p.id')])
+                    ->selectRaw("(CASE WHEN ps.fk_perfil IS NULL THEN 0 ELSE 1 END) AS checked")
+                    ->leftjoin("permisos_sistema as ps", function ($join) use ($idPerfil) {
+                        $join->on('p.id', 'ps.fk_permiso')
+                        ->where('ps.fk_perfil', $idPerfil)
+                        ->where('ps.estado', 1);
+                    });
+    
+
+        if ($permiso == null) {
+            $query = $query->whereNull('p.fk_permiso');
+        } else {
+            $query = $query->where('p.fk_permiso', $permiso);
+        }
+
+        $query = $query->get();
+
+        foreach ($query as $per) {
+            if ($per->contHijos > 0) {
+                $per->children = $this->arbol($idPerfil, $per->value);
+            }
+        }
+
+        return $query; 
+    }
+
+
 }
