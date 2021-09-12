@@ -105,5 +105,7 @@ Route::middleware(['guest'])->group(function () {
         Route::post('actualizar', [PerfilesController::class, 'actualizar']);
         Route::post('cambiarEstado', [PerfilesController::class, 'cambiarEstado']);
         Route::post('obtener', [PerfilesController::class, 'show']);
+        Route::get('arbol/{idPerfil}', [PerfilesController::class, 'arbol']);
+        Route::post('guardarPermiso', [PerfilesController::class, 'guardarPermiso']);
     });
   });

@@ -104,4 +104,69 @@ class PerfilesController extends Controller {
         return datatables()->eloquent($query)->rawColumns(['nombre'])->make(true);
     }
 
+    public function arbol($idPerfil, $permiso = null){
+        $query = DB::table("permisos AS p")
+                    ->select(
+                        "p.id AS value"
+                        ,"p.tag AS text"
+                    )->addSelect(['contHijos' => DB::table("permisos AS per")->selectRaw('count(*)')->whereColumn('per.fk_permiso', 'p.id')])
+                    ->selectRaw("(CASE WHEN ps.fk_perfil IS NULL THEN 0 ELSE 1 END) AS checked")
+                    ->leftjoin("permisos_sistema as ps", function ($join) use ($idPerfil) {
+                        $join->on('p.id', 'ps.fk_permiso')
+                        ->where('ps.fk_perfil', $idPerfil)
+                        ->where('ps.estado', 1);
+                    });
+    
+
+        if ($permiso == null) {
+            $query = $query->whereNull('p.fk_permiso');
+        } else {
+            $query = $query->where('p.fk_permiso', $permiso);
+        }
+
+        $query = $query->get();
+
+        foreach ($query as $per) {
+            if ($per->contHijos > 0) {
+                $per->children = $this->arbol($idPerfil, $per->value);
+            }
+        }
+
+        return $query; 
+    }
+
+    public function guardarPermiso(Request $request){
+        $resp["success"] = false;
+        DB::beginTransaction();
+
+        DB::table('permisos_sistema')->where("fk_perfil", $request->idPerfil)->delete(); 
+        
+        $cont = 0;
+        foreach ($request->permisos as $value) {
+            try {
+                DB::table('permisos_sistema')->insert([
+                    "fk_perfil" => $request->idPerfil
+                    ,"fk_permiso" => $value
+                    ,"tipo" => 0
+                ]);
+            } catch (\Exception $e) {
+                DB::rollback();
+                $cont++;
+                break;
+            }
+        }
+
+        if ($cont == 0) {
+            DB::commit();
+            $resp["success"] = true;
+            $resp["msj"] = "Permisos actualizados correctamente.";
+        } else {
+            DB::rollback();
+            $resp["msj"] = "Error al actualizar los permisos.";
+        }
+
+        return $resp;
+    }
+
+
 }
