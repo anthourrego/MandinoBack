@@ -108,6 +108,15 @@ class PermisosSeeder extends Seeder
                 ,'fk_permiso' => 1
                 ,'created_at' => date('Y-m-d H:m:s')
                 ,'updated_at' => date('Y-m-d H:m:s')
+            ],[
+                'id' => 11
+                ,'nombre' => "perfiles"
+                ,'tag' => 'Perfiles'
+                ,'icono' => 'fas fa-lock'
+                ,'ruta' => 'perfiles'
+                ,'fk_permiso' => 1
+                ,'created_at' => date('Y-m-d H:m:s')
+                ,'updated_at' => date('Y-m-d H:m:s')
             ]
         ]);
     }

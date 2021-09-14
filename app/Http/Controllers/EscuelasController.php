@@ -105,4 +105,8 @@ class EscuelasController extends Controller {
         return $resp;
     }
 
+    public function lista(){
+        return Escuelas::select("id", "nombre")->where("estado", 1)->get();
+    }
+
 }
