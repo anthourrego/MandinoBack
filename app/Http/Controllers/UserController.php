@@ -102,9 +102,11 @@ class UserController extends Controller {
             ,"d.name AS dep_nombre"
             ,"p.id AS pais_id"
             ,"p.name AS pais_nombre"
+            ,"per.nombre AS perfil_nombre"
         )->join("municipios AS m", "users.fk_municipio", "m.id")
         ->join("departamentos AS d", "m.state_id", "d.id")
         ->join("paises AS p", "m.country_id", "p.id")
+        ->join("perfiles AS per", "users.fk_perfil", "per.id")
         ->where([
             ["m.flag", 1]
             ,["d.flag", 1]
