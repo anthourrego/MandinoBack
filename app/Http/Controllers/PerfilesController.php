@@ -137,24 +137,44 @@ class PerfilesController extends Controller {
 
     public function guardarPermiso(Request $request){
         $resp["success"] = false;
+        $cont = 0;
         DB::beginTransaction();
 
-        DB::table('permisos_sistema')->where("fk_perfil", $request->idPerfil)->delete(); 
-        
-        $cont = 0;
-        foreach ($request->permisos as $value) {
-            try {
-                DB::table('permisos_sistema')->insert([
-                    "fk_perfil" => $request->idPerfil
-                    ,"fk_permiso" => $value
-                    ,"tipo" => 0
-                ]);
-            } catch (\Exception $e) {
-                DB::rollback();
-                $cont++;
-                break;
+        if (isset($request->permisos)) {
+            DB::table('permisos_sistema')->where("fk_perfil", $request->idPerfil)->whereNull('fk_escuelas')->delete(); 
+            
+            foreach ($request->permisos as $value) {
+                try {
+                    DB::table('permisos_sistema')->insert([
+                        "fk_perfil" => $request->idPerfil
+                        ,"fk_permiso" => $value
+                        ,"tipo" => 0
+                    ]);
+                } catch (\Exception $e) {
+                    DB::rollback();
+                    $cont++;
+                    break;
+                }
             }
         }
+        
+        if (isset($request->escuelas)) {
+            DB::table('permisos_sistema')->where("fk_perfil", $request->idPerfil)->whereNull('fk_perfil')->delete(); 
+            
+            foreach ($request->escuelas as $value) {
+                try {
+                    DB::table('permisos_sistema')->insert([
+                        "fk_perfil" => $request->idPerfil
+                        ,"fk_escuelas" => $value
+                        ,"tipo" => 0
+                    ]);
+                } catch (\Exception $e) {
+                    DB::rollback();
+                    $cont++;
+                    break;
+                }
+            }
+        }    
 
         if ($cont == 0) {
             DB::commit();
