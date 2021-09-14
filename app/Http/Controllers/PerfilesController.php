@@ -104,6 +104,13 @@ class PerfilesController extends Controller {
         return datatables()->eloquent($query)->rawColumns(['nombre'])->make(true);
     }
 
+    public function permisos($idPerfil){
+        $resp['permisos'] = $this->arbol($idPerfil);
+        $resp['escuelas'] = $this->escuelas($idPerfil);
+
+        return $resp;
+    }
+
     public function arbol($idPerfil, $permiso = null){
         $query = DB::table("permisos AS p")
                     ->select(
@@ -133,6 +140,21 @@ class PerfilesController extends Controller {
         }
 
         return $query; 
+    }
+
+    public function escuelas($idPerfil){
+        $query = DB::table("escuelas AS e")
+        ->select(
+            "e.id"
+            ,"e.nombre"
+        )->selectRaw("(CASE WHEN ps.fk_perfil IS NULL THEN 0 ELSE 1 END) AS checked")
+        ->leftjoin("permisos_sistema as ps", function ($join) use ($idPerfil) {
+            $join->on('e.id', 'ps.fk_escuelas')
+            ->where('ps.fk_perfil', $idPerfil)
+            ->where('ps.estado', 1);
+        })->get();
+
+        return $query;
     }
 
     public function guardarPermiso(Request $request){
