@@ -181,7 +181,7 @@ class PerfilesController extends Controller {
         }
         
         if (isset($request->escuelas)) {
-            DB::table('permisos_sistema')->where("fk_perfil", $request->idPerfil)->whereNull('fk_perfil')->delete(); 
+            DB::table('permisos_sistema')->where("fk_perfil", $request->idPerfil)->whereNull('fk_permiso')->delete(); 
             
             foreach ($request->escuelas as $value) {
                 try {
