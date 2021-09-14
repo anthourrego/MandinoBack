@@ -77,6 +77,7 @@ Route::middleware(['guest'])->group(function () {
         Route::post('cambiarEstado', [EscuelasController::class, 'cambiarEstado']);
         Route::post('crear', [EscuelasController::class, 'crear']);
         Route::post('actualizar', [EscuelasController::class, 'actualizar']);
+        Route::post('lista', [EscuelasController::class, 'lista']);
     });
 
     //Permisos
