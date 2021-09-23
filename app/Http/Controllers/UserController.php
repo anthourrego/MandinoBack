@@ -60,7 +60,7 @@ class UserController extends Controller {
                     $usuario->estado = $request->estado;
                     $usuario->fk_municipio = $request->fk_municipio;
                     $usuario->foto = $request->foto;
-                    $usuario->fk_perfil = $request->fk_perfil;
+                    $usuario->fk_perfil = $request->fk_perfil == "null" ? null : $request->fk_perfil;
 
                     if($usuario->save()){
                         $resp["success"] = true;
@@ -216,7 +216,8 @@ class UserController extends Controller {
                         $usuario->estado = $request->estado; 
                         $usuario->fk_municipio = $request->fk_municipio;
                         $usuario->foto = $request->foto;
-                        $usuario->fk_perfil = $request->fk_perfil;
+                        $usuario->fk_perfil = $request->fk_perfil == "null" ? null : $request->fk_perfil;
+
 
                         if ($usuario->save()) {
                             $resp["success"] = true;
@@ -284,6 +285,13 @@ class UserController extends Controller {
         }
 
         return $query; 
+    }
+
+    public function checkearUsuario($usuario){
+        $existeUsuario = User::where('usuario', $usuario)->get();
+
+        return $existeUsuario->isEmpty();
+        
     }
 
     public function guardarPermiso(Request $request){
