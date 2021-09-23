@@ -377,7 +377,8 @@ class UserController extends Controller {
                 $usuario->apellido1 != $request->apellido1 ||
                 $usuario->apellido2 != $request->apellido2 ||
                 $usuario->email != $request->email ||
-                $usuario->telefono != $request->telefono
+                $usuario->telefono != $request->telefono ||
+                $usuario->fk_municipio != $request->idCiudad
             ) {
             
                 $usuario->nombre1 = $request->nombre1;
@@ -387,6 +388,7 @@ class UserController extends Controller {
                 $usuario->nombre = $request->nombre1 . ' ' . (strlen($request->nombre2) > 0 ? $request->nombre2 . ' ' : '') . $request->apellido1 . (strlen($request->apellido2) > 0 ? ' ' . $request->apellido2 : '');
                 $usuario->email = $request->email; 
                 $usuario->telefono = $request->telefono; 
+                $usuario->fk_municipio = $request->idCiudad;
 
                 if ($usuario->save()) {
                     $resp["success"] = true;
