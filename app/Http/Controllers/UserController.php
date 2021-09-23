@@ -326,4 +326,18 @@ class UserController extends Controller {
 
         return $resp;
     }
+
+    public function escuelas($idUsuario, $idRol){
+       $query = DB::table("permisos_sistema AS PS")
+                ->select(
+                    "E.id"
+                    ,"E.nombre"
+                )->join("escuelas AS E", "PS.fk_escuelas", "=", "E.id")  
+                ->where(function($query) use ($idUsuario, $idRol) {
+                    return $query->where("PS.fk_perfil", $idRol)
+                                ->orWhere("PS.fk_usuario", $idUsuario);
+                })->whereNotNull("PS.fk_escuelas")->get();
+
+        return $query; 
+    }
 }
