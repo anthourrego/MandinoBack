@@ -97,6 +97,8 @@ Route::middleware(['guest'])->group(function () {
         Route::post('editar', [UserController::class, 'editar']);
         Route::get('permisos/{idUsuario}', [UserController::class, 'permisos']);
         Route::post('guardarPermiso', [UserController::class, 'guardarPermiso']);
+        Route::get('checkearUsuario/{usuario}', [UserController::class, 'checkearUsuario']);
+        Route::get('escuelas/{idUsuario}/{idRol}', [UserController::class, 'escuelas']);
     });
 
     //Perfiles

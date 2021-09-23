@@ -60,7 +60,7 @@ class UserController extends Controller {
                     $usuario->estado = $request->estado;
                     $usuario->fk_municipio = $request->fk_municipio;
                     $usuario->foto = $request->foto;
-                    $usuario->fk_perfil = $request->fk_perfil;
+                    $usuario->fk_perfil = $request->fk_perfil == "null" ? null : $request->fk_perfil;
 
                     if($usuario->save()){
                         $resp["success"] = true;
@@ -216,7 +216,8 @@ class UserController extends Controller {
                         $usuario->estado = $request->estado; 
                         $usuario->fk_municipio = $request->fk_municipio;
                         $usuario->foto = $request->foto;
-                        $usuario->fk_perfil = $request->fk_perfil;
+                        $usuario->fk_perfil = $request->fk_perfil == "null" ? null : $request->fk_perfil;
+
 
                         if ($usuario->save()) {
                             $resp["success"] = true;
@@ -286,6 +287,13 @@ class UserController extends Controller {
         return $query; 
     }
 
+    public function checkearUsuario($usuario){
+        $existeUsuario = User::where('usuario', $usuario)->get();
+
+        return $existeUsuario->isEmpty();
+        
+    }
+
     public function guardarPermiso(Request $request){
         $resp["success"] = false;
         DB::beginTransaction();
@@ -317,5 +325,19 @@ class UserController extends Controller {
         }
 
         return $resp;
+    }
+
+    public function escuelas($idUsuario, $idRol){
+       $query = DB::table("permisos_sistema AS PS")
+                ->select(
+                    "E.id"
+                    ,"E.nombre"
+                )->join("escuelas AS E", "PS.fk_escuelas", "=", "E.id")  
+                ->where(function($query) use ($idUsuario, $idRol) {
+                    return $query->where("PS.fk_perfil", $idRol)
+                                ->orWhere("PS.fk_usuario", $idUsuario);
+                })->whereNotNull("PS.fk_escuelas")->get();
+
+        return $query; 
     }
 }
