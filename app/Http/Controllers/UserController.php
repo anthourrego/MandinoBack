@@ -39,7 +39,7 @@ class UserController extends Controller {
 
     public function crear(Request $request){
         $resp["success"] = false;
-        $validar = User::where('nro_documento', $request->documento)->get();
+        $validar = User::where('nro_documento', $request->nro_documento)->get();
         
         if($validar->isEmpty()){
             $validar = User::where('usuario', $request->usuario)->get();
@@ -50,7 +50,7 @@ class UserController extends Controller {
                     $usuario = new User;
                     $usuario->nro_documento = $request->nro_documento;
                     $usuario->usuario = $request->usuario;
-                    $usuario->password = Hash::make($request->documento, ['rounds' => 15]);
+                    $usuario->password = Hash::make($request->nro_documento, ['rounds' => 15]);
                     $usuario->nombre1 = $request->nombre1;
                     $usuario->nombre2 = $request->nombre2;
                     $usuario->apellido1 = $request->apellido1;
@@ -218,7 +218,6 @@ class UserController extends Controller {
                         $usuario->foto = $request->foto;
                         $usuario->fk_perfil = $request->fk_perfil == "null" ? null : $request->fk_perfil;
 
-
                         if ($usuario->save()) {
                             $resp["success"] = true;
                             $resp["msj"] = "Se han actualizado los datos";
@@ -376,6 +375,33 @@ class UserController extends Controller {
             $resp["msj"] = "No se ha encontrado el usuario";
         }
         
+        return $resp;
+    }
+
+    public function cambiarPass(Request $request){
+        $resp["success"] = false;
+        $usuario = User::find($request->idUsuario);
+
+        if(!empty($usuario)){
+            if(Hash::check($request->passActual, $usuario->password)){
+                if(trim($request->passNueva) === trim($request->passNuevaConfirm)){
+                    $usuario->password = Hash::make(trim($request->passNueva), ['rounds' => 15]);
+                    if($usuario->save()){
+                        $resp["success"] = true;
+                        $resp["msj"] = "Contraseña actualizada";
+                    }else{
+                        $resp["msj"] = "No se ha actualizado la contraseña";
+                    }
+                } else {
+                    $resp["msj"] = "La contraseña nueva no coincide.";
+                }
+            } else {
+                $resp["msj"] = "La contraseña actual no coincide.";
+            }
+        }else{
+            $resp["msj"] = "No se ha encontrado el usuario";
+        }
+
         return $resp;
     }
 }
