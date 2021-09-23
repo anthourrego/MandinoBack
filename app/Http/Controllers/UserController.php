@@ -13,11 +13,34 @@ class UserController extends Controller {
     public function inicioSesion($nroDoc, $pass){
         $resp["success"]= false;
         //Validaos por numero de documento, email y usuario
-        $usuario = User::where(function($query) use ($nroDoc) {
-            $query->orWhere('nro_documento', $nroDoc)
-                ->orWhere('email', $nroDoc)
-                ->orWhere('usuario', $nroDoc);
-        })->first();
+        $usuario = User::select(
+                "users.id"
+                ,"users.nro_documento"
+                ,"users.usuario"
+                ,"users.password"
+                ,"users.nombre"
+                ,"users.nombre1"
+                ,"users.nombre2"
+                ,"users.apellido1"
+                ,"users.apellido2"
+                ,"users.foto"
+                ,"users.email"
+                ,"users.telefono"
+                ,"users.fk_municipio"
+                ,"users.fk_perfil"
+                ,"m.name AS ciudad_nombre"
+                ,"d.id AS dep_id"
+                ,"d.name AS dep_nombre"
+                ,"p.id AS pais_id"
+                ,"p.name AS pais_nombre"
+            )->join("municipios AS m", "users.fk_municipio", "m.id")
+            ->join("departamentos AS d", "m.state_id", "d.id")
+            ->join("paises AS p", "m.country_id", "p.id")
+            ->where(function($query) use ($nroDoc) {
+                $query->orWhere('nro_documento', $nroDoc)
+                    ->orWhere('email', $nroDoc)
+                    ->orWhere('usuario', $nroDoc);
+            })->first();
 
         if (is_object($usuario)){
             if(Hash::check($pass, $usuario->password)){
