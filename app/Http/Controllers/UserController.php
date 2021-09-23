@@ -332,6 +332,7 @@ class UserController extends Controller {
                 ->select(
                     "E.id"
                     ,"E.nombre"
+                    ,"E.descripcion"
                 )->join("escuelas AS E", "PS.fk_escuelas", "=", "E.id")  
                 ->where(function($query) use ($idUsuario, $idRol) {
                     return $query->where("PS.fk_perfil", $idRol)
@@ -339,5 +340,42 @@ class UserController extends Controller {
                 })->whereNotNull("PS.fk_escuelas")->get();
 
         return $query; 
+    }
+
+    public function editarPefil(Request $request){
+        $resp["success"] = false;
+        $usuario = User::find($request->idUsuario);
+
+        if(!empty($usuario)){
+            if (
+                $usuario->nombre1 != $request->nombre1 ||
+                $usuario->nombre2 != $request->nombre2 ||
+                $usuario->apellido1 != $request->apellido1 ||
+                $usuario->apellido2 != $request->apellido2 ||
+                $usuario->email != $request->email ||
+                $usuario->telefono != $request->telefono
+            ) {
+            
+                $usuario->nombre1 = $request->nombre1;
+                $usuario->nombre2 = $request->nombre2;
+                $usuario->apellido1 = $request->apellido1;
+                $usuario->apellido2 = $request->apellido2; 
+                $usuario->email = $request->email; 
+                $usuario->telefono = $request->telefono; 
+
+                if ($usuario->save()) {
+                    $resp["success"] = true;
+                    $resp["msj"] = "Se han actualizado los datos";
+                }else{
+                    $resp["msj"] = "No se han guardado cambios";
+                }
+            } else {
+                $resp["msj"] = "Por favor realice algún cambio";
+            }
+        }else{
+            $resp["msj"] = "No se ha encontrado el usuario";
+        }
+        
+        return $resp;
     }
 }
