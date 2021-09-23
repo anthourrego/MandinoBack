@@ -21,7 +21,7 @@ class UserController extends Controller {
 
         if (is_object($usuario)){
             if(Hash::check($pass, $usuario->password)){
-                $usuario->nombreCompleto = $usuario->nombre1 . ' ' . (strlen($usuario->nombre2) > 0 ? $usuario->nombre2 . ' ' : '') . $usuario->apellido1 . (strlen($usuario->apellido2) > 0 ? ' ' . $usuario->apellido2 : '');
+                $usuario->nombreCompleto = $usuario->nombre;
 
                 $resp['success'] = true;
                 $resp['menu'] = $this->permisos($usuario->id, true);
@@ -51,6 +51,7 @@ class UserController extends Controller {
                     $usuario->nro_documento = $request->nro_documento;
                     $usuario->usuario = $request->usuario;
                     $usuario->password = Hash::make($request->nro_documento, ['rounds' => 15]);
+                    $usuario->nombre = $request->nombre1 . ' ' . (strlen($request->nombre2) > 0 ? $request->nombre2 . ' ' : '') . $request->apellido1 . (strlen($request->apellido2) > 0 ? ' ' . $request->apellido2 : '');
                     $usuario->nombre1 = $request->nombre1;
                     $usuario->nombre2 = $request->nombre2;
                     $usuario->apellido1 = $request->apellido1;
@@ -211,6 +212,7 @@ class UserController extends Controller {
                         $usuario->nombre2 = $request->nombre2;
                         $usuario->apellido1 = $request->apellido1;
                         $usuario->apellido2 = $request->apellido2; 
+                        $usuario->nombre = $request->nombre1 . ' ' . (strlen($request->nombre2) > 0 ? $request->nombre2 . ' ' : '') . $request->apellido1 . (strlen($request->apellido2) > 0 ? ' ' . $request->apellido2 : '');
                         $usuario->email = $request->email; 
                         $usuario->telefono = $request->telefono; 
                         $usuario->estado = $request->estado; 
@@ -359,6 +361,7 @@ class UserController extends Controller {
                 $usuario->nombre2 = $request->nombre2;
                 $usuario->apellido1 = $request->apellido1;
                 $usuario->apellido2 = $request->apellido2; 
+                $usuario->nombre = $request->nombre1 . ' ' . (strlen($request->nombre2) > 0 ? $request->nombre2 . ' ' : '') . $request->apellido1 . (strlen($request->apellido2) > 0 ? ' ' . $request->apellido2 : '');
                 $usuario->email = $request->email; 
                 $usuario->telefono = $request->telefono; 
 
