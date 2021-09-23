@@ -343,6 +343,39 @@ class UserController extends Controller {
     }
 
     public function editarPefil(Request $request){
+        $resp["success"] = false;
         $usuario = User::find($request->idUsuario);
+
+        if(!empty($usuario)){
+            if (
+                $usuario->nombre1 != $request->nombre1 ||
+                $usuario->nombre2 != $request->nombre2 ||
+                $usuario->apellido1 != $request->apellido1 ||
+                $usuario->apellido2 != $request->apellido2 ||
+                $usuario->email != $request->email ||
+                $usuario->telefono != $request->telefono
+            ) {
+            
+                $usuario->nombre1 = $request->nombre1;
+                $usuario->nombre2 = $request->nombre2;
+                $usuario->apellido1 = $request->apellido1;
+                $usuario->apellido2 = $request->apellido2; 
+                $usuario->email = $request->email; 
+                $usuario->telefono = $request->telefono; 
+
+                if ($usuario->save()) {
+                    $resp["success"] = true;
+                    $resp["msj"] = "Se han actualizado los datos";
+                }else{
+                    $resp["msj"] = "No se han guardado cambios";
+                }
+            } else {
+                $resp["msj"] = "Por favor realice algún cambio";
+            }
+        }else{
+            $resp["msj"] = "No se ha encontrado el usuario";
+        }
+        
+        return $resp;
     }
 }
