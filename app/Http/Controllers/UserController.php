@@ -332,6 +332,7 @@ class UserController extends Controller {
                 ->select(
                     "E.id"
                     ,"E.nombre"
+                    ,"E.descripcion"
                 )->join("escuelas AS E", "PS.fk_escuelas", "=", "E.id")  
                 ->where(function($query) use ($idUsuario, $idRol) {
                     return $query->where("PS.fk_perfil", $idRol)
@@ -339,5 +340,9 @@ class UserController extends Controller {
                 })->whereNotNull("PS.fk_escuelas")->get();
 
         return $query; 
+    }
+
+    public function editarPefil(Request $request){
+        $usuario = User::find($request->idUsuario);
     }
 }
