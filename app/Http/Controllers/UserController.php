@@ -431,5 +431,15 @@ class UserController extends Controller {
         }
 
         return $resp;
+
+    }
+    
+    public function upload(Request $request){
+    
+
+        Storage::disk('public')->put($request->ruta,$request->file);
+
+        return $request->file('file') ? 'ok' : 'false';
+
     }
 }

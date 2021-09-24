@@ -101,6 +101,7 @@ Route::middleware(['guest'])->group(function () {
         Route::get('escuelas/{idUsuario}/{idRol}', [UserController::class, 'escuelas']);
         Route::post('editarPefil', [UserController::class, 'editarPefil']);
         Route::post('cambiarPass', [UserController::class, 'cambiarPass']);
+        Route::post('upload', [UserController::class, 'upload']);
     });
 
     //Perfiles
