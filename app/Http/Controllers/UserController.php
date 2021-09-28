@@ -47,8 +47,8 @@ class UserController extends Controller {
                 $usuario->nombreCompleto = $usuario->nombre;
 
                 $resp['success'] = true;
-                $resp['menu'] = $this->permisos($usuario->id, true);
-                $resp['permisos'] = $this->permisos($usuario->id, true, null, false);
+                $resp['menu'] = $this->permisos($usuario->id, $usuario->fk_perfil, true);
+                $resp['permisos'] = $this->permisos($usuario->id, $usuario->fk_perfil, true, null, false);
                 $resp['msj'] = $usuario;
             }else{
                 $resp["msj"] = 'Contraseña incorrecta';
@@ -269,7 +269,9 @@ class UserController extends Controller {
         return $resp; 
     }
 
-    public function permisos($idUsuario, $menu = false, $permiso = null, $hijos = true){
+    public function permisos($idUsuario, $idPerfil, $menu = false, $permiso = null, $hijos = true){
+        $idPerfil = is_null($idPerfil) ? 0 : $idPerfil;
+
         $query = DB::table("permisos AS p")
                     ->select(
                         "p.id"
@@ -279,15 +281,20 @@ class UserController extends Controller {
                         ,"p.ruta"
                         ,"p.fk_permiso"
                     )->addSelect(['contHijos' => DB::table("permisos AS per")->selectRaw('count(*)')->whereColumn('per.fk_permiso', 'p.id')])
-                    ->selectRaw("(CASE WHEN ps.fk_usuario IS NULL THEN 0 ELSE 1 END) AS aplicaPermiso")
-                    ->leftjoin("permisos_sistema as ps", function ($join) use ($idUsuario) {
+                    ->selectRaw("(CASE WHEN ps.fk_usuario IS NULL THEN CASE WHEN ps.fk_perfil IS NULL THEN 0 ELSE 1 END ELSE 1 END) AS aplicaPermiso")
+                    ->leftjoin("permisos_sistema as ps", function ($join) use ($idUsuario, $idPerfil) {
                         $join->on('p.id', 'ps.fk_permiso')
-                        ->where('ps.fk_usuario', $idUsuario)
-                        ->where('ps.estado', 1);
+                        ->where(function($query) use ($idUsuario, $idPerfil) {
+                            return $query->where("ps.fk_usuario", $idUsuario)
+                                        ->orWhere("ps.fk_perfil", $idPerfil);
+                        })->where('ps.estado', 1);
                     });
         
         if ($menu == true) {
-            $query = $query->whereNotNull('ps.fk_usuario');
+            $query = $query->where(function($query) use ($idUsuario, $idPerfil) {
+                return $query->whereNotNull("ps.fk_usuario")
+                            ->orWhereNotNull("ps.fk_perfil");
+            });
         }
 
         if ($hijos){
@@ -297,17 +304,16 @@ class UserController extends Controller {
                 $query = $query->where('p.fk_permiso', $permiso);
             }
         }
-
-        $query = $query->get();
-
+        
+        $query = $query->groupBy("p.id", "p.nombre", "p.tag", "p.icono", "p.ruta", "p.fk_permiso")->get();
+        $quries = DB::getQueryLog();
         if ($hijos){ 
             foreach ($query as $per) {
                 if ($per->contHijos > 0) {
-                    $per->hijos = $this->permisos($idUsuario, $menu, $per->id);
+                    $per->hijos = $this->permisos($idUsuario, $idPerfil, $menu, $per->id);
                 }
             }
         }
-
         return $query; 
     }
 
