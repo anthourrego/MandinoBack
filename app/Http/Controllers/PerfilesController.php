@@ -107,6 +107,7 @@ class PerfilesController extends Controller {
     public function permisos($idPerfil){
         $resp['permisos'] = $this->arbol($idPerfil);
         $resp['escuelas'] = $this->escuelas($idPerfil);
+        $resp['categorias'] = $this->categorias($idPerfil);
 
         return $resp;
     }
@@ -153,6 +154,22 @@ class PerfilesController extends Controller {
             ->where('ps.fk_perfil', $idPerfil)
             ->where('ps.estado', 1);
         })->get();
+
+        return $query;
+    }
+
+    public function categorias($idPerfil){
+        $query = DB::table("toma_control_categorias AS tcc")
+        ->select(
+            "tcc.id"
+            ,"tcc.nombre"
+        )->selectRaw("(CASE WHEN ps.fk_perfil IS NULL THEN 0 ELSE 1 END) AS checked")
+        ->leftjoin("permisos_sistema as ps", function ($join) use ($idPerfil) {
+            $join->on('tcc.id', 'ps.fk_categorias_toma_control')
+            ->where('ps.fk_perfil', $idPerfil)
+            ->where('ps.estado', 1);
+        })->where('tcc.estado', 1)
+        ->get();
 
         return $query;
     }
