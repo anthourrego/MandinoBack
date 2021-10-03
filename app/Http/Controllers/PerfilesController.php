@@ -163,7 +163,7 @@ class PerfilesController extends Controller {
         DB::beginTransaction();
 
         if (isset($request->permisos)) {
-            DB::table('permisos_sistema')->where("fk_perfil", $request->idPerfil)->whereNull('fk_escuelas')->delete(); 
+            DB::table('permisos_sistema')->where("fk_perfil", $request->idPerfil)->whereNotNull('fk_permiso')->delete(); 
             $permisoSeleccionados = $this->permisosGuardar($request->permisos, []);
             foreach ($permisoSeleccionados as $value) {
                 try {
@@ -181,7 +181,7 @@ class PerfilesController extends Controller {
         }
         
         if (isset($request->escuelas)) {
-            DB::table('permisos_sistema')->where("fk_perfil", $request->idPerfil)->whereNull('fk_permiso')->delete(); 
+            DB::table('permisos_sistema')->where("fk_perfil", $request->idPerfil)->whereNotNull('fk_escuelas')->delete(); 
             
             foreach ($request->escuelas as $value) {
                 try {
@@ -196,7 +196,25 @@ class PerfilesController extends Controller {
                     break;
                 }
             }
-        }    
+        }
+        
+        if (isset($request->categorias)) {
+            DB::table('permisos_sistema')->where("fk_perfil", $request->idPerfil)->whereNotNull('fk_categorias_toma_control')->delete(); 
+            
+            foreach ($request->escuelas as $value) {
+                try {
+                    DB::table('permisos_sistema')->insert([
+                        "fk_perfil" => $request->idPerfil
+                        ,"fk_categorias_toma_control" => $value
+                        ,"tipo" => 0
+                    ]);
+                } catch (\Exception $e) {
+                    DB::rollback();
+                    $cont++;
+                    break;
+                }
+            }
+        }
 
         if ($cont == 0) {
             DB::commit();
