@@ -112,7 +112,7 @@ class PermisosSeeder extends Seeder
                 'id' => 11
                 ,'nombre' => "perfiles"
                 ,'tag' => 'Perfiles'
-                ,'icono' => 'fas fa-lock'
+                ,'icono' => 'fas fa-id-badge'
                 ,'ruta' => 'perfiles'
                 ,'fk_permiso' => 1
                 ,'created_at' => date('Y-m-d H:m:s')

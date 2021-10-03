@@ -18,6 +18,7 @@ class CreatePermisosTable extends Migration
             $table->string('nombre');
             $table->string('tag');
             $table->string('icono');
+            $table->boolean("imagen")->default(0);
             $table->text('ruta')->nullable();
             $table->unsignedBigInteger('fk_permiso')->nullable();
             $table->boolean("estado")->default(1);
