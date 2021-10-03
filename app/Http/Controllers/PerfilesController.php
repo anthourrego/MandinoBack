@@ -164,8 +164,8 @@ class PerfilesController extends Controller {
 
         if (isset($request->permisos)) {
             DB::table('permisos_sistema')->where("fk_perfil", $request->idPerfil)->whereNull('fk_escuelas')->delete(); 
-            
-            foreach ($request->permisos as $value) {
+            $permisoSeleccionados = $this->permisosGuardar($request->permisos, []);
+            foreach ($permisoSeleccionados as $value) {
                 try {
                     DB::table('permisos_sistema')->insert([
                         "fk_perfil" => $request->idPerfil
@@ -208,6 +208,19 @@ class PerfilesController extends Controller {
         }
 
         return $resp;
+    }
+
+    public function permisosGuardar($permisos, $ids) {
+        foreach($permisos as $permiso) {
+            $query = DB::table("permisos")->select("id", "fk_permiso")->where('id', $permiso)->first();
+            if (!in_array($query->id, $ids)) {
+                $ids[] = $query->id;
+            }
+            if (!is_null($query->fk_permiso)) {
+                $ids = $this->permisosGuardar([$query->fk_permiso], $ids);
+            }
+        }
+        return $ids;
     }
 
 

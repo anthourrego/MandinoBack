@@ -25,7 +25,7 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::middleware(['guest'])->group(function () {
+Route::middleware(['guest', 'cors'])->group(function () {
     //Rutas a las que se permitirá acceso
     Route::get('login/{nroDoc}/{pass}', [UserController::class, 'inicioSesion']);
     
@@ -53,7 +53,7 @@ Route::middleware(['guest'])->group(function () {
         Route::post('crear', [DepartamentosController::class, 'crear']);
         Route::post('actualizar', [DepartamentosController::class, 'update']);
         Route::post('cambiarEstado', [DepartamentosController::class, 'cambiarEstado']);
-        Route::post('lista', [DepartamentosController::class, 'lista']);
+        Route::post('listaDepartamentos', [DepartamentosController::class, 'lista']);
         /* Route::get('lista/{pais}', [DepartamentosController::class, 'lista']); */
     });
 
@@ -102,6 +102,8 @@ Route::middleware(['guest'])->group(function () {
         Route::post('editarPefil', [UserController::class, 'editarPefil']);
         Route::post('cambiarPass', [UserController::class, 'cambiarPass']);
         Route::post('upload', [UserController::class, 'upload']);
+        Route::post('setFoto', [UserController::class, 'setFoto']);
+        
     });
 
     //Perfiles

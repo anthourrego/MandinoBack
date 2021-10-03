@@ -83,12 +83,12 @@ class UserController extends Controller {
                     $usuario->telefono = $request->telefono;
                     $usuario->estado = $request->estado;
                     $usuario->fk_municipio = $request->fk_municipio;
-                    $usuario->foto = $request->foto;
                     $usuario->fk_perfil = $request->fk_perfil == "null" ? null : $request->fk_perfil;
 
-                    if($usuario->save()){
+                    if( $usuario->save() ){
                         $resp["success"] = true;
                         $resp["msj"] = "Se ha creado el usuario";
+                        $resp["id"]= $usuario->id;
                     }else{
                         $resp["msj"] = "No se ha creado el usuario";
                     }
@@ -104,6 +104,29 @@ class UserController extends Controller {
     
         return $resp;
     }
+
+    public function setFoto(Request $request){
+        $resp["success"] = false;
+
+        $user = User::find($request->id);
+        if (is_object($user)){
+            
+            $user->foto = $request->fotoUrl;
+           
+            if( $user->save() ){
+                $resp["success"] = true;
+                $resp["msj"] = "Foto Actualizada";
+            }else{
+                $resp["msj"] = "No se actualizado foto";
+            }
+               
+        }else{
+            $resp["msj"] = "El usuario no se encuentra";
+        }
+    
+        return $resp;
+    }
+
 
     public function obtener(Request $request){
         $query = User::select(
@@ -225,8 +248,8 @@ class UserController extends Controller {
                             $usuario->telefono != $request->telefono ||
                             $usuario->estado != $request->estado ||
                             $usuario->fk_municipio != $request->fk_municipio ||
-                            $usuario->foto != $request->foto ||
-                            $usuario->fk_perfil != $request->fk_perfil
+                            $usuario->fk_perfil != $request->fk_perfil ||
+                            $usuario->foto != $request->foto
                         ) {
                         
                         $usuario->nro_documento = $request->nro_documento;
@@ -240,12 +263,13 @@ class UserController extends Controller {
                         $usuario->telefono = $request->telefono; 
                         $usuario->estado = $request->estado; 
                         $usuario->fk_municipio = $request->fk_municipio;
-                        $usuario->foto = $request->foto;
                         $usuario->fk_perfil = $request->fk_perfil == "null" ? null : $request->fk_perfil;
 
                         if ($usuario->save()) {
                             $resp["success"] = true;
                             $resp["msj"] = "Se han actualizado los datos";
+                            $resp["id"]= $usuario->id;
+
                         }else{
                             $resp["success"] = false;
                             $resp["msj"] = "No se han guardado cambios";
@@ -442,10 +466,11 @@ class UserController extends Controller {
     
     public function upload(Request $request){
     
+        $uploaded = Storage::putFileAs('public/'.$request->ruta, $request->file, $request->nombre);
 
-        Storage::disk('public')->put($request->ruta,$request->file);
+        $resp["success"] = true;
+        $resp["ruta"] = $uploaded;
 
-        return $request->file('file') ? 'ok' : 'false';
-
+        return $resp;
     }
 }
