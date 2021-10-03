@@ -218,7 +218,7 @@ class PerfilesController extends Controller {
         if (isset($request->categorias)) {
             DB::table('permisos_sistema')->where("fk_perfil", $request->idPerfil)->whereNotNull('fk_categorias_toma_control')->delete(); 
             
-            foreach ($request->escuelas as $value) {
+            foreach ($request->categorias as $value) {
                 try {
                     DB::table('permisos_sistema')->insert([
                         "fk_perfil" => $request->idPerfil
