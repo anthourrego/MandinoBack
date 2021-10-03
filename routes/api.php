@@ -9,6 +9,7 @@ use App\Http\Controllers\MunicipiosController;
 use App\Http\Controllers\EscuelasController;
 use App\Http\Controllers\PermisosController;
 use App\Http\Controllers\PerfilesController;
+use App\Http\Controllers\TomaControlCategoriasController;
 
 /*
 |--------------------------------------------------------------------------
@@ -116,5 +117,14 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::get('arbol/{idPerfil}', [PerfilesController::class, 'arbol']);
         Route::get('permisos/{idPerfil}', [PerfilesController::class, 'permisos']);
         Route::post('guardarPermiso', [PerfilesController::class, 'guardarPermiso']);
+    });
+
+    //Toma Control Categorias
+    Route::prefix('categorias-toma-control')->group(function () {
+        Route::post('obtener', [TomaControlCategoriasController::class, 'show']);
+        Route::post('cambiarEstado', [TomaControlCategoriasController::class, 'cambiarEstado']);
+        Route::post('crear', [TomaControlCategoriasController::class, 'crear']);
+        Route::post('actualizar', [TomaControlCategoriasController::class, 'actualizar']);
+        Route::post('lista', [TomaControlCategoriasController::class, 'lista']);
     });
   });

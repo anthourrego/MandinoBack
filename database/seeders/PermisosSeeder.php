@@ -117,6 +117,15 @@ class PermisosSeeder extends Seeder
                 ,'fk_permiso' => 1
                 ,'created_at' => date('Y-m-d H:m:s')
                 ,'updated_at' => date('Y-m-d H:m:s')
+            ],[
+                'id' => 12
+                ,'nombre' => "categoria toma control"
+                ,'tag' => 'Categoria Toma Control'
+                ,'icono' => 'fas fa-tags'
+                ,'ruta' => 'categorias-toma-control'
+                ,'fk_permiso' => 1
+                ,'created_at' => date('Y-m-d H:m:s')
+                ,'updated_at' => date('Y-m-d H:m:s')
             ]
         ]);
     }
