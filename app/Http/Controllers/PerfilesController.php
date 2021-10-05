@@ -107,6 +107,7 @@ class PerfilesController extends Controller {
     public function permisos($idPerfil){
         $resp['permisos'] = $this->arbol($idPerfil);
         $resp['escuelas'] = $this->escuelas($idPerfil);
+        $resp['categorias'] = $this->categorias($idPerfil);
 
         return $resp;
     }
@@ -157,13 +158,29 @@ class PerfilesController extends Controller {
         return $query;
     }
 
+    public function categorias($idPerfil){
+        $query = DB::table("toma_control_categorias AS tcc")
+        ->select(
+            "tcc.id"
+            ,"tcc.nombre"
+        )->selectRaw("(CASE WHEN ps.fk_perfil IS NULL THEN 0 ELSE 1 END) AS checked")
+        ->leftjoin("permisos_sistema as ps", function ($join) use ($idPerfil) {
+            $join->on('tcc.id', 'ps.fk_categorias_toma_control')
+            ->where('ps.fk_perfil', $idPerfil)
+            ->where('ps.estado', 1);
+        })->where('tcc.estado', 1)
+        ->get();
+
+        return $query;
+    }
+
     public function guardarPermiso(Request $request){
         $resp["success"] = false;
         $cont = 0;
         DB::beginTransaction();
 
         if (isset($request->permisos)) {
-            DB::table('permisos_sistema')->where("fk_perfil", $request->idPerfil)->whereNull('fk_escuelas')->delete(); 
+            DB::table('permisos_sistema')->where("fk_perfil", $request->idPerfil)->whereNotNull('fk_permiso')->delete(); 
             $permisoSeleccionados = $this->permisosGuardar($request->permisos, []);
             foreach ($permisoSeleccionados as $value) {
                 try {
@@ -181,7 +198,7 @@ class PerfilesController extends Controller {
         }
         
         if (isset($request->escuelas)) {
-            DB::table('permisos_sistema')->where("fk_perfil", $request->idPerfil)->whereNull('fk_permiso')->delete(); 
+            DB::table('permisos_sistema')->where("fk_perfil", $request->idPerfil)->whereNotNull('fk_escuelas')->delete(); 
             
             foreach ($request->escuelas as $value) {
                 try {
@@ -196,7 +213,25 @@ class PerfilesController extends Controller {
                     break;
                 }
             }
-        }    
+        }
+        
+        if (isset($request->categorias)) {
+            DB::table('permisos_sistema')->where("fk_perfil", $request->idPerfil)->whereNotNull('fk_categorias_toma_control')->delete(); 
+            
+            foreach ($request->categorias as $value) {
+                try {
+                    DB::table('permisos_sistema')->insert([
+                        "fk_perfil" => $request->idPerfil
+                        ,"fk_categorias_toma_control" => $value
+                        ,"tipo" => 0
+                    ]);
+                } catch (\Exception $e) {
+                    DB::rollback();
+                    $cont++;
+                    break;
+                }
+            }
+        }
 
         if ($cont == 0) {
             DB::commit();
