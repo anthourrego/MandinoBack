@@ -109,4 +109,8 @@ class EscuelasController extends Controller {
         return Escuelas::select("id", "nombre")->where("estado", 1)->get();
     }
 
+    public function traerEscuela($id){
+        return Escuelas::select( "nombre", "descripcion")->where("id", $id)->get();
+    }
+
 }
