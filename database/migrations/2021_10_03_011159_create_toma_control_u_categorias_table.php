@@ -19,7 +19,7 @@ class CreateTomaControlUCategoriasTable extends Migration
             $table->foreignId('fk_categoria');
             $table->timestamps();
 
-            $table->foreign('fk_toma_control')->references('id')->on('toma_controls');
+            $table->foreign('fk_toma_control')->references('id')->on('toma_control');
             $table->foreign('fk_categoria')->references('id')->on('toma_control_categorias');
         });
     }
