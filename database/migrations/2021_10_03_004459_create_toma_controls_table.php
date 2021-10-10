@@ -13,7 +13,7 @@ class CreateTomaControlsTable extends Migration
      */
     public function up()
     {
-        Schema::create('toma_control', function (Blueprint $table) {
+        Schema::create('toma_controls', function (Blueprint $table) {
             $table->id();
             $table->text('nombre');
             $table->text('descripcion')->nullable();
@@ -33,6 +33,6 @@ class CreateTomaControlsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('toma_control');
+        Schema::dropIfExists('toma_controls');
     }
 }

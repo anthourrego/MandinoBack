@@ -11,6 +11,7 @@ use App\Http\Controllers\PermisosController;
 use App\Http\Controllers\PerfilesController;
 use App\Http\Controllers\TomaControlCategoriasController;
 use App\Http\Controllers\CursosController;
+use App\Http\Controllers\TomaControlController;
 
 /*
 |--------------------------------------------------------------------------
@@ -148,5 +149,14 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::get('listarEscuelasCursos/{idEscuela}', [CursosController::class, 'listarEscuelasCursos']);
     });
     
-
+    
+    //Toma Control
+    Route::prefix('toma-control')->group(function () {
+        Route::post('obtener', [TomaControlController::class, 'show']);
+        Route::post('cambiarEstado', [TomaControlController::class, 'cambiarEstado']);
+        Route::post('crear', [TomaControlController::class, 'crear']);
+        Route::post('actualizar', [TomaControlController::class, 'actualizar']);
+        Route::post('lista', [TomaControlController::class, 'lista']);
+        Route::post('upload', [TomaControlController::class, 'upload']);
+    });
 });

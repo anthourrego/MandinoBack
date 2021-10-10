@@ -22,7 +22,7 @@ class CreateTomaControlVisualizacionesTable extends Migration
             $table->timestamps();
 
             $table->foreign('fk_user')->references('id')->on('users');
-            $table->foreign('fk_toma_control')->references('id')->on('toma_control');
+            $table->foreign('fk_toma_control')->references('id')->on('toma_controls');
         });
     }
 
