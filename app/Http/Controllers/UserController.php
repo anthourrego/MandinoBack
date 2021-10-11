@@ -294,7 +294,6 @@ class UserController extends Controller {
     }
 
     public function permisos($idUsuario, $idPerfil, $menu = false, $permiso = null, $hijos = true){
-        var_dump($permiso);
         $idPerfil = is_null($idPerfil) ? 0 : $idPerfil;
 
         $query = DB::table("permisos AS p")
