@@ -294,6 +294,7 @@ class UserController extends Controller {
     }
 
     public function permisos($idUsuario, $idPerfil, $menu = false, $permiso = null, $hijos = true){
+        var_dump($permiso);
         $idPerfil = is_null($idPerfil) ? 0 : $idPerfil;
 
         $query = DB::table("permisos AS p")
@@ -330,7 +331,6 @@ class UserController extends Controller {
         }
         
         $query = $query->groupBy("p.id", "p.nombre", "p.tag", "p.icono", "p.ruta", "p.fk_permiso")->get();
-        $quries = DB::getQueryLog();
         if ($hijos){ 
             foreach ($query as $per) {
                 if ($per->contHijos > 0) {
