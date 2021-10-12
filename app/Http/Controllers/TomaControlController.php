@@ -61,9 +61,28 @@ class TomaControlController extends Controller
             $toma->estado = $request->estado;
             
             if($toma->save()){
-                $resp["success"] = true;
-                $resp["msj"] = $request->nombre . " se ha creado correctamente.";
-                $resp["insertado"] = $toma->id;
+                $cont = 0;
+                foreach ($request->categorias as $value) {
+                    try {
+                        DB::table('toma_control_u_categorias')->insert([
+                            "fk_toma_control" => $toma->id
+                            ,"fk_categoria" => $value
+                        ]);
+                    } catch (\Exception $e) {
+                        DB::rollback();
+                        $cont++;
+                        break;
+                    }
+                }
+
+                if ($cont > 0) {
+                    $resp["msj"] = "No fue posible guardar a " . $request->nombre;
+                } else {
+                    $resp["success"] = true;
+                    $resp["msj"] = $request->nombre . " se ha creado correctamente.";
+                    $resp["insertado"] = $toma->id;
+                }
+
             }else{
                 $resp["msj"] = "No se ha creado a " . $request->nombre;
             }
