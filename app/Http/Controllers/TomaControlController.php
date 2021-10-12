@@ -82,13 +82,30 @@ class TomaControlController extends Controller
                     DB::rollback();
                     $resp["msj"] = "No fue posible guardar a " . $datos->nombre;
                 } else {
-                    DB::commit();
-                    $uploaded = Storage::putFileAs('public/' . $request->ruta, $request->file, $request->nombre);
 
-                    $resp["success"] = true;
-                    $resp["msj"] = $datos->nombre . " se ha creado correctamente.";
+                    $rutaVideo = 0;
+                    $rutaPoster = 0;
+                    try {
+                        $rutaVideo = Storage::putFileAs('public/' . $request->ruta . "/" . $toma->id, $request->file, "video." . $request->file('file')->getClientOriginalExtension());
+                    } catch (\Exception $e) {
+                        $rutaVideo = 0;
+                    }
+
+                    try {
+                        $rutaPoster = Storage::putFileAs('public/' . $request->ruta . "/" . $toma->id, $request->poster, "poster." . $request->file('poster')->getClientOriginalExtension());
+                    } catch (\Exception $e) {
+                        $rutaPoster = 0;
+                    }
+
+                    if ($rutaVideo == 0 && $rutaPoster == 0) {
+                        DB::rollback();
+                        $resp["msj"] = "Error al subir el video.";
+                    } else {
+                        DB::commit();
+                        $resp["success"] = true;
+                        $resp["msj"] = $datos->nombre . " se ha creado correctamente.";
+                    }
                 }
-
             }else{
                 $resp["msj"] = "No se ha creado a " . $datos->nombre;
             }
