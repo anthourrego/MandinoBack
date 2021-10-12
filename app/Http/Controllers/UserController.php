@@ -330,7 +330,6 @@ class UserController extends Controller {
         }
         
         $query = $query->groupBy("p.id", "p.nombre", "p.tag", "p.icono", "p.ruta", "p.fk_permiso")->get();
-        $quries = DB::getQueryLog();
         if ($hijos){ 
             foreach ($query as $per) {
                 if ($per->contHijos > 0) {

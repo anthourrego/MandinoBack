@@ -10,6 +10,7 @@ use App\Http\Controllers\EscuelasController;
 use App\Http\Controllers\PermisosController;
 use App\Http\Controllers\PerfilesController;
 use App\Http\Controllers\TomaControlCategoriasController;
+use App\Http\Controllers\CursosController;
 use App\Http\Controllers\TomaControlController;
 
 /*
@@ -59,6 +60,7 @@ Route::middleware(['guest', 'cors'])->group(function () {
         /* Route::get('lista/{pais}', [DepartamentosController::class, 'lista']); */
     });
 
+    //Municipios
     Route::prefix('municipios')->group(function () {
         Route::post('lista', [MunicipiosController::class, 'lista']);
         Route::get('ubicacion/{idMunicipio}', [MunicipiosController::class, 'ubicacion']);
@@ -80,6 +82,7 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::post('crear', [EscuelasController::class, 'crear']);
         Route::post('actualizar', [EscuelasController::class, 'actualizar']);
         Route::post('lista', [EscuelasController::class, 'lista']);
+        Route::get('traerEscuela/{id}', [EscuelasController::class, 'traerEscuela']);
     });
 
     //Permisos
@@ -129,6 +132,24 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::post('lista', [TomaControlCategoriasController::class, 'lista']);
     });
 
+
+    //Cursos
+    Route::prefix('cursos')->group(function () {
+        Route::post('crear', [CursosController::class, 'crear']);
+        Route::post('obtener', [CursosController::class, 'show']);
+        Route::post('editar', [CursosController::class, 'actualizar']);
+        Route::post('cambiarEstado', [CursosController::class, 'cambiarEstado']);
+
+    });
+
+
+    //Escuelas-Cursos
+    Route::prefix('escuelas_cursos')->group(function () {
+        Route::post('asignar', [CursosController::class, 'asignar']);
+        Route::get('listarEscuelasCursos/{idEscuela}', [CursosController::class, 'listarEscuelasCursos']);
+    });
+    
+    
     //Toma Control
     Route::prefix('toma-control')->group(function () {
         Route::post('obtener', [TomaControlController::class, 'show']);
@@ -138,4 +159,4 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::post('lista', [TomaControlController::class, 'lista']);
         Route::post('upload', [TomaControlController::class, 'upload']);
     });
-  });
+});
