@@ -49,45 +49,51 @@ class TomaControlController extends Controller
 
     public function crear(Request $request){
         $resp["success"] = false;
+        $datos = json_decode($request->datos);
         $validar = toma_control::where([
-            ['nombre', $request->nombre], 
+            ['nombre', $datos->nombre], 
         ])->get();
 
         if($validar->isEmpty()){
+            
+            DB::beginTransaction();
+
             $toma = new toma_control;
-            $toma->nombre = $request->nombre;
-            $toma->visibilidad = $request->visibilidad;
-            $toma->comentarios = $request->comentarios;
-            $toma->estado = $request->estado;
+            $toma->nombre = $datos->nombre;
+            $toma->visibilidad = $datos->visibilidad;
+            $toma->comentarios = $datos->comentarios;
+            $toma->estado = $datos->estado;
             
             if($toma->save()){
                 $cont = 0;
-                foreach ($request->categorias as $value) {
+                foreach ($datos->categorias as $value) {
                     try {
                         DB::table('toma_control_u_categorias')->insert([
                             "fk_toma_control" => $toma->id
                             ,"fk_categoria" => $value
                         ]);
                     } catch (\Exception $e) {
-                        DB::rollback();
                         $cont++;
                         break;
                     }
                 }
 
                 if ($cont > 0) {
-                    $resp["msj"] = "No fue posible guardar a " . $request->nombre;
+                    DB::rollback();
+                    $resp["msj"] = "No fue posible guardar a " . $datos->nombre;
                 } else {
+                    DB::commit();
+                    $uploaded = Storage::putFileAs('public/' . $request->ruta, $request->file, $request->nombre);
+
                     $resp["success"] = true;
-                    $resp["msj"] = $request->nombre . " se ha creado correctamente.";
-                    $resp["insertado"] = $toma->id;
+                    $resp["msj"] = $datos->nombre . " se ha creado correctamente.";
                 }
 
             }else{
-                $resp["msj"] = "No se ha creado a " . $request->nombre;
+                $resp["msj"] = "No se ha creado a " . $datos->nombre;
             }
         }else{
-            $resp["msj"] = $request->nombre . " ya se encuentra registrado.";
+            $resp["msj"] = $datos->nombre . " ya se encuentra registrado.";
         }
 
         return $resp;
