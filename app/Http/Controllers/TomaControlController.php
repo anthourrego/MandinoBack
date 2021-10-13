@@ -20,7 +20,7 @@ class TomaControlController extends Controller
      */
     public function show(Request $request)
     {
-        $query = toma_control::select('id', 'nombre', 'descripcion', 'visibilidad', 'comentarios', 'estado', 'created_at');
+        $query = toma_control::select('id', 'nombre', 'descripcion', 'visibilidad', 'comentarios', 'estado', 'created_at', 'ruta', 'poster');
         if ($request->estado != '') {
             $query->where("estado", $request->estado);
         }
@@ -176,10 +176,14 @@ class TomaControlController extends Controller
         return $resp;
     }
 
-    public function devolverStorage($filename){
-        $path = storage_path('app/public/fotosPerfil/'.$filename);
+    public function devolverStorage($id, $tipo, $filename){
+        $path = storage_path('app/public/toma-control/'. $id . '/' . $filename);
         if (!File::exists($path)) {
-            abort(404);
+            if($tipo == 1) {
+                $path = resource_path('assets/videos/error.mp4');
+            } else {
+                $path = resource_path('assets/image/nofoto.png');
+            }
         }
 
         $file = File::get($path);
