@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\toma_control;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Response;
 use DB;
 
 class TomaControlController extends Controller
@@ -63,6 +65,8 @@ class TomaControlController extends Controller
             $toma->visibilidad = $datos->visibilidad;
             $toma->comentarios = $datos->comentarios;
             $toma->estado = $datos->estado;
+            $toma->ruta = "video." . $request->file('file')->getClientOriginalExtension();
+            $toma->poster = isset($request->poster) ? "poster." . $request->file('poster')->getClientOriginalExtension() : NULL;
             
             if($toma->save()){
                 $cont = 0;
@@ -91,10 +95,14 @@ class TomaControlController extends Controller
                         $rutaVideo = 0;
                     }
 
-                    try {
-                        $rutaPoster = Storage::putFileAs('public/' . $request->ruta . "/" . $toma->id, $request->poster, "poster." . $request->file('poster')->getClientOriginalExtension());
-                    } catch (\Exception $e) {
-                        $rutaPoster = 0;
+                    if(isset($request->poster)){
+                        try {
+                            $rutaPoster = Storage::putFileAs('public/' . $request->ruta . "/" . $toma->id, $request->poster, "poster." . $request->file('poster')->getClientOriginalExtension());
+                        } catch (\Exception $e) {
+                            $rutaPoster = 0;
+                        }
+                    } else {
+                        $rutaPoster = 1; 
                     }
 
                     if ($rutaVideo == 0 && $rutaPoster == 0) {
@@ -166,5 +174,20 @@ class TomaControlController extends Controller
         $resp["ruta"] = $uploaded;
 
         return $resp;
+    }
+
+    public function devolverStorage($filename){
+        $path = storage_path('app/public/fotosPerfil/'.$filename);
+        if (!File::exists($path)) {
+            abort(404);
+        }
+
+        $file = File::get($path);
+        $type = File::mimeType($path);
+
+        $response = Response::make($file, 200);
+        $response->header("Content-Type", $type); 
+
+        return $response;
     }
 }
