@@ -20,10 +20,23 @@ class TomaControlController extends Controller
      */
     public function show(Request $request)
     {
-        $query = toma_control::select('id', 'nombre', 'descripcion', 'visibilidad', 'comentarios', 'estado', 'created_at', 'ruta', 'poster');
+        $query = toma_control::select(
+                    'toma_controls.id'
+                    ,'toma_controls.nombre'
+                    ,'toma_controls.descripcion'
+                    ,'toma_controls.visibilidad'
+                    ,'toma_controls.comentarios'
+                    ,'toma_controls.estado'
+                    ,'toma_controls.created_at'
+                    ,'toma_controls.ruta'
+                    ,'toma_controls.poster'
+                )->selectRaw("GROUP_CONCAT(tcuc.fk_categoria) AS categorias")
+                ->join("toma_control_u_categorias AS tcuc", "toma_controls.id", "tcuc.fk_toma_control");
         if ($request->estado != '') {
-            $query->where("estado", $request->estado);
+            $query = $query->where("toma_controls.estado", $request->estado);
         }
+        $query->groupBy('toma_controls.id');
+        
         return datatables()->eloquent($query)->rawColumns(['nombre', 'descripcion'])->make(true);
     }
 
