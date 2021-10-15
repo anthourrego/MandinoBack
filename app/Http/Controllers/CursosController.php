@@ -131,7 +131,6 @@ class CursosController extends Controller
     }
 
 
-
     /**
      * Remove the specified resource from storage.
      *
@@ -165,7 +164,6 @@ class CursosController extends Controller
         return $resp; 
     }
 
-
     // asignación escuelas_cursos
     public function asignar(Request $request){
         $resp["success"] = false;
@@ -194,17 +192,82 @@ class CursosController extends Controller
 
     }
 
-
     // listado escuelas_cursos
     public function listarEscuelasCursos($idEscuela){
         
         $query = DB::table('escuelas_cursos')->join('cursos', 'escuelas_cursos.fk_curso', '=', 'cursos.id');
         $query->where('escuelas_cursos.fk_escuela',$idEscuela);
-        $query->select("escuelas_cursos.id as escuelas_cursos_id", "cursos.id as curso_id", "cursos.nombre as curso_nombre", "cursos.descripcion as curso_descripcion");
+        $query->where('escuelas_cursos.estado',1);
+        $query->select(
+            "escuelas_cursos.id as escuelas_cursos_id",
+            "escuelas_cursos.estado as escuelas_cursos_estado", 
+            "escuelas_cursos.orden as escuelas_cursos_orden", 
+            "cursos.id as curso_id", "cursos.nombre as curso_nombre", 
+            "cursos.descripcion as curso_descripcion"
+        );
+        $query->orderBy('escuelas_cursos_orden','asc');
         
         return $query->get();
 
     }
 
+    //desasignar escuela_curso
+    public function desasignar(Request $request){
 
+        $resp["success"] = false;
+
+        $validar =  DB::table('escuelas_cursos')->where([
+            ['id', '<>', $request->id],
+        ])->get();
+  
+
+        if (!$validar->isEmpty()) {
+
+            $escuelaCurso = DB::table('escuelas_cursos')->where('id',$request->id);
+            
+
+            if ( $escuelaCurso->update(["estado" => 0]) ) {
+                $resp["success"] = true;
+                $resp["msj"] = "Se ha desasignado el curso";
+            }else{
+                $resp["msj"] = "Error al desasignar";
+            }
+        }else{
+            $resp["msj"] = "no se encuentra curso asignado";
+        }
+        
+        return $resp;
+
+    }
+
+    //actualizar orden escuela_curso
+    public function actualizarOrden(Request $request){
+
+        $resp["success"] = false;
+        $opts = [];
+
+        foreach ($request->cursos as $curso) {
+
+            $id = $curso['escuelas_cursos_id'];
+            $orden = $curso['escuelas_cursos_orden'];
+            try {
+                $escuelaCurso = DB::table('escuelas_cursos')->where('id',$id);
+                if ( $escuelaCurso->update(["orden" => $orden]) ) {
+                    $resp["success"] = true;
+                    $resp["msj"] = "Se ha cambiado el curso";
+                    array_push($opts, $id, $orden);
+                }
+               
+            } catch (\Exception $e) {
+                DB::rollback();
+                $resp["msj"] = 'exepcion';
+                return $resp;
+                break;
+            }
+
+        }
+
+        $resp["msj"] = "orden cambiado correctamente.";
+        return $resp;
+    }   
 }

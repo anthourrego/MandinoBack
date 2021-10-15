@@ -146,6 +146,8 @@ Route::middleware(['guest', 'cors'])->group(function () {
     //Escuelas-Cursos
     Route::prefix('escuelas_cursos')->group(function () {
         Route::post('asignar', [CursosController::class, 'asignar']);
+        Route::post('desasignar', [CursosController::class, 'desasignar']);
+        Route::post('actualizarOrden', [CursosController::class, 'actualizarOrden']);
         Route::get('listarEscuelasCursos/{idEscuela}', [CursosController::class, 'listarEscuelasCursos']);
     });
     
@@ -159,4 +161,6 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::post('lista', [TomaControlController::class, 'lista']);
         Route::post('upload', [TomaControlController::class, 'upload']);
     });
+
+
 });
