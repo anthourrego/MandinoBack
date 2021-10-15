@@ -160,6 +160,7 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::post('actualizar', [TomaControlController::class, 'actualizar']);
         Route::post('lista', [TomaControlController::class, 'lista']);
         Route::post('upload', [TomaControlController::class, 'upload']);
+        Route::get('storage/{id}/{tipo}/{filename}', [TomaControlController::class, 'devolverStorage']);
     });
 
 

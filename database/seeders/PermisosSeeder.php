@@ -119,11 +119,29 @@ class PermisosSeeder extends Seeder
                 ,'updated_at' => date('Y-m-d H:m:s')
             ],[
                 'id' => 12
-                ,'nombre' => "categoria toma control"
-                ,'tag' => 'Categoria Toma Control'
+                ,'nombre' => "toma control"
+                ,'tag' => 'Toma el Control'
                 ,'icono' => 'fas fa-tags'
-                ,'ruta' => 'categorias-toma-control'
+                ,'ruta' => NULL
                 ,'fk_permiso' => 1
+                ,'created_at' => date('Y-m-d H:m:s')
+                ,'updated_at' => date('Y-m-d H:m:s')
+            ],[
+                'id' => 13
+                ,'nombre' => "categoria toma control"
+                ,'tag' => 'Categorias'
+                ,'icono' => 'fas fa-tag'
+                ,'ruta' => 'categorias-toma-control'
+                ,'fk_permiso' => 12
+                ,'created_at' => date('Y-m-d H:m:s')
+                ,'updated_at' => date('Y-m-d H:m:s')
+            ],[
+                'id' => 14
+                ,'nombre' => "videos toma control"
+                ,'tag' => 'Videos'
+                ,'icono' => 'fas fa-play'
+                ,'ruta' => 'toma-control'
+                ,'fk_permiso' => 12
                 ,'created_at' => date('Y-m-d H:m:s')
                 ,'updated_at' => date('Y-m-d H:m:s')
             ]
