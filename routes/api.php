@@ -108,6 +108,7 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::post('cambiarPass', [UserController::class, 'cambiarPass']);
         Route::post('upload', [UserController::class, 'upload']);
         Route::post('setFoto', [UserController::class, 'setFoto']);
+        Route::get('categorias/{idUsuario}/{idPerfil}', [UserController::class, 'categorias']);
         
     });
 

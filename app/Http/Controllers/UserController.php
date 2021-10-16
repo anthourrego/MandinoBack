@@ -472,4 +472,18 @@ class UserController extends Controller {
 
         return $resp;
     }
+
+    public function categorias($idUsuario, $idPerfil){
+        $query = DB::table("permisos_sistema AS PS")
+                ->select(
+                    "TCC.id"
+                    ,"TCC.nombre"
+                )->join("toma_control_categorias AS TCC", "PS.fk_categorias_toma_control", "=", "TCC.id")  
+                ->where(function($query) use ($idUsuario, $idPerfil) {
+                    return $query->where("PS.fk_perfil", $idPerfil)
+                                ->orWhere("PS.fk_usuario", $idUsuario);
+                })->whereNotNull("PS.fk_categorias_toma_control")->get();
+
+        return $query; 
+    }
 }
