@@ -140,26 +140,74 @@ class TomaControlController extends Controller
 
     public function actualizar(Request $request) {
         $resp["success"] = false;
+        $datos = json_decode($request->datos);
         $validar = toma_control::where([
-            ['id', '<>', $request->id],
-            ['nombre', $request->nombre]
+            ['id', '<>', $datos->id],
+            ['nombre', $datos->nombre]
           ])->get();
   
         if ($validar->isEmpty()) {
 
-            $toma = toma_control::find($request->id);
+            $toma = toma_control::find($datos->id);
 
             if(!empty($toma)){
-                if ($toma->nombre != $request->nombre || $toma->estado != $request->estado) {
+                if ($toma->nombre != $datos->nombre || $toma->descripcion != $datos->descripcion || $toma->visibilidad != $datos->visibilidad || $toma->comentarios != $datos->comentarios || $toma->estado != $datos->estado) {
 
-                    $toma->nombre = $request->nombre;
-                    $toma->visibilidad = $request->visibilidad;
-                    $toma->comentarios = $request->comentarios;
-                    $toma->estado = $request->estado;
+                    $toma->nombre = $datos->nombre;
+                    $toma->descripcion = $datos->descripcion;
+                    $toma->visibilidad = $datos->visibilidad;
+                    $toma->comentarios = $datos->comentarios;
+                    $toma->estado = $datos->estado;
                     
                     if ($toma->save()) {
-                        $resp["success"] = true;
-                        $resp["msj"] = "Se han actualizado los datos";
+                        DB::table('toma_control_u_categorias')->where("fk_toma_control", $toma->id)->delete(); 
+                        $cont = 0;
+                        foreach ($datos->categorias as $value) {
+                            try {
+                                DB::table('toma_control_u_categorias')->insert([
+                                    "fk_toma_control" => $toma->id
+                                    ,"fk_categoria" => $value
+                                ]);
+                            } catch (\Exception $e) {
+                                $cont++;
+                                break;
+                            }
+                        }
+
+                        if ($cont > 0) {
+                            DB::rollback();
+                            $resp["msj"] = "No fue posible guardar a " . $datos->nombre;
+                        } else {
+
+                            $rutaVideo = 0;
+                            $rutaPoster = 0;
+                            if ($request->file && $datos->cambioVideo) {
+                                try {
+                                    $rutaVideo = Storage::putFileAs('public/' . $request->ruta . "/" . $toma->id, $request->file, "video." . $request->file('file')->getClientOriginalExtension());
+                                } catch (\Exception $e) {
+                                    $rutaVideo = 0;
+                                }
+                            }
+
+                            if(isset($request->poster) && $datos->cambioPoster){
+                                try {
+                                    $rutaPoster = Storage::putFileAs('public/' . $request->ruta . "/" . $toma->id, $request->poster, "poster." . $request->file('poster')->getClientOriginalExtension());
+                                } catch (\Exception $e) {
+                                    $rutaPoster = 0;
+                                }
+                            } else {
+                                $rutaPoster = 1; 
+                            }
+
+                            if ($rutaVideo == 0 && $rutaPoster == 0) {
+                                DB::rollback();
+                                $resp["msj"] = "Error al subir el video.";
+                            } else {
+                                DB::commit();
+                                $resp["success"] = true;
+                                $resp["msj"] = $datos->nombre . " se ha modificado correctamente.";
+                            }
+                        }
                     }else{
                         $resp["msj"] = "No se han guardado cambios";
                     }
@@ -167,10 +215,10 @@ class TomaControlController extends Controller
                     $resp["msj"] = "Por favor realice algún cambio";
                 }
             }else{
-                $resp["msj"] = "No se ha encontrado a " . $request->nombre;
+                $resp["msj"] = "No se ha encontrado a " . $datos->nombre;
             }
         }else{
-            $resp["msj"] = $request->nombre . " ya se encuentra registrado";
+            $resp["msj"] = $datos->nombre . " ya se encuentra registrado";
         }
         
         return $resp;
@@ -207,5 +255,15 @@ class TomaControlController extends Controller
         $response->header("Content-Type", $type); 
 
         return $response;
+    }
+
+    public function deleteFile(Request $request){
+    
+        $uploaded = Storage::delete('public/toma-control/' . $request->ruta);
+
+        $resp["success"] = $uploaded;
+        $resp["msj"] = ($uploaded ? 'Eliminado correctamente' : 'No fue posible eliminar el archivo');
+
+        return $resp;
     }
 }
