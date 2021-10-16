@@ -77,6 +77,7 @@ class TomaControlController extends Controller
             $toma->nombre = $datos->nombre;
             $toma->visibilidad = $datos->visibilidad;
             $toma->comentarios = $datos->comentarios;
+            $toma->descripcion = $datos->descripcion;
             $toma->estado = $datos->estado;
             $toma->ruta = "video." . $request->file('file')->getClientOriginalExtension();
             $toma->poster = isset($request->poster) ? "poster." . $request->file('poster')->getClientOriginalExtension() : NULL;
