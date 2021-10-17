@@ -148,6 +148,7 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::post('asignar', [CursosController::class, 'asignar']);
         Route::post('desasignar', [CursosController::class, 'desasignar']);
         Route::post('actualizarOrden', [CursosController::class, 'actualizarOrden']);
+        Route::post('agregarDependencia', [CursosController::class, 'agregarDependencia']);
         Route::get('listarEscuelasCursos/{idEscuela}', [CursosController::class, 'listarEscuelasCursos']);
     });
     
