@@ -266,4 +266,38 @@ class TomaControlController extends Controller
 
         return $resp;
     }
+
+    public function videoVisualizar($id) {
+        $query = toma_control::select(
+                'toma_controls.nombre'
+                ,'toma_controls.descripcion'
+                ,'toma_controls.visibilidad'
+                ,'toma_controls.comentarios'
+                ,'toma_controls.estado'
+                ,'toma_controls.created_at'
+                ,'toma_controls.ruta'
+                ,'toma_controls.poster'
+                ,'tcv.tiempo'
+                ,'tcv.completo'
+            )->leftJoin("toma_control_visualizaciones AS tcv", "toma_controls.id", "tcv.fk_toma_control")
+            ->where("toma_controls.id", $id);
+        return $query->first();
+    }
+
+    public function videosSugeridos($id) {
+        $query = toma_control::select(
+                'toma_controls.id'
+                ,'toma_controls.nombre'
+                ,'toma_controls.descripcion'
+                ,'toma_controls.visibilidad'
+                ,'toma_controls.comentarios'
+                ,'toma_controls.estado'
+                ,'toma_controls.created_at'
+                ,'toma_controls.ruta'
+                ,'toma_controls.poster'
+            )
+            ->where("toma_controls.estado", 1)
+            ->where("toma_controls.id", "<>", $id);
+        return $query->get();
+    }
 }

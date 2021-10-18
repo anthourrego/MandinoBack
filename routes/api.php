@@ -12,6 +12,7 @@ use App\Http\Controllers\PerfilesController;
 use App\Http\Controllers\TomaControlCategoriasController;
 use App\Http\Controllers\CursosController;
 use App\Http\Controllers\TomaControlController;
+use App\Http\Controllers\TomaControlVisualizacionesController;
 
 /*
 |--------------------------------------------------------------------------
@@ -163,6 +164,14 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::post('upload', [TomaControlController::class, 'upload']);
         Route::get('storage/{id}/{tipo}/{filename}', [TomaControlController::class, 'devolverStorage']);
         Route::post('delete', [TomaControlController::class, 'deleteFile']);
+        Route::get('visualizar/{id}', [TomaControlController::class, 'videoVisualizar']);
+        Route::get('sugeridos/{id}', [TomaControlController::class, 'videosSugeridos']);
+    });
+
+    //Visualizaciones
+    Route::prefix('visualizaciones')->group(function () {
+        Route::post('crear', [TomaControlVisualizacionesController::class, 'crear']);
+        Route::post('actualizar', [TomaControlVisualizacionesController::class, 'actualizar']);
     });
 
 
