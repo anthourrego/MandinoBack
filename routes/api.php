@@ -167,6 +167,7 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::post('delete', [TomaControlController::class, 'deleteFile']);
         Route::get('visualizar/{id}', [TomaControlController::class, 'videoVisualizar']);
         Route::get('sugeridos/{id}', [TomaControlController::class, 'videosSugeridos']);
+        Route::post('videos', [TomaControlController::class, 'videos']);
     });
 
     //Visualizaciones
