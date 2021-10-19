@@ -12,6 +12,7 @@ use App\Http\Controllers\PerfilesController;
 use App\Http\Controllers\TomaControlCategoriasController;
 use App\Http\Controllers\CursosController;
 use App\Http\Controllers\TomaControlController;
+use App\Http\Controllers\TomaControlVisualizacionesController;
 
 /*
 |--------------------------------------------------------------------------
@@ -108,6 +109,7 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::post('cambiarPass', [UserController::class, 'cambiarPass']);
         Route::post('upload', [UserController::class, 'upload']);
         Route::post('setFoto', [UserController::class, 'setFoto']);
+        Route::get('categorias/{idUsuario}/{idPerfil}', [UserController::class, 'categorias']);
         
     });
 
@@ -162,6 +164,16 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::post('lista', [TomaControlController::class, 'lista']);
         Route::post('upload', [TomaControlController::class, 'upload']);
         Route::get('storage/{id}/{tipo}/{filename}', [TomaControlController::class, 'devolverStorage']);
+        Route::post('delete', [TomaControlController::class, 'deleteFile']);
+        Route::get('visualizar/{id}', [TomaControlController::class, 'videoVisualizar']);
+        Route::get('sugeridos/{id}', [TomaControlController::class, 'videosSugeridos']);
+        Route::post('videos', [TomaControlController::class, 'videos']);
+    });
+
+    //Visualizaciones
+    Route::prefix('visualizaciones')->group(function () {
+        Route::post('crear', [TomaControlVisualizacionesController::class, 'crear']);
+        Route::post('actualizar', [TomaControlVisualizacionesController::class, 'actualizar']);
     });
 
 
