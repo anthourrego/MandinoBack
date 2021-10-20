@@ -270,4 +270,31 @@ class CursosController extends Controller
         $resp["msj"] = "orden cambiado correctamente.";
         return $resp;
     }   
+
+
+    public function agregarDependencia(Request $request){
+        $resp["success"] = false;
+
+        $id = $request->id;
+        $idDependencia =  $request->idDependencia;
+        $validar =  DB::table('escuelas_cursos')->where([
+            ['id', '<>', $request->id],
+        ])->get();
+  
+        if (!$validar->isEmpty()) {
+            $escuelaCurso = DB::table('escuelas_cursos')->where('id',$id);
+            return  $escuelaCurso;
+            if ( $escuelaCurso->update(["fk_curso_dependencia" => $idDependencia]) ) {
+                $resp["success"] = true;
+                $resp["msj"] = "dependencia asignada";
+            }else{
+                $resp["msj"] = "error al asignar dependencia";
+            }
+        }else{
+            $resp["msj"] = "no se encuentra el curso asignado";
+        }
+        
+        return $resp;
+
+    }
 }

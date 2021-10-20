@@ -89,6 +89,8 @@ class TomaControlController extends Controller
                         DB::table('toma_control_u_categorias')->insert([
                             "fk_toma_control" => $toma->id
                             ,"fk_categoria" => $value
+                            ,"created_at" => date("Y-m-d H:i:s")
+                            ,"updated_at" => date("Y-m-d H:i:s")
                         ]);
                     } catch (\Exception $e) {
                         $cont++;
@@ -300,5 +302,25 @@ class TomaControlController extends Controller
             ->where("toma_controls.estado", 1)
             ->where("toma_controls.id", "<>", $id);
         return $query->get();
+    }
+
+    public function videos(Request $request){
+        $query = DB::table("toma_control_u_categorias AS TCUC")
+                    ->select(
+                        "TC.id"
+                        ,"TC.nombre"
+                        ,"TC.descripcion"
+                        ,"TC.poster"
+                        ,"TC.ruta"
+                        ,"TC.created_at"
+                    )->selectRaw("COUNT(TCV.fk_toma_control) AS Vistas")
+                    ->leftJoin("toma_controls AS TC", "TCUC.fk_toma_control", "TC.id")
+                    ->leftJoin("toma_control_visualizaciones AS TCV", "TCUC.fk_toma_control", "TCV.fk_toma_control")
+                    ->where("TC.estado", 1)
+                    ->where("TC.visibilidad", 1)
+                    ->groupBy("TCUC.fk_toma_control")
+                    ->get();
+
+        return $query; 
     }
 }
