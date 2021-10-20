@@ -279,6 +279,7 @@ class TomaControlController extends Controller
                 ,'toma_controls.poster'
                 ,'tcv.tiempo'
                 ,'tcv.completo'
+                ,'tcv.id AS idVisualizacion'
             )->leftJoin("toma_control_visualizaciones AS tcv", "toma_controls.id", "tcv.fk_toma_control")
             ->where("toma_controls.id", $id);
         return $query->first();
