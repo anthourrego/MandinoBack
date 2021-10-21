@@ -287,7 +287,7 @@ class TomaControlController extends Controller
         return $query->first();
     }
 
-    public function videosSugeridos($id) {
+    public function videosSugeridos(Request $request) {
         $query = toma_control::select(
                 'toma_controls.id'
                 ,'toma_controls.nombre'
@@ -300,7 +300,7 @@ class TomaControlController extends Controller
                 ,'toma_controls.poster'
             )
             ->where("toma_controls.estado", 1)
-            ->where("toma_controls.id", "<>", $id);
+            ->where("toma_controls.id", "<>", $request->idActual);
         return $query->get();
     }
 
