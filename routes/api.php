@@ -13,6 +13,7 @@ use App\Http\Controllers\TomaControlCategoriasController;
 use App\Http\Controllers\CursosController;
 use App\Http\Controllers\TomaControlController;
 use App\Http\Controllers\TomaControlVisualizacionesController;
+use App\Http\Controllers\UnidadesController;
 
 /*
 |--------------------------------------------------------------------------
@@ -174,6 +175,24 @@ Route::middleware(['guest', 'cors'])->group(function () {
     Route::prefix('visualizaciones')->group(function () {
         Route::post('crear', [TomaControlVisualizacionesController::class, 'crear']);
         Route::post('actualizar', [TomaControlVisualizacionesController::class, 'actualizar']);
+    });
+
+    //Unidades
+    Route::prefix('unidades')->group(function () {
+        Route::post('obtener', [UnidadesController::class, 'show']);
+        Route::post('crear', [UnidadesController::class, 'crear']);
+        Route::post('editar', [UnidadesController::class, 'actualizar']);
+        Route::post('cambiarEstado', [UnidadesController::class, 'cambiarEstado']);
+        Route::get('traerUnidad/{id}', [UnidadesController::class, 'traerUnidad']);
+    });
+
+    //Escuelas-Cursos
+    Route::prefix('unidades_cursos')->group(function () {
+        Route::post('asignar', [UnidadesController::class, 'asignar']);
+        Route::post('desasignar', [UnidadesController::class, 'desasignar']);
+        Route::post('actualizarOrden', [UnidadesController::class, 'actualizarOrden']);
+        Route::post('agregarDependencia', [UnidadesController::class, 'agregarDependencia']);
+        Route::get('listarUnidadesCursos/{idCurso}', [UnidadesController::class, 'listarUnidadesCursos']);
     });
 
 
