@@ -270,7 +270,12 @@ class TomaControlController extends Controller
         return $resp;
     }
 
-    public function videoVisualizar($id) {
+    public function videoVisualizar($video, $usuario) {
+
+        $me_gusta = DB::table('toma_control_me_gustas')
+            ->select('me_gusta', 'id', 'fk_toma_control')
+            ->where('fk_user', $usuario);
+
         $query = toma_control::select(
                 'toma_controls.nombre'
                 ,'toma_controls.descripcion'
@@ -283,8 +288,12 @@ class TomaControlController extends Controller
                 ,'tcv.tiempo'
                 ,'tcv.completo'
                 ,'tcv.id AS idVisualizacion'
+                ,'tcmg.id AS idMeGusta'
+                ,'tcmg.me_gusta AS meGusta'
             )->leftJoin("toma_control_visualizaciones AS tcv", "toma_controls.id", "tcv.fk_toma_control")
-            ->where("toma_controls.id", $id);
+            ->leftJoinSub($me_gusta, "tcmg", function ($join) {
+                $join->on("toma_controls.id", "=", "tcmg.fk_toma_control");
+            })->where("toma_controls.id", $video);
         return $query->first();
     }
 

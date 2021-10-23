@@ -14,6 +14,7 @@ use App\Http\Controllers\CursosController;
 use App\Http\Controllers\TomaControlController;
 use App\Http\Controllers\TomaControlVisualizacionesController;
 use App\Http\Controllers\TomaControlComentariosController;
+use App\Http\Controllers\TomaControlMeGustaController;
 
 /*
 |--------------------------------------------------------------------------
@@ -166,7 +167,7 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::post('upload', [TomaControlController::class, 'upload']);
         Route::get('storage/{id}/{tipo}/{filename}', [TomaControlController::class, 'devolverStorage']);
         Route::post('delete', [TomaControlController::class, 'deleteFile']);
-        Route::get('visualizar/{id}', [TomaControlController::class, 'videoVisualizar']);
+        Route::get('visualizar/{video}/{usuario}', [TomaControlController::class, 'videoVisualizar']);
         Route::post('sugeridos', [TomaControlController::class, 'videosSugeridos']);
         Route::post('videos', [TomaControlController::class, 'videos']);
     });
@@ -180,6 +181,13 @@ Route::middleware(['guest', 'cors'])->group(function () {
     //Comentarios
     Route::prefix('comentarios')->group(function () {
         Route::post('crear', [TomaControlComentariosController::class, 'crear']);
+        Route::get('obtener/{id}', [TomaControlComentariosController::class, 'lista']);
+    });
+
+    //Me gusta
+    Route::prefix('me-gusta')->group(function () {
+        Route::post('crear', [TomaControlMeGustaController::class, 'crear']);
+        Route::post('actualizar', [TomaControlMeGustaController::class, 'actualizar']);
     });
 
 
