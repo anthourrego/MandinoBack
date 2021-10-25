@@ -181,9 +181,11 @@ class UnidadesController extends Controller
             "unidades_cursos.id as unidades_cursos_id",
             "unidades_cursos.estado as unidades_cursos_estado", 
             "unidades_cursos.orden as unidades_cursos_orden", 
+            "unidades_cursos.fk_curso as fk_curso",
             "unidades_cursos.fk_unidad_dependencia as unidades_cursos_dependencia",
             "unidades.id as unidad_id", "unidades.nombre as unidad_nombre", 
             "unidades.descripcion as unidad_descripcion",
+
         );
         $query->orderBy('unidades_cursos_orden','asc');
         
@@ -203,7 +205,7 @@ class UnidadesController extends Controller
 
         if (!$validar->isEmpty()) {
 
-            $dependencias = DB::table('unidades_cursos')->where('fk_unidad_dependencia',$request->unidad_id)->where('estado',1)->get();
+            $dependencias = DB::table('unidades_cursos')->where('fk_unidad_dependencia',$request->unidad_id)->where('estado',1)->where('fk_curso',$request->curso_id)->get();
 
             if($dependencias->isEmpty()){
                 $unidadCurso = DB::table('unidades_cursos')->where('id',$request->id);

@@ -202,6 +202,7 @@ class CursosController extends Controller
             "escuelas_cursos.id as escuelas_cursos_id",
             "escuelas_cursos.estado as escuelas_cursos_estado", 
             "escuelas_cursos.orden as escuelas_cursos_orden", 
+            "escuelas_cursos.fk_escuela as fk_escuela",
             "escuelas_cursos.fk_curso_dependencia as escuelas_cursos_dependencia",
             "cursos.id as curso_id", "cursos.nombre as curso_nombre", 
             "cursos.descripcion as curso_descripcion",
@@ -224,7 +225,7 @@ class CursosController extends Controller
 
         if (!$validar->isEmpty()) {
 
-            $dependencias = DB::table('escuelas_cursos')->where('fk_curso_dependencia',$request->curso_id)->where('estado',1)->get();
+            $dependencias = DB::table('escuelas_cursos')->where('fk_curso_dependencia',$request->curso_id)->where('estado',1)->where('fk_escuela', $request->fk_escuela)->get();
 
             if($dependencias->isEmpty()){
                 $escuelaCurso = DB::table('escuelas_cursos')->where('id',$request->id);
