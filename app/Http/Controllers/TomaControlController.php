@@ -122,7 +122,7 @@ class TomaControlController extends Controller
                         $ffprobe = FFProbe::create();
                         $duracion = (int) $ffprobe->format(storage_path('app/' . $rutaVideo))->get('duration');
 
-                        $timeSkip = rand(1, $duracion - 5);
+                        $timeSkip = rand(1, $duracion - 3);
                         $videoOpen = $request->ruta . "/" . $toma->id . "/video." . $request->file('file')->getClientOriginalExtension();
 
                         if(isset($request->poster)){
@@ -148,10 +148,10 @@ class TomaControlController extends Controller
                         }
 
                         try {
-                            $gifPath = storage_path("app/public/" . $request->ruta . "/" . $toma->id . "/priview.gif");
+                            $gifPath = storage_path("app/public/" . $request->ruta . "/" . $toma->id . "/preview.gif");
                             $ffmpeg = FFMpeg::create();
                             $ffmpegVideo = $ffmpeg->open(storage_path('app/' . $rutaVideo));
-                            $ffmpegVideo->gif(TimeCode::fromSeconds($timeSkip), new Dimension(640, 480), ($timeSkip+5))->save($gifPath);
+                            $ffmpegVideo->gif(TimeCode::fromSeconds($timeSkip), new Dimension(320, 180), 3)->save($gifPath);
                         } catch (\Throwable $th) {
                             $resp["msj"] = "Error al crear la vista previa.";
                             $rutaPoster = 0; 
