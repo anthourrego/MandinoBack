@@ -32,25 +32,31 @@ class TomaControlVisualizacionesController extends Controller
         }
     }else{
         $resp["msj"] = "El video ya tiene registro de visualización.";
+        $resp["id"] = $validar[0]->id;
     }
     return $resp;
   }
 
   public function actualizar(Request $request) {
     $resp["success"] = false;
+    $resp["id"] = $request->id;
     
     $visualizacion = toma_control_visualizaciones::find($request->id);
 
     if(!empty($visualizacion)){
       
-      $visualizacion->tiempo = $request->tiempo;
-      $visualizacion->completo = $request->completo;
-      
-      if ($visualizacion->save()) {
-        $resp["success"] = true;
-        $resp["msj"] = "Se han actualizado los datos";
-      }else{
-        $resp["msj"] = "No se han guardado cambios";
+      if ($visualizacion->tiempo < $request->tiempo) {
+        $visualizacion->tiempo = $request->tiempo;
+        $visualizacion->completo = $request->completo;
+        
+        if ($visualizacion->save()) {
+          $resp["success"] = true;
+          $resp["msj"] = "Se han actualizado los datos";
+        }else{
+          $resp["msj"] = "No se han guardado cambios";
+        }
+      } else {
+        $resp["msj"] = "El tiempo es anterior al registrado.";
       }
     }else{
       $resp["msj"] = "No se ha encontrado la visualización";

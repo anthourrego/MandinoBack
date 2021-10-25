@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Response;
 use DB;
+use DateTime;
 
 class TomaControlController extends Controller
 {
@@ -269,7 +270,12 @@ class TomaControlController extends Controller
         return $resp;
     }
 
-    public function videoVisualizar($id) {
+    public function videoVisualizar($video, $usuario) {
+
+        $me_gusta = DB::table('toma_control_me_gustas')
+            ->select('me_gusta', 'id', 'fk_toma_control')
+            ->where('fk_user', $usuario);
+
         $query = toma_control::select(
                 'toma_controls.nombre'
                 ,'toma_controls.descripcion'
@@ -281,12 +287,17 @@ class TomaControlController extends Controller
                 ,'toma_controls.poster'
                 ,'tcv.tiempo'
                 ,'tcv.completo'
+                ,'tcv.id AS idVisualizacion'
+                ,'tcmg.id AS idMeGusta'
+                ,'tcmg.me_gusta AS meGusta'
             )->leftJoin("toma_control_visualizaciones AS tcv", "toma_controls.id", "tcv.fk_toma_control")
-            ->where("toma_controls.id", $id);
+            ->leftJoinSub($me_gusta, "tcmg", function ($join) {
+                $join->on("toma_controls.id", "=", "tcmg.fk_toma_control");
+            })->where("toma_controls.id", $video);
         return $query->first();
     }
 
-    public function videosSugeridos($id) {
+    public function videosSugeridos(Request $request) {
         $query = toma_control::select(
                 'toma_controls.id'
                 ,'toma_controls.nombre'
@@ -299,7 +310,7 @@ class TomaControlController extends Controller
                 ,'toma_controls.poster'
             )
             ->where("toma_controls.estado", 1)
-            ->where("toma_controls.id", "<>", $id);
+            ->where("toma_controls.id", "<>", $request->idActual);
         return $query->get();
     }
 
@@ -319,7 +330,43 @@ class TomaControlController extends Controller
                     ->where("TC.visibilidad", 1)
                     ->groupBy("TCUC.fk_toma_control")
                     ->get();
+        
+        foreach ($query as $ite) {
+            $date1 = new DateTime();
+            $date2 = new DateTime($ite->created_at);
+            $diff = $date1->diff($date2);
+
+            $ite->fecha = $this->formatoFecha($diff);
+        }
 
         return $query; 
+    }
+
+    function formatoFecha($df) {
+
+        $str = '';
+        //$str .= ($df->invert == 1) ? ' - ' : '';
+
+        if ($df->y > 0) {
+            // years
+            $str .= ($df->y > 1) ? $df->y . ' años' : $df->y . ' año';
+        } else if ($df->m > 0) {
+            // month
+            $str .= ($df->m > 1) ? $df->m . ' meses' : $df->m . ' mes';
+        } else if ($df->d > 0) {
+            // days
+            $str .= ($df->d > 1) ? $df->d . ' días' : $df->d . ' día';
+        } else if ($df->h > 0) {
+            // hours
+            $str .= ($df->h > 1) ? $df->h . ' horas' : $df->h . ' hora';
+        } else if ($df->i > 0) {
+            // minutes
+            $str .= ($df->i > 1) ? $df->i . ' minutos' : $df->i . ' minuto';
+        } else if ($df->s > 0) {
+            // seconds
+            $str .= ($df->s > 1) ? $df->s . ' segundos' : $df->s . ' segundo';
+        }
+    
+        return $str;
     }
 }

@@ -422,6 +422,7 @@ class UserController extends Controller {
                 if ($usuario->save()) {
                     $resp["success"] = true;
                     $resp["msj"] = "Se han actualizado los datos";
+                    $resp['nombreCompleto'] = $usuario->nombre;
                 }else{
                     $resp["msj"] = "No se han guardado cambios";
                 }
