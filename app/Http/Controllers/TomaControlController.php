@@ -378,6 +378,33 @@ class TomaControlController extends Controller
         return $query; 
     }
 
+    public function buscarVideos(Request $request) {
+
+        $query = toma_control::select(
+                'toma_controls.id'
+                ,'toma_controls.nombre'
+                ,'toma_controls.descripcion'
+                ,'toma_controls.visibilidad'
+                ,'toma_controls.comentarios'
+                ,'toma_controls.estado'
+                ,'toma_controls.created_at'
+                ,'toma_controls.ruta'
+                ,'toma_controls.poster'
+                ,'tcv.tiempo'
+                ,'tcv.completo'
+                ,'tcv.id AS idVisualizacion'
+            )->leftJoin("toma_control_visualizaciones AS tcv", "toma_controls.id", "tcv.fk_toma_control")
+            ->where("toma_controls.nombre", 'like', '%' . $request->buscar . '%')->get();
+        foreach ($query as $ite) {
+            $date1 = new DateTime();
+            $date2 = new DateTime($ite->created_at);
+            $diff = $date1->diff($date2);
+
+            $ite->fecha = $this->formatoFecha($diff);
+        }
+        return $query;
+    }
+
     function formatoFecha($df) {
 
         $str = '';
