@@ -9,6 +9,11 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Response;
 use DB;
 use DateTime;
+use FFMpeg AS FFMpeg2;
+use FFMpeg\FFMpeg;
+use FFMpeg\FFProbe;
+use FFMpeg\Coordinate\TimeCode;
+use FFMpeg\Coordinate\Dimension;
 
 class TomaControlController extends Controller
 {
@@ -81,7 +86,7 @@ class TomaControlController extends Controller
             $toma->descripcion = $datos->descripcion;
             $toma->estado = $datos->estado;
             $toma->ruta = "video." . $request->file('file')->getClientOriginalExtension();
-            $toma->poster = isset($request->poster) ? "poster." . $request->file('poster')->getClientOriginalExtension() : NULL;
+            $toma->poster = isset($request->poster) ? "poster." . $request->file('poster')->getClientOriginalExtension() : 'poster.png';
             
             if($toma->save()){
                 $cont = 0;
@@ -110,21 +115,52 @@ class TomaControlController extends Controller
                         $rutaVideo = Storage::putFileAs('public/' . $request->ruta . "/" . $toma->id, $request->file, "video." . $request->file('file')->getClientOriginalExtension());
                     } catch (\Exception $e) {
                         $rutaVideo = 0;
-                    }
-
-                    if(isset($request->poster)){
-                        try {
-                            $rutaPoster = Storage::putFileAs('public/' . $request->ruta . "/" . $toma->id, $request->poster, "poster." . $request->file('poster')->getClientOriginalExtension());
-                        } catch (\Exception $e) {
-                            $rutaPoster = 0;
-                        }
-                    } else {
-                        $rutaPoster = 1; 
-                    }
-
-                    if ($rutaVideo == 0 && $rutaPoster == 0) {
-                        DB::rollback();
                         $resp["msj"] = "Error al subir el video.";
+                    }
+
+                    if($rutaVideo != 0) {
+                        $ffprobe = FFProbe::create();
+                        $duracion = (int) $ffprobe->format(storage_path('app/' . $rutaVideo))->get('duration');
+
+                        $timeSkip = rand(1, $duracion - 5);
+                        $videoOpen = $request->ruta . "/" . $toma->id . "/video." . $request->file('file')->getClientOriginalExtension();
+
+                        if(isset($request->poster)){
+                            try {
+                                $rutaPoster = Storage::putFileAs('public/' . $request->ruta . "/" . $toma->id, $request->poster, "poster." . $request->file('poster')->getClientOriginalExtension());
+                            } catch (\Exception $e) {
+                                $rutaPoster = 0;
+                                $resp["msj"] = "Error al subir el poster.";
+                            }
+                        } else {
+                            try {
+                                FFMpeg2::fromDisk('public')
+                                ->open($videoOpen)
+                                ->getFrameFromSeconds(10)
+                                ->export()
+                                ->toDisk('public')
+                                ->save($request->ruta . "/" . $toma->id . "/poster.png");
+                                $rutaPoster = 'poster.png';
+                            } catch (\Throwable $th) {
+                                $rutaPoster = 0; 
+                                $resp["msj"] = "Error al subir el poster predeterminado.";
+                            }
+                        }
+
+                        try {
+                            $gifPath = storage_path("app/public/" . $request->ruta . "/" . $toma->id . "/priview.gif");
+                            $ffmpeg = FFMpeg::create();
+                            $ffmpegVideo = $ffmpeg->open(storage_path('app/' . $rutaVideo));
+                            $ffmpegVideo->gif(TimeCode::fromSeconds($timeSkip), new Dimension(640, 480), ($timeSkip+5))->save($gifPath);
+                        } catch (\Throwable $th) {
+                            $resp["msj"] = "Error al crear la vista previa.";
+                            $rutaPoster = 0; 
+                            $rutaVideo == 0;
+                        }
+                    }
+
+                    if ($rutaVideo == 0 || $rutaPoster == 0) {
+                        DB::rollback();
                     } else {
                         DB::commit();
                         $resp["success"] = true;
@@ -368,5 +404,47 @@ class TomaControlController extends Controller
         }
     
         return $str;
+    }
+
+    function pruebasvideos(){
+        /* FFMpeg2::fromDisk('public')
+        ->open('toma-control/16/video.mp4')
+        ->export()
+        ->toDisk('public')
+        ->inFormat(new \FFMpeg\Format\Video\X264)
+        ->save('toma-control/16/funca.mkv'); */
+
+        
+        /* FFMpeg2::fromDisk('public')
+        ->open('toma-control/15/video.mp4')
+        ->getFrameFromSeconds(2)
+        ->export()
+        ->toDisk('public')
+        ->save('toma-control/15/poster.jpg'); */
+
+        $videoPath = storage_path('app/public/toma-control/16/video.mp4');
+
+        // The gif duration will be as long as the video/
+        $ffprobe = FFProbe::create();
+        $duration = (int) $ffprobe->format($videoPath)->get('duration');
+        $dimensions = $ffprobe->streams($videoPath)->videos()->first()->getDimensions();
+
+        $gifPath = storage_path('app/public/toma-control/16/laverga.gif');
+
+        $ffmpeg = FFMpeg::create();
+        $ffmpegVideo = $ffmpeg->open($videoPath);
+        $ffmpegVideo->gif(TimeCode::fromSeconds(0), new Dimension(640, 480), 10)->save($gifPath);
+
+        
+
+        // The gif will have the same dimension. You can change that of course if needed.
+        /* $dimensions = $ffprobe->streams($videoPath)->videos()->first()->getDimensions();
+
+        $gifPath = storage_path('app/public/toma-control/16/gifvideo.gif');
+
+        // Transform
+        $ffmpeg = FFMpeg::create();
+        $ffmpegVideo = $ffmpeg->open($videoPath);
+        $ffmpegVideo->gif(TimeCode::fromSeconds(0), $dimensions, $duration)->save($gifPath); */
     }
 }
