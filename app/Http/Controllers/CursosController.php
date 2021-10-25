@@ -202,8 +202,10 @@ class CursosController extends Controller
             "escuelas_cursos.id as escuelas_cursos_id",
             "escuelas_cursos.estado as escuelas_cursos_estado", 
             "escuelas_cursos.orden as escuelas_cursos_orden", 
+            "escuelas_cursos.fk_escuela as fk_escuela",
+            "escuelas_cursos.fk_curso_dependencia as escuelas_cursos_dependencia",
             "cursos.id as curso_id", "cursos.nombre as curso_nombre", 
-            "cursos.descripcion as curso_descripcion"
+            "cursos.descripcion as curso_descripcion",
         );
         $query->orderBy('escuelas_cursos_orden','asc');
         
@@ -223,15 +225,21 @@ class CursosController extends Controller
 
         if (!$validar->isEmpty()) {
 
-            $escuelaCurso = DB::table('escuelas_cursos')->where('id',$request->id);
-            
+            $dependencias = DB::table('escuelas_cursos')->where('fk_curso_dependencia',$request->curso_id)->where('estado',1)->where('fk_escuela', $request->fk_escuela)->get();
 
-            if ( $escuelaCurso->update(["estado" => 0]) ) {
-                $resp["success"] = true;
-                $resp["msj"] = "Se ha desasignado el curso";
+            if($dependencias->isEmpty()){
+                $escuelaCurso = DB::table('escuelas_cursos')->where('id',$request->id);
+                if ( $escuelaCurso->update(["estado" => 0]) ) {
+                    $resp["success"] = true;
+                    $resp["msj"] = "Se ha desasignado el curso";
+                }else{
+                    $resp["msj"] = "Error al desasignar";
+                }
             }else{
-                $resp["msj"] = "Error al desasignar";
+                $resp["msj"] = "Curso es dependencia de otros cursos, no se puede desasignar";
             }
+        
+            
         }else{
             $resp["msj"] = "no se encuentra curso asignado";
         }
@@ -271,22 +279,23 @@ class CursosController extends Controller
         return $resp;
     }   
 
-
+    //desasignar dependencia escuela_curso
     public function agregarDependencia(Request $request){
         $resp["success"] = false;
 
-        $id = $request->id;
-        $idDependencia =  $request->idDependencia;
+        $id = $request['id'];
+        $idDependencia =  $request['idDependencia'];
         $validar =  DB::table('escuelas_cursos')->where([
             ['id', '<>', $request->id],
         ])->get();
   
         if (!$validar->isEmpty()) {
             $escuelaCurso = DB::table('escuelas_cursos')->where('id',$id);
-            return  $escuelaCurso;
+
             if ( $escuelaCurso->update(["fk_curso_dependencia" => $idDependencia]) ) {
                 $resp["success"] = true;
-                $resp["msj"] = "dependencia asignada";
+
+                $resp["msj"] = "dependencia".($idDependencia == null ? " des" : " ")."asignada";
             }else{
                 $resp["msj"] = "error al asignar dependencia";
             }
@@ -296,5 +305,9 @@ class CursosController extends Controller
         
         return $resp;
 
+    }
+
+    public function traerCurso($id){
+        return cursos::select( "nombre", "descripcion")->where("id", $id)->get();
     }
 }
