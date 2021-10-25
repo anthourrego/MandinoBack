@@ -306,4 +306,8 @@ class CursosController extends Controller
         return $resp;
 
     }
+
+    public function traerCurso($id){
+        return cursos::select( "nombre", "descripcion")->where("id", $id)->get();
+    }
 }

@@ -144,6 +144,7 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::post('obtener', [CursosController::class, 'show']);
         Route::post('editar', [CursosController::class, 'actualizar']);
         Route::post('cambiarEstado', [CursosController::class, 'cambiarEstado']);
+        Route::get('traerCurso/{id}', [CursosController::class, 'traerCurso']);
 
     });
 
