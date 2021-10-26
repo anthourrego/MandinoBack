@@ -356,15 +356,23 @@ class TomaControlController extends Controller
                         "TC.id"
                         ,"TC.nombre"
                         ,"TC.descripcion"
-                        ,"TC.poster"
-                        ,"TC.ruta"
+                        ,"TC.visibilidad"
+                        ,"TC.comentarios"
+                        ,"TC.estado"
                         ,"TC.created_at"
+                        ,"TC.ruta"
+                        ,"TC.poster"
+                        ,"TCV.tiempo"
+                        ,"TCV.completo"
+                        ,"TCV.id AS idVisualizacion"
                     )->selectRaw("COUNT(TCV.fk_toma_control) AS Vistas")
                     ->leftJoin("toma_controls AS TC", "TCUC.fk_toma_control", "TC.id")
                     ->leftJoin("toma_control_visualizaciones AS TCV", "TCUC.fk_toma_control", "TCV.fk_toma_control")
                     ->where("TC.estado", 1)
                     ->where("TC.visibilidad", 1)
                     ->groupBy("TCUC.fk_toma_control")
+                    ->orderBy('TC.created_at', 'DESC')
+                    ->offset($request->inicio)->limit($request->cantidad)
                     ->get();
         
         foreach ($query as $ite) {
@@ -394,7 +402,11 @@ class TomaControlController extends Controller
                 ,'tcv.completo'
                 ,'tcv.id AS idVisualizacion'
             )->leftJoin("toma_control_visualizaciones AS tcv", "toma_controls.id", "tcv.fk_toma_control")
-            ->where("toma_controls.nombre", 'like', '%' . $request->buscar . '%')->get();
+            ->where("toma_controls.nombre", 'like', '%' . $request->buscar . '%')
+            ->where("toma_controls.estado", 1)
+            ->where("toma_controls.visibilidad", 1)
+            ->get();
+
         foreach ($query as $ite) {
             $date1 = new DateTime();
             $date2 = new DateTime($ite->created_at);
@@ -431,47 +443,5 @@ class TomaControlController extends Controller
         }
     
         return $str;
-    }
-
-    function pruebasvideos(){
-        /* FFMpeg2::fromDisk('public')
-        ->open('toma-control/16/video.mp4')
-        ->export()
-        ->toDisk('public')
-        ->inFormat(new \FFMpeg\Format\Video\X264)
-        ->save('toma-control/16/funca.mkv'); */
-
-        
-        /* FFMpeg2::fromDisk('public')
-        ->open('toma-control/15/video.mp4')
-        ->getFrameFromSeconds(2)
-        ->export()
-        ->toDisk('public')
-        ->save('toma-control/15/poster.jpg'); */
-
-        $videoPath = storage_path('app/public/toma-control/16/video.mp4');
-
-        // The gif duration will be as long as the video/
-        $ffprobe = FFProbe::create();
-        $duration = (int) $ffprobe->format($videoPath)->get('duration');
-        $dimensions = $ffprobe->streams($videoPath)->videos()->first()->getDimensions();
-
-        $gifPath = storage_path('app/public/toma-control/16/laverga.gif');
-
-        $ffmpeg = FFMpeg::create();
-        $ffmpegVideo = $ffmpeg->open($videoPath);
-        $ffmpegVideo->gif(TimeCode::fromSeconds(0), new Dimension(640, 480), 10)->save($gifPath);
-
-        
-
-        // The gif will have the same dimension. You can change that of course if needed.
-        /* $dimensions = $ffprobe->streams($videoPath)->videos()->first()->getDimensions();
-
-        $gifPath = storage_path('app/public/toma-control/16/gifvideo.gif');
-
-        // Transform
-        $ffmpeg = FFMpeg::create();
-        $ffmpegVideo = $ffmpeg->open($videoPath);
-        $ffmpegVideo->gif(TimeCode::fromSeconds(0), $dimensions, $duration)->save($gifPath); */
     }
 }
