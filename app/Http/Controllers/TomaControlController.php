@@ -37,6 +37,7 @@ class TomaControlController extends Controller
                     ,'toma_controls.ruta'
                     ,'toma_controls.poster'
                 )->selectRaw("GROUP_CONCAT(tcuc.fk_categoria) AS categorias")
+                ->selectRaw("'preview.gif' AS gif")
                 ->join("toma_control_u_categorias AS tcuc", "toma_controls.id", "tcuc.fk_toma_control");
         if ($request->estado != '') {
             $query = $query->where("toma_controls.estado", $request->estado);
@@ -346,8 +347,18 @@ class TomaControlController extends Controller
                 ,'toma_controls.poster'
             )
             ->where("toma_controls.estado", 1)
-            ->where("toma_controls.id", "<>", $request->idActual);
-        return $query->get();
+            ->where("toma_controls.id", "<>", $request->idActual)->get();
+
+        foreach ($query as $ite) {
+            $date1 = new DateTime();
+            $date2 = new DateTime($ite->created_at);
+            $diff = $date1->diff($date2);
+
+            $ite->fecha = $this->formatoFecha($diff);
+            $ite->gif = "preview.gif";
+        }
+        
+        return $query;
     }
 
     public function videos(Request $request){
@@ -373,6 +384,7 @@ class TomaControlController extends Controller
             $diff = $date1->diff($date2);
 
             $ite->fecha = $this->formatoFecha($diff);
+            $ite->gif = "preview.gif";
         }
 
         return $query; 
@@ -394,13 +406,16 @@ class TomaControlController extends Controller
                 ,'tcv.completo'
                 ,'tcv.id AS idVisualizacion'
             )->leftJoin("toma_control_visualizaciones AS tcv", "toma_controls.id", "tcv.fk_toma_control")
-            ->where("toma_controls.nombre", 'like', '%' . $request->buscar . '%')->get();
+            ->where("toma_controls.nombre", 'like', '%' . $request->buscar . '%')
+            ->where("toma_controls.visibilidad", '1')
+            ->where("toma_controls.estado", '1')->get();
         foreach ($query as $ite) {
             $date1 = new DateTime();
             $date2 = new DateTime($ite->created_at);
             $diff = $date1->diff($date2);
 
             $ite->fecha = $this->formatoFecha($diff);
+            $ite->gif = "preview.gif";
         }
         return $query;
     }
