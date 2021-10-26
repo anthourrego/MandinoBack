@@ -380,12 +380,17 @@ class TomaControlController extends Controller
                     ->leftJoin("toma_controls AS TC", "TCUC.fk_toma_control", "TC.id")
                     ->leftJoin("toma_control_visualizaciones AS TCV", "TCUC.fk_toma_control", "TCV.fk_toma_control")
                     ->where("TC.estado", 1)
-                    ->where("TC.visibilidad", 1)
-                    ->groupBy("TCUC.fk_toma_control")
-                    ->orderBy('TC.created_at', 'DESC')
-                    ->offset($request->inicio)->limit($request->cantidad)
-                    ->get();
-        
+                    ->where("TC.visibilidad", 1);
+
+        if(isset($request->buscar)) {
+            $query = $query->where("TC.nombre", 'like', '%' . $request->buscar . '%');
+        }
+                    
+        $query = $query->groupBy("TCUC.fk_toma_control")
+            ->orderBy('TC.created_at', 'DESC')
+            ->offset($request->inicio)->limit($request->cantidad)
+            ->get();
+
         foreach ($query as $ite) {
             $date1 = new DateTime();
             $date2 = new DateTime($ite->created_at);
