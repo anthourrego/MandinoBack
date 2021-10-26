@@ -8,15 +8,6 @@ use DB;
 
 class CursosController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
-    {
-        //
-    }
 
     /**
      * Show the form for creating a new resource.
@@ -49,17 +40,6 @@ class CursosController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
      * Display the specified resource.
      *
      * @param  \App\Models\cursos  $cursos
@@ -72,17 +52,6 @@ class CursosController extends Controller
             $query->where("estado", $request->estado);
         }
         return datatables()->eloquent($query)->rawColumns(['nombre', 'descripcion'])->make(true);
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\cursos  $cursos
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(cursos $cursos)
-    {
-        //
     }
 
     /**
@@ -128,18 +97,6 @@ class CursosController extends Controller
         }
         
         return $resp;
-    }
-
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\cursos  $cursos
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(cursos $cursos)
-    {
-        //
     }
 
     public function cambiarEstado(Request $request){
