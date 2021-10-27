@@ -137,7 +137,7 @@ class TomaControlController extends Controller
                             try {
                                 FFMpeg2::fromDisk('public')
                                 ->open($videoOpen)
-                                ->getFrameFromSeconds(10)
+                                ->getFrameFromSeconds($timeSkip)
                                 ->export()
                                 ->toDisk('public')
                                 ->save($request->ruta . "/" . $toma->id . "/poster.png");
@@ -362,6 +362,7 @@ class TomaControlController extends Controller
     }
 
     public function videos(Request $request){
+        
         $query = DB::table("toma_control_u_categorias AS TCUC")
                     ->select(
                         "TC.id"
@@ -385,6 +386,10 @@ class TomaControlController extends Controller
         if(isset($request->buscar)) {
             $query = $query->where("TC.nombre", 'like', '%' . $request->buscar . '%');
         }
+
+        if(isset($request->categorias) && count($request->categorias) > 0){
+            $query = $query->whereIn('TCUC.fk_categoria', $request->categorias);
+        }
                     
         $query = $query->groupBy("TCUC.fk_toma_control")
             ->orderBy('TC.created_at', 'DESC')
@@ -401,38 +406,6 @@ class TomaControlController extends Controller
         }
 
         return $query; 
-    }
-
-    public function buscarVideos(Request $request) {
-
-        $query = toma_control::select(
-                'toma_controls.id'
-                ,'toma_controls.nombre'
-                ,'toma_controls.descripcion'
-                ,'toma_controls.visibilidad'
-                ,'toma_controls.comentarios'
-                ,'toma_controls.estado'
-                ,'toma_controls.created_at'
-                ,'toma_controls.ruta'
-                ,'toma_controls.poster'
-                ,'tcv.tiempo'
-                ,'tcv.completo'
-                ,'tcv.id AS idVisualizacion'
-            )->leftJoin("toma_control_visualizaciones AS tcv", "toma_controls.id", "tcv.fk_toma_control")
-            ->where("toma_controls.nombre", 'like', '%' . $request->buscar . '%')
-            ->where("toma_controls.estado", 1)
-            ->where("toma_controls.visibilidad", 1)
-            ->get();
-
-        foreach ($query as $ite) {
-            $date1 = new DateTime();
-            $date2 = new DateTime($ite->created_at);
-            $diff = $date1->diff($date2);
-
-            $ite->fecha = $this->formatoFecha($diff);
-            $ite->gif = "preview.gif";
-        }
-        return $query;
     }
 
     function formatoFecha($df) {
