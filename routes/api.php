@@ -172,7 +172,6 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::get('visualizar/{video}/{usuario}', [TomaControlController::class, 'videoVisualizar']);
         Route::post('sugeridos', [TomaControlController::class, 'videosSugeridos']);
         Route::post('videos', [TomaControlController::class, 'videos']);
-        Route::post('buscarVideos', [TomaControlController::class, 'buscarVideos']);
     });
 
     //Visualizaciones

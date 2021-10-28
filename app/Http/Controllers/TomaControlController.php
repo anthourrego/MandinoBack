@@ -14,6 +14,7 @@ use FFMpeg\FFMpeg;
 use FFMpeg\FFProbe;
 use FFMpeg\Coordinate\TimeCode;
 use FFMpeg\Coordinate\Dimension;
+use FFMpeg\Filters\Frame\FrameFilters;
 
 class TomaControlController extends Controller
 {
@@ -138,6 +139,9 @@ class TomaControlController extends Controller
                                 FFMpeg2::fromDisk('public')
                                 ->open($videoOpen)
                                 ->getFrameFromSeconds($timeSkip)
+                                ->addFilter(function (FrameFilters $filters) {
+                                    $filters->custom('scale=320:180');
+                                })
                                 ->export()
                                 ->toDisk('public')
                                 ->save($request->ruta . "/" . $toma->id . "/poster.png");
@@ -162,6 +166,7 @@ class TomaControlController extends Controller
 
                     if ($rutaVideo == 0 || $rutaPoster == 0) {
                         DB::rollback();
+                        $delete = Storage::deleteDirectory('public/' . $request->ruta . "/" . $toma->id);
                     } else {
                         DB::commit();
                         $resp["success"] = true;
@@ -387,8 +392,18 @@ class TomaControlController extends Controller
             $query = $query->where("TC.nombre", 'like', '%' . $request->buscar . '%');
         }
 
-        if(isset($request->categorias) && count($request->categorias) > 0){
-            $query = $query->whereIn('TCUC.fk_categoria', $request->categorias);
+        if(isset($request->categorias)){
+            if(count($request->categorias) == 0){
+                $userController = new UserController();
+                $categoriasUser = $userController->categorias($request->usuariosId, $request->PerfilUsuario);
+                $categorias = [];
+                foreach ($categoriasUser as $ite) {
+                    $categorias[] = $ite->id;
+                }
+                $query = $query->whereIn('TCUC.fk_categoria', $categorias);
+            } else {
+                $query = $query->whereIn('TCUC.fk_categoria', $request->categorias);
+            }
         }
                     
         $query = $query->groupBy("TCUC.fk_toma_control")
