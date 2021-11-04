@@ -297,7 +297,7 @@ class TomaControlController extends Controller
         $size = File::size($path);
         $type = File::mimeType($path);
 
-        $response = Response::make($file, 200);
+        $response = Response::make($file, 206);
         $response->header("Content-Type", $type); 
         $response->header("Content-Range", "bytes 0-" . ($size - 1) . "/" . $size); 
 
