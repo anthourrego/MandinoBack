@@ -340,8 +340,13 @@ class TomaControlController extends Controller
             )->leftJoin("toma_control_visualizaciones AS tcv", "toma_controls.id", "tcv.fk_toma_control")
             ->leftJoinSub($me_gusta, "tcmg", function ($join) {
                 $join->on("toma_controls.id", "=", "tcmg.fk_toma_control");
-            })->where("toma_controls.id", $video);
-        return $query->first();
+            })->where("toma_controls.id", $video)
+            ->first();
+
+        $comentarios = new TomaControlComentariosController();
+        $query->comentarios = $comentarios->lista($video);
+
+        return $query;
     }
 
     public function videosSugeridos(Request $request) {
