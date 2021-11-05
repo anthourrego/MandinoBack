@@ -283,7 +283,7 @@ class TomaControlController extends Controller
         return $resp;
     }
 
-    public function devolverStorage($id, $tipo, $filename){
+    public function devolverStorage($id, $tipo, $filename, $navegador){
         $path = storage_path('app/public/toma-control/'. $id . '/' . $filename);
         if (!File::exists($path)) {
             if($tipo == 1) {
@@ -297,7 +297,10 @@ class TomaControlController extends Controller
         $size = File::size($path);
         $type = File::mimeType($path);
 
-        $response = Response::make($file, 206);
+        $codigo = 206;
+        if ($navegador == 'firefox') $codigo = 200;
+
+        $response = Response::make($file, $codigo);
         $response->header("Content-Type", $type); 
         $response->header("Content-Range", "bytes 0-" . ($size - 1) . "/" . $size); 
 
