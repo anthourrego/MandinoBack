@@ -341,10 +341,13 @@ class TomaControlController extends Controller
             ->leftJoinSub($me_gusta, "tcmg", function ($join) {
                 $join->on("toma_controls.id", "=", "tcmg.fk_toma_control");
             })->where("toma_controls.id", $video)
+            ->where("toma_controls.visibilidad", 1)
             ->first();
 
-        $comentarios = new TomaControlComentariosController();
-        $query->comentarios = $comentarios->lista($video);
+        if ($query->comentarios == 1) {
+            $comentarios = new TomaControlComentariosController();
+            $query->listaComentarios = $comentarios->lista($video);
+        }
 
         return $query;
     }
@@ -361,6 +364,7 @@ class TomaControlController extends Controller
                 ,'toma_controls.ruta'
                 ,'toma_controls.poster'
             )
+            ->where("toma_controls.visibilidad", 1)
             ->where("toma_controls.estado", 1)
             ->where("toma_controls.id", "<>", $request->idActual)->get();
 
