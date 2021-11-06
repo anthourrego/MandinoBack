@@ -64,34 +64,35 @@ class UserController extends Controller {
 
     public function crear(Request $request){
         $resp["success"] = false;
-        $validar = User::where('nro_documento', $request->nro_documento)->get();
+        $datos = json_decode($request->datos);
+        $validar = User::where('nro_documento', $datos->nro_documento)->get();
         
         if($validar->isEmpty()){
-            $validar = User::where('usuario', $request->usuario)->get();
+            $validar = User::where('usuario', $datos->usuario)->get();
             if($validar->isEmpty()){
-                $validar = User::where('email', $request->email)->get();
+                $validar = User::where('email', $datos->email)->get();
                 if($validar->isEmpty()){
 
                     $usuario = new User;
-                    $usuario->nro_documento = $request->nro_documento;
-                    $usuario->usuario = $request->usuario;
-                    $usuario->password = Hash::make($request->nro_documento, ['rounds' => 15]);
-                    $usuario->nombre = $request->nombre1 . ' ' . (strlen($request->nombre2) > 0 ? $request->nombre2 . ' ' : '') . $request->apellido1 . (strlen($request->apellido2) > 0 ? ' ' . $request->apellido2 : '');
-                    $usuario->nombre1 = $request->nombre1;
-                    $usuario->nombre2 = $request->nombre2;
-                    $usuario->apellido1 = $request->apellido1;
-                    $usuario->apellido2 = $request->apellido2;
-                    $usuario->email = $request->email;
-                    $usuario->telefono = $request->telefono;
-                    $usuario->estado = $request->estado;
-                    $usuario->fk_municipio = $request->fk_municipio;
-                    $usuario->fk_perfil = $request->fk_perfil == "null" ? null : $request->fk_perfil;
+                    $usuario->nro_documento = $datos->nro_documento;
+                    $usuario->usuario = $datos->usuario;
+                    $usuario->password = Hash::make($datos->nro_documento, ['rounds' => 15]);
+                    $usuario->nombre = $datos->nombre1 . ' ' . (strlen($datos->nombre2) > 0 ? $datos->nombre2 . ' ' : '') . $datos->apellido1 . (strlen($datos->apellido2) > 0 ? ' ' . $datos->apellido2 : '');
+                    $usuario->nombre1 = $datos->nombre1;
+                    $usuario->nombre2 = $datos->nombre2;
+                    $usuario->apellido1 = $datos->apellido1;
+                    $usuario->apellido2 = $datos->apellido2;
+                    $usuario->email = $datos->email;
+                    $usuario->telefono = $datos->telefono;
+                    $usuario->estado = $datos->estado;
+                    $usuario->fk_municipio = $datos->fk_municipio;
+                    $usuario->fk_perfil = $datos->fk_perfil == "null" ? null : $datos->fk_perfil;
 
                     DB::beginTransaction();
 
                     if( $usuario->save() ){
                         $rutaFotoPerfil = "foto";
-                        if(isset($request->fotoPerfil)){
+                        if(isset($datos->fotoPerfil)){
                             try {
                                 $rutaFotoPerfil = Storage::putFileAs('public/fotosPerfil/', $request->fotoPerfil, $usuario->id . "." . $request->file('fotoPerfil')->getClientOriginalExtension());
 
@@ -120,13 +121,13 @@ class UserController extends Controller {
                         $resp["msj"] = "No se ha creado el usuario";
                     }
                 } else {
-                    $resp["msj"] = "El correo " . $request->email . " ya se encuentra registrado";
+                    $resp["msj"] = "El correo " . $datos->email . " ya se encuentra registrado";
                 }
             } else {
-                $resp["msj"] = "El usuario " . $request->usuario . " ya se encuentra registrado";
+                $resp["msj"] = "El usuario " . $datos->usuario . " ya se encuentra registrado";
             }
         }else{
-            $resp["msj"] = "El número de documento " . $request->documento . " ya se encuentra registrado";
+            $resp["msj"] = "El número de documento " . $datos->documento . " ya se encuentra registrado";
         }
     
         return $resp;
@@ -246,56 +247,79 @@ class UserController extends Controller {
 
     public function editar(Request $request){
         $resp["success"] = false;
+        $datos = json_decode($request->datos);
         $validar = User::where([
-                  ['id', '<>', $request->id],
-                  ['nro_documento', $request->nro_documento]
+                  ['id', '<>', $datos->id],
+                  ['nro_documento', $datos->nro_documento]
                 ])->get();
         
         if ($validar->isEmpty()) {
             $validar = User::where([
-                ['id', '<>', $request->id],
-                ['usuario', $request->usuario]
+                ['id', '<>', $datos->id],
+                ['usuario', $datos->usuario]
             ])->get();
             if ($validar->isEmpty()) {
                 $validar = User::where([
-                    ['id', '<>', $request->id],
-                    ['email', $request->email]
+                    ['id', '<>', $datos->id],
+                    ['email', $datos->email]
                 ])->get();
                 if ($validar->isEmpty()) {
-                    $usuario = User::find($request->id);
+                    $usuario = User::find($datos->id);
                     if(!empty($usuario)){
                         if (
-                            $usuario->nro_documento != $request->nro_documento ||
-                            $usuario->usuario != $request->usuario ||
-                            $usuario->nombre1 != $request->nombre1 ||
-                            $usuario->nombre2 != $request->nombre2 ||
-                            $usuario->apellido1 != $request->apellido1 ||
-                            $usuario->apellido2 != $request->apellido2 ||
-                            $usuario->email != $request->email ||
-                            $usuario->telefono != $request->telefono ||
-                            $usuario->estado != $request->estado ||
-                            $usuario->fk_municipio != $request->fk_municipio ||
-                            $usuario->fk_perfil != $request->fk_perfil ||
-                            $usuario->foto != $request->foto
+                            $usuario->nro_documento != $datos->nro_documento ||
+                            $usuario->usuario != $datos->usuario ||
+                            $usuario->nombre1 != $datos->nombre1 ||
+                            $usuario->nombre2 != $datos->nombre2 ||
+                            $usuario->apellido1 != $datos->apellido1 ||
+                            $usuario->apellido2 != $datos->apellido2 ||
+                            $usuario->email != $datos->email ||
+                            $usuario->telefono != $datos->telefono ||
+                            $usuario->estado != $datos->estado ||
+                            $usuario->fk_municipio != $datos->fk_municipio ||
+                            $usuario->fk_perfil != $datos->fk_perfil ||
+                            $usuario->foto != $datos->foto
                         ) {
                         
-                        $usuario->nro_documento = $request->nro_documento;
-                        $usuario->usuario = $request->usuario;
-                        $usuario->nombre1 = $request->nombre1;
-                        $usuario->nombre2 = $request->nombre2;
-                        $usuario->apellido1 = $request->apellido1;
-                        $usuario->apellido2 = $request->apellido2; 
-                        $usuario->nombre = $request->nombre1 . ' ' . (strlen($request->nombre2) > 0 ? $request->nombre2 . ' ' : '') . $request->apellido1 . (strlen($request->apellido2) > 0 ? ' ' . $request->apellido2 : '');
-                        $usuario->email = $request->email; 
-                        $usuario->telefono = $request->telefono; 
-                        $usuario->estado = $request->estado; 
-                        $usuario->fk_municipio = $request->fk_municipio;
-                        $usuario->fk_perfil = $request->fk_perfil == "null" ? null : $request->fk_perfil;
+                        $usuario->nro_documento = $datos->nro_documento;
+                        $usuario->usuario = $datos->usuario;
+                        $usuario->nombre1 = $datos->nombre1;
+                        $usuario->nombre2 = $datos->nombre2;
+                        $usuario->apellido1 = $datos->apellido1;
+                        $usuario->apellido2 = $datos->apellido2; 
+                        $usuario->nombre = $datos->nombre1 . ' ' . (strlen($datos->nombre2) > 0 ? $datos->nombre2 . ' ' : '') . $datos->apellido1 . (strlen($datos->apellido2) > 0 ? ' ' . $datos->apellido2 : '');
+                        $usuario->email = $datos->email; 
+                        $usuario->telefono = $datos->telefono; 
+                        $usuario->estado = $datos->estado; 
+                        $usuario->fk_municipio = $datos->fk_municipio;
+                        $usuario->fk_perfil = $datos->fk_perfil == "null" ? null : $datos->fk_perfil;
 
                         if ($usuario->save()) {
-                            $resp["success"] = true;
-                            $resp["msj"] = "Se han actualizado los datos";
-                            $resp["id"]= $usuario->id;
+
+                            $rutaFotoPerfil = "foto";
+                            if(isset($datos->fotoPerfil)){
+                                try {
+                                    $rutaFotoPerfil = Storage::putFileAs('public/fotosPerfil/', $request->fotoPerfil, $usuario->id . "." . $request->file('fotoPerfil')->getClientOriginalExtension());
+
+                                    $usuario->foto = $usuario->id . "." . $request->file('fotoPerfil')->getClientOriginalExtension();
+
+                                    $usuario->save();
+
+                                } catch (\Exception $e) {
+                                    DB::rollback();
+                                    $rutaFotoPerfil = 0;
+                                    $resp["msj"] = "Error al subir el poster.";
+                                }
+                            }
+
+                            if ($rutaFotoPerfil != 0){
+                                DB::commit();
+                                $resp["success"] = true;
+                                $resp["msj"] = "Se han actualizado los datos";
+                                $resp["id"]= $usuario->id;
+                            } else {
+                                DB::rollback();
+                            }
 
                         }else{
                             $resp["success"] = false;
@@ -309,13 +333,13 @@ class UserController extends Controller {
                         $resp["msj"] = "No se ha encontrado el usuario";
                     }
                 } else {
-                    $resp["msj"] = "El correo " . $request->email . " ya se encuentra registrado";  
+                    $resp["msj"] = "El correo " . $datos->email . " ya se encuentra registrado";  
                 }
             } else {
-                $resp["msj"] = "El usuario " . $request->usuario . " ya se encuentra registrado";
+                $resp["msj"] = "El usuario " . $datos->usuario . " ya se encuentra registrado";
             }
         } else {
-            $resp["msj"] = "El número de documento " . $request->nro_documento . " ya se encuentra registrado";
+            $resp["msj"] = "El número de documento " . $datos->nro_documento . " ya se encuentra registrado";
         }
         return $resp; 
     }
