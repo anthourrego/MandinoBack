@@ -6,6 +6,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Response;
 use DB;
 
 class UserController extends Controller {
@@ -85,11 +87,36 @@ class UserController extends Controller {
                     $usuario->fk_municipio = $request->fk_municipio;
                     $usuario->fk_perfil = $request->fk_perfil == "null" ? null : $request->fk_perfil;
 
+                    DB::beginTransaction();
+
                     if( $usuario->save() ){
-                        $resp["success"] = true;
-                        $resp["msj"] = "Se ha creado el usuario";
-                        $resp["id"]= $usuario->id;
+                        $rutaFotoPerfil = "foto";
+                        if(isset($request->fotoPerfil)){
+                            try {
+                                $rutaFotoPerfil = Storage::putFileAs('public/fotosPerfil/', $request->fotoPerfil, $usuario->id . "." . $request->file('fotoPerfil')->getClientOriginalExtension());
+
+                                $usuario->foto = $usuario->id . "." . $request->file('fotoPerfil')->getClientOriginalExtension();
+
+                                $usuario->save();
+
+                            } catch (\Exception $e) {
+                                DB::rollback();
+                                $rutaFotoPerfil = 0;
+                                $resp["msj"] = "Error al subir el poster.";
+                            }
+                        }
+
+                        if ($rutaFotoPerfil != 0){
+                            DB::commit();
+                            $resp["success"] = true;
+                            $resp["msj"] = "Se ha creado el usuario";
+                            $resp["id"]= $usuario->id;
+                        } else {
+                            DB::rollback();
+                        }
+
                     }else{
+                        DB::rollback();
                         $resp["msj"] = "No se ha creado el usuario";
                     }
                 } else {
@@ -486,5 +513,29 @@ class UserController extends Controller {
                 })->whereNotNull("PS.fk_categorias_toma_control")->get();
 
         return $query; 
+    }
+
+    public function fotoPerfil($idUsuario){
+
+        $user = User::find($idUsuario);
+
+        if(!empty($user)){
+            if(!is_null($user->foto)){
+                $path = storage_path('app/public/fotosPerfil/'. $user->foto);
+            } else {
+                $path = resource_path('assets/image/user.png');
+            }
+            
+        } else {
+            $path = resource_path('assets/image/user.png');
+        }
+
+        $file = File::get($path);
+        $type = File::mimeType($path);
+
+        $response = Response::make($file, 200);
+        $response->header("Content-Type", $type); 
+
+        return $response;
     }
 }
