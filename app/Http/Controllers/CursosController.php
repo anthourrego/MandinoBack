@@ -236,7 +236,7 @@ class CursosController extends Controller
         return $resp;
     }   
 
-    //desasignar dependencia escuela_curso
+    //agregar dependencia escuela_curso
     public function agregarDependencia(Request $request){
         $resp["success"] = false;
 

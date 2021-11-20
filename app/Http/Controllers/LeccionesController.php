@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\lecciones;
 use Illuminate\Http\Request;
+use DB;
 
 class LeccionesController extends Controller
 {
@@ -14,25 +15,27 @@ class LeccionesController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function crear(Request $request){
+
         $resp["success"] = false;
-        $validar = cursos::where([
-            ['nombre', $request->nombre], 
-        ])->get();
+        /* 
+            $validar = lecciones::where([
+                ['nombre', $request->nombre], 
+            ])->get();
+            $validar->isEmpty()
+        */
 
-        if($validar->isEmpty()){
-            $curso = new cursos;
-            $curso->nombre = $request->nombre;
-            $curso->descripcion = $request->descripcion;
-            $curso->estado = $request->estado;
+        $leccion = new lecciones;
+        $leccion->nombre = $request->nombre;
+        $leccion->contenido = $request->contenido;
+        $leccion->estado = $request->estado;
+        $leccion->tipo = $request->tipo;
+        $leccion->url_contenido = $request->url_contenido;
 
-            if($curso->save()){
-                $resp["success"] = true;
-                $resp["msj"] = "Se ha creado el curso correctamente.";
-            }else{
-                $resp["msj"] = "No se ha creado el curso " . $request->nombre;
-            }
+        if($leccion->save()){
+            $resp["success"] = true;
+            $resp["msj"] = "Se ha creado la lección correctamente.";
         }else{
-            $resp["msj"] = "El curso " . $request->nombre . " ya se encuentra registrado.";
+            $resp["msj"] = "No se ha creado la lección " . $request->nombre;
         }
 
         return $resp;
@@ -41,45 +44,48 @@ class LeccionesController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  \App\Models\cursos  $cursos
+     * @param  \App\Models\lecciones  $lecciones
      * @return \Illuminate\Http\Response
      */
     public function show(Request $request)
     {
-        $query = cursos::select('id', 'nombre', 'descripcion', 'estado', 'created_at');
+        $query = lecciones::select('id', 'nombre', 'contenido', 'estado', 'tipo','created_at');
         if ($request->estado != '') {
             $query->where("estado", $request->estado);
         }
-        return datatables()->eloquent($query)->rawColumns(['nombre', 'descripcion'])->make(true);
+        return datatables()->eloquent($query)->rawColumns(['nombre', 'tipo'])->make(true);
     }
 
     /**
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\cursos  $cursos
+     * @param  \App\Models\lecciones  $lecciones
      * @return \Illuminate\Http\Response
      */
     public function actualizar(Request $request)
     {
         $resp["success"] = false;
-        $validar = cursos::where([
+        $validar = lecciones::where([
             ['id', '<>', $request->id],
             ['nombre', $request->nombre]
         ])->get();
   
         if ($validar->isEmpty()) {
 
-            $curso = cursos::find($request->id);
+            $leccion = lecciones::find($request->id);
 
-            if(!empty($curso)){
-                if ($curso->nombre != $request->nombre || $curso->descripcion != $request->descripcion || $curso->estado != $request->estado) {
+            if(!empty($leccion)){
+                if ($leccion->contenido != $request->contenido || $leccion->estado != $request->estado || $leccion->nombre != $request->nombre || $leccion->url_contenido != $request->url_contenido || $leccion->tipo != $request->tipo ) {
 
-                    $curso->nombre = $request->nombre;
-                    $curso->descripcion = $request->descripcion;
-                    $curso->estado = $request->estado;
+                    $leccion->nombre = $request->nombre;
+                    $leccion->contenido = $request->contenido;
+                    $leccion->estado = $request->estado;
+                    $leccion->tipo = $request->tipo;
+                    $leccion->url_contenido = $request->url_contenido;
+            
                     
-                    if ($curso->save()) {
+                    if ($leccion->save()) {
                         $resp["success"] = true;
                         $resp["msj"] = "Se han actualizado los datos";
                     }else{
@@ -89,10 +95,10 @@ class LeccionesController extends Controller
                     $resp["msj"] = "Por favor realice algún cambio";
                 }
             }else{
-                $resp["msj"] = "No se ha encontrado el curso";
+                $resp["msj"] = "No se ha encontrado la lección";
             }
         }else{
-            $resp["msj"] = "el curso " . $request->nombre . " ya se encuentra registrado";
+            $resp["msj"] = "la lección " . $request->nombre . " ya se encuentra registrada";
         }
         
         return $resp;
@@ -100,15 +106,15 @@ class LeccionesController extends Controller
 
     public function cambiarEstado(Request $request){
         $resp["success"] = false;
-        $curso = cursos::find($request->id);
+        $leccion = lecciones::find($request->id);
         
-        if(is_object($curso)){
+        if(is_object($leccion)){
             DB::beginTransaction();
-            $curso->estado = $request->estado;
+            $leccion->estado = $request->estado;
         
-            if ($curso->save()) {
+            if ($leccion->save()) {
                 $resp["success"] = true;
-                $resp["msj"] = "La escuela " . $curso->nombre . " se ha " . ($request->estado == 1 ? 'habilitado' : 'deshabilitado') . " correctamente.";
+                $resp["msj"] = "La escuela " . $leccion->nombre . " se ha " . ($request->estado == 1 ? 'habilitado' : 'deshabilitado') . " correctamente.";
                 DB::commit();
             }else{
                 DB::rollBack();
@@ -120,108 +126,115 @@ class LeccionesController extends Controller
         return $resp; 
     }
 
-    // asignación escuelas_cursos
+    public function traerLeccion($id){
+        return unidades::select( "nombre", "tipo")->where("id", $id)->get();
+    }
+
+    // listado lecciones_unidades
+    public function listarLeccionesUnidades($idUnidad){
+    
+        $query = DB::table('lecciones_unidades')->join('lecciones', 'lecciones_unidades.fk_leccion', '=', 'lecciones.id');
+        $query->where('lecciones_unidades.fk_unidad', $idUnidad);
+        $query->where('lecciones_unidades.estado',1);
+        $query->select(
+            "lecciones_unidades.id as lecciones_unidades_id",
+            "lecciones_unidades.estado as lecciones_unidades_estado", 
+            "lecciones_unidades.orden as lecciones_unidades_orden", 
+            "lecciones_unidades.fk_unidad as fk_unidad",
+            "lecciones_unidades.fk_leccion_dependencia as lecciones_unidades_dependencia",
+            "lecciones.id as lecciones_id", "lecciones.nombre as lecciones_nombre", 
+            "lecciones.tipo as lecciones_tipo"
+        );
+        $query->orderBy('lecciones_unidades_orden','asc');
+        
+        return $query->get();
+
+    }
+
+    
+    // asignación lecciones_unidades
     public function asignar(Request $request){
         $resp["success"] = false;
-
         try {
-            $query = DB::table('escuelas_cursos')->insert([
-               "fk_curso" => $request->fk_curso,
-               "fk_escuela" => $request->fk_escuela,
-               "fk_curso_dependencia" => $request->fk_curso_dependencia,
+            $query = DB::table('lecciones_unidades')->insert([
+               "fk_unidad" => $request->fk_unidad,
+               "fk_leccion" => $request->fk_leccion,
                "estado" => 1,
                "orden" => $request->orden        
             ]);
 
             $resp["success"] = true;
-            $resp["msj"] = " curso asignado correctamente.";
+            $resp["msj"] = " lección asignada correctamente.";
             DB::commit();
 
             return $resp;
         } catch (\Exception $e) {
             DB::rollback();
 
-            $resp["msj"] = " error al asignar curso.";
+            $resp["msj"] = " error al asignar lección.";
 
             return $resp;
         }
 
     }
 
-    // listado escuelas_cursos
-    public function listarEscuelasCursos($idEscuela){
-        
-        $query = DB::table('escuelas_cursos')->join('cursos', 'escuelas_cursos.fk_curso', '=', 'cursos.id');
-        $query->where('escuelas_cursos.fk_escuela',$idEscuela);
-        $query->where('escuelas_cursos.estado',1);
-        $query->select(
-            "escuelas_cursos.id as escuelas_cursos_id",
-            "escuelas_cursos.estado as escuelas_cursos_estado", 
-            "escuelas_cursos.orden as escuelas_cursos_orden", 
-            "escuelas_cursos.fk_escuela as fk_escuela",
-            "escuelas_cursos.fk_curso_dependencia as escuelas_cursos_dependencia",
-            "cursos.id as curso_id", "cursos.nombre as curso_nombre", 
-            "cursos.descripcion as curso_descripcion",
-        );
-        $query->orderBy('escuelas_cursos_orden','asc');
-        
-        return $query->get();
-
-    }
-
-    //desasignar escuela_curso
+    
+    //desasignar lecciones_unidades
     public function desasignar(Request $request){
 
         $resp["success"] = false;
 
-        $validar =  DB::table('escuelas_cursos')->where([
+        $validar =  DB::table('lecciones_unidades')->where([
             ['id', '<>', $request->id],
         ])->get();
   
 
         if (!$validar->isEmpty()) {
 
-            $dependencias = DB::table('escuelas_cursos')->where('fk_curso_dependencia',$request->curso_id)->where('estado',1)->where('fk_escuela', $request->fk_escuela)->get();
+            $dependencias = DB::table('lecciones_unidades')->where('fk_leccion_dependencia',$request->leccion_id)->where('estado',1)->where('fk_unidad',$request->fk_unidad)->get();
 
             if($dependencias->isEmpty()){
-                $escuelaCurso = DB::table('escuelas_cursos')->where('id',$request->id);
-                if ( $escuelaCurso->update(["estado" => 0]) ) {
+                $unidadCurso = DB::table('lecciones_unidades')->where('id',$request->id);
+                
+                if ( $unidadCurso->update(["estado" => 0]) ) {
                     $resp["success"] = true;
-                    $resp["msj"] = "Se ha desasignado el curso";
+                    $resp["msj"] = "Se ha desasignado la leccion";
                 }else{
                     $resp["msj"] = "Error al desasignar";
                 }
             }else{
-                $resp["msj"] = "Curso es dependencia de otros cursos, no se puede desasignar";
+                $resp["msj"] = "Leccion es dependencia de otras leccion, no se puede desasignar";
             }
         
             
         }else{
-            $resp["msj"] = "no se encuentra curso asignado";
+            $resp["msj"] = "no se encuentra lección asignada";
         }
         
         return $resp;
 
     }
 
-    //actualizar orden escuela_curso
+    //actualizar orden lecciones_unidades
     public function actualizarOrden(Request $request){
 
         $resp["success"] = false;
         $opts = [];
 
-        foreach ($request->cursos as $curso) {
+        foreach ($request->lecciones as $leccion) {
 
-            $id = $curso['escuelas_cursos_id'];
-            $orden = $curso['escuelas_cursos_orden'];
+            $id = $leccion['lecciones_unidades_id'];
+            $orden = $leccion['lecciones_unidades_orden'];
+        
             try {
-                $escuelaCurso = DB::table('escuelas_cursos')->where('id',$id);
-                if ( $escuelaCurso->update(["orden" => $orden]) ) {
+    
+                $leccionUnidad = DB::table('lecciones_unidades')->where('id',$id);
+
+                if ( $leccionUnidad->update(["orden" => $orden]) ) {
                     $resp["success"] = true;
-                    $resp["msj"] = "Se ha cambiado el curso";
+                    $resp["msj"] = "Se ha cambiado el orden de lección";
                     array_push($opts, $id, $orden);
                 }
-               
             } catch (\Exception $e) {
                 DB::rollback();
                 $resp["msj"] = 'exepcion';
@@ -233,22 +246,22 @@ class LeccionesController extends Controller
 
         $resp["msj"] = "orden cambiado correctamente.";
         return $resp;
-    }   
-
-    //desasignar dependencia escuela_curso
+    }
+    
+    //agregar dependencia lecciones_unidades
     public function agregarDependencia(Request $request){
         $resp["success"] = false;
 
         $id = $request['id'];
         $idDependencia =  $request['idDependencia'];
-        $validar =  DB::table('escuelas_cursos')->where([
+        $validar =  DB::table('lecciones_unidades')->where([
             ['id', '<>', $request->id],
         ])->get();
-  
+    
         if (!$validar->isEmpty()) {
-            $escuelaCurso = DB::table('escuelas_cursos')->where('id',$id);
+            $escuelaCurso = DB::table('lecciones_unidades')->where('id',$id);
 
-            if ( $escuelaCurso->update(["fk_curso_dependencia" => $idDependencia]) ) {
+            if ( $escuelaCurso->update(["fk_leccion_dependencia" => $idDependencia]) ) {
                 $resp["success"] = true;
 
                 $resp["msj"] = "dependencia".($idDependencia == null ? " des" : " ")."asignada";
@@ -256,15 +269,11 @@ class LeccionesController extends Controller
                 $resp["msj"] = "error al asignar dependencia";
             }
         }else{
-            $resp["msj"] = "no se encuentra el curso asignado";
+            $resp["msj"] = "no se encuentra la lección asignado";
         }
         
         return $resp;
 
-    }
-
-    public function traerCurso($id){
-        return cursos::select( "nombre", "descripcion")->where("id", $id)->get();
     }
 }
 
