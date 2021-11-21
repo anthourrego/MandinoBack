@@ -16,6 +16,7 @@ use App\Http\Controllers\TomaControlVisualizacionesController;
 use App\Http\Controllers\UnidadesController;
 use App\Http\Controllers\TomaControlComentariosController;
 use App\Http\Controllers\TomaControlMeGustaController;
+use App\Http\Controllers\LeccionesController;
 
 /*
 |--------------------------------------------------------------------------
@@ -211,5 +212,23 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::post('actualizar', [TomaControlMeGustaController::class, 'actualizar']);
     });
 
+
+    //Lecciones
+    Route::prefix('lecciones')->group(function () {
+        Route::post('obtener', [LeccionesController::class, 'show']);
+        Route::post('crear', [LeccionesController::class, 'crear']);
+        Route::post('editar', [LeccionesController::class, 'actualizar']);
+        Route::post('cambiarEstado', [LeccionesController::class, 'cambiarEstado']);
+        Route::get('traerLeccion/{id}', [LeccionesController::class, 'traerLeccion']);
+    });
+
+    //Lecciones-unidades
+    Route::prefix('lecciones_unidades')->group(function () {
+        Route::post('asignar', [LeccionesController::class, 'asignar']);
+        Route::post('desasignar', [LeccionesController::class, 'desasignar']);
+        Route::post('actualizarOrden', [LeccionesController::class, 'actualizarOrden']);
+        Route::post('agregarDependencia', [LeccionesController::class, 'agregarDependencia']);
+        Route::get('listarLeccionesUnidades/{idUnidad}', [LeccionesController::class, 'listarLeccionesUnidades']);
+    });
 
 });
