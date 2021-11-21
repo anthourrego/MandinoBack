@@ -24,6 +24,7 @@ class TomaControlComentariosController extends Controller
         $resp["success"] = true;
         $resp["msj"] = "Comentario guardado correctamente.";
         $resp["id"] = $comentario->id;
+        $resp["comentarios"] = $this->lista($request->fk_toma_control);
     }else{
         $resp["msj"] = "No fue posible guardar el comentario.";
     }
@@ -37,13 +38,16 @@ class TomaControlComentariosController extends Controller
         "toma_control_comentarios.estado",
         "toma_control_comentarios.visibilidad",
         "toma_control_comentarios.fk_comentario",
+        "toma_control_comentarios.fk_user",
+        "toma_control_comentarios.created_at",
         "u.nombre AS usuario"
       )->addSelect(['contHijos' => DB::table("toma_control_comentarios AS tcc")->selectRaw('count(*)')
         ->whereColumn('tcc.fk_comentario', 'toma_control_comentarios.id')
       ])
       ->join("users AS u", "toma_control_comentarios.fk_user", "u.id")
       ->where("toma_control_comentarios.visibilidad", 1)
-      ->where("toma_control_comentarios.fk_toma_control", $id);
+      ->where("toma_control_comentarios.fk_toma_control", $id)
+      ->orderBy('toma_control_comentarios.created_at', 'DESC');
     if (is_null($comentario)) {
       $comentarios = $comentarios->whereNull("toma_control_comentarios.fk_comentario");
     } else {

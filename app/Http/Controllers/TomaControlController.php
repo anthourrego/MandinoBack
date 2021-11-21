@@ -78,7 +78,6 @@ class TomaControlController extends Controller
         ])->get();
 
         if($validar->isEmpty()){
-            
             DB::beginTransaction();
 
             $toma = new toma_control;
@@ -91,6 +90,8 @@ class TomaControlController extends Controller
             $toma->poster = isset($request->poster) ? "poster." . $request->file('poster')->getClientOriginalExtension() : 'poster.png';
             
             if($toma->save()){
+                
+
                 $cont = 0;
                 foreach ($datos->categorias as $value) {
                     try {
@@ -120,12 +121,12 @@ class TomaControlController extends Controller
                         $resp["msj"] = "Error al subir el video.";
                     }
 
-                    if($rutaVideo != 0) {
+                    if($rutaVideo !== 0) {
                         $ffprobe = FFProbe::create();
                         $duracion = (int) $ffprobe->format(storage_path('app/' . $rutaVideo))->get('duration');
-
                         $timeSkip = rand(1, $duracion - 3);
                         $videoOpen = $request->ruta . "/" . $toma->id . "/video." . $request->file('file')->getClientOriginalExtension();
+                        
 
                         if(isset($request->poster)){
                             try {
@@ -153,18 +154,20 @@ class TomaControlController extends Controller
                         }
 
                         try {
-                            $gifPath = storage_path("app/public/" . $request->ruta . "/" . $toma->id . "/preview.gif");
-                            $ffmpeg = FFMpeg::create();
-                            $ffmpegVideo = $ffmpeg->open(storage_path('app/' . $rutaVideo));
-                            $ffmpegVideo->gif(TimeCode::fromSeconds($timeSkip), new Dimension(320, 180), 3)->save($gifPath);
+                           $gifPath = storage_path("app/public/" . $request->ruta . "/" . $toma->id . "/preview.gif");
+                           $ffmpeg = FFMpeg::create();
+                           $ffmpegVideo = $ffmpeg->open(storage_path('app/' . $rutaVideo));
+                           $ffmpegVideo->gif(TimeCode::fromSeconds($timeSkip), new Dimension(320, 180), 3)->save($gifPath);
                         } catch (\Throwable $th) {
-                            $resp["msj"] = "Error al crear la vista previa.";
-                            $rutaPoster = 0; 
-                            $rutaVideo == 0;
+                           $resp["msj"] = "Error al crear la vista previa.";
+                           $rutaPoster = 0; 
+                           $rutaVideo == 0;
                         }
                     }
 
-                    if ($rutaVideo == 0 || $rutaPoster == 0) {
+
+
+                    if ($rutaVideo === 0 || $rutaPoster === 0) {
                         DB::rollback();
                         $delete = Storage::deleteDirectory('public/' . $request->ruta . "/" . $toma->id);
                     } else {
@@ -341,7 +344,6 @@ class TomaControlController extends Controller
             ->leftJoinSub($me_gusta, "tcmg", function ($join) {
                 $join->on("toma_controls.id", "=", "tcmg.fk_toma_control");
             })->where("toma_controls.id", $video)
-            ->where("toma_controls.visibilidad", 1)
             ->first();
 
         if ($query->comentarios == 1) {
