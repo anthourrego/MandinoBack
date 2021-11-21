@@ -293,7 +293,7 @@ class UserController extends Controller {
                         $usuario->estado = $datos->estado; 
                         $usuario->fk_municipio = $datos->fk_municipio;
                         $usuario->fk_perfil = $datos->fk_perfil == "null" ? null : $datos->fk_perfil;
-
+                        DB::beginTransaction();
                         if ($usuario->save()) {
 
                             $rutaFotoPerfil = "foto";
@@ -561,5 +561,27 @@ class UserController extends Controller {
         $response->header("Content-Type", $type); 
 
         return $response;
+    }
+
+    public function actualizarFotoPerfil(Request $request) {
+        $resp["success"] = true;
+        $resp["msj"] = "Foto actualizada correctamente.";
+        try {
+
+            $usuario = User::find($request->usuario);
+            Storage::delete('public/fotosPerfil/' . $usuario->foto);
+
+            $extend = $request->file('fotoPerfil')->getClientOriginalExtension();
+            $rutaFotoPerfil = Storage::putFileAs('public/fotosPerfil/', $request->fotoPerfil, $request->usuario . "." . $extend);
+            DB::beginTransaction();
+            $usuario->foto = $request->usuario . "." . $extend;
+            $usuario->save();
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollback();
+            $resp["success"] = false;
+            $resp["msj"] = "Error al actualizar la foto.";
+        }
+        return $resp;
     }
 }

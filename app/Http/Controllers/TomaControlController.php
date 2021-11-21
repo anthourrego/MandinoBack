@@ -341,7 +341,6 @@ class TomaControlController extends Controller
             ->leftJoinSub($me_gusta, "tcmg", function ($join) {
                 $join->on("toma_controls.id", "=", "tcmg.fk_toma_control");
             })->where("toma_controls.id", $video)
-            ->where("toma_controls.visibilidad", 1)
             ->first();
 
         if ($query->comentarios == 1) {
