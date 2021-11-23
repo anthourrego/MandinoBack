@@ -554,6 +554,10 @@ class UserController extends Controller {
             $path = resource_path('assets/image/user.png');
         }
 
+        if (!File::exists($path)) {
+            $path = resource_path('assets/image/user.png');
+        }
+
         $file = File::get($path);
         $type = File::mimeType($path);
 

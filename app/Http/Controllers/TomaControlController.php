@@ -165,8 +165,6 @@ class TomaControlController extends Controller
                         }
                     }
 
-
-
                     if ($rutaVideo === 0 || $rutaPoster === 0) {
                         DB::rollback();
                         $delete = Storage::deleteDirectory('public/' . $request->ruta . "/" . $toma->id);
