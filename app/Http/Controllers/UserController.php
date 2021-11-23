@@ -534,7 +534,8 @@ class UserController extends Controller {
                 ->where(function($query) use ($idUsuario, $idPerfil) {
                     return $query->where("PS.fk_perfil", $idPerfil)
                                 ->orWhere("PS.fk_usuario", $idUsuario);
-                })->whereNotNull("PS.fk_categorias_toma_control")->get();
+                })->whereNotNull("PS.fk_categorias_toma_control")
+                ->where("TCC.estado", 1)->get();
 
         return $query; 
     }
