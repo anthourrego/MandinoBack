@@ -197,7 +197,7 @@ class TomaControlController extends Controller
             $toma = toma_control::find($datos->id);
 
             if(!empty($toma)){
-                if ($toma->nombre != $datos->nombre || $toma->descripcion != $datos->descripcion || $toma->visibilidad != $datos->visibilidad || $toma->comentarios != $datos->comentarios || $toma->estado != $datos->estado) {
+                if ($toma->nombre != $datos->nombre || $toma->descripcion != $datos->descripcion || $toma->visibilidad != $datos->visibilidad || $toma->comentarios != $datos->comentarios || $toma->estado != $datos->estado || $datos->categoritasModificadas == true || $datos->cambioPoster == true) {
 
                     $toma->nombre = $datos->nombre;
                     $toma->descripcion = $datos->descripcion;
@@ -206,17 +206,19 @@ class TomaControlController extends Controller
                     $toma->estado = $datos->estado;
                     
                     if ($toma->save()) {
-                        DB::table('toma_control_u_categorias')->where("fk_toma_control", $toma->id)->delete(); 
                         $cont = 0;
-                        foreach ($datos->categorias as $value) {
-                            try {
-                                DB::table('toma_control_u_categorias')->insert([
-                                    "fk_toma_control" => $toma->id
-                                    ,"fk_categoria" => $value
-                                ]);
-                            } catch (\Exception $e) {
-                                $cont++;
-                                break;
+                        if ($datos->categoritasModificadas == true) {
+                            DB::table('toma_control_u_categorias')->where("fk_toma_control", $toma->id)->delete(); 
+                            foreach ($datos->categorias as $value) {
+                                try {
+                                    DB::table('toma_control_u_categorias')->insert([
+                                        "fk_toma_control" => $toma->id
+                                        ,"fk_categoria" => $value
+                                    ]);
+                                } catch (\Exception $e) {
+                                    $cont++;
+                                    break;
+                                }
                             }
                         }
 
@@ -237,12 +239,34 @@ class TomaControlController extends Controller
 
                             if(isset($request->poster) && $datos->cambioPoster){
                                 try {
-                                    $rutaPoster = Storage::putFileAs('public/' . $request->ruta . "/" . $toma->id, $request->poster, "poster." . $request->file('poster')->getClientOriginalExtension());
+                                    $rutaPoster = Storage::putFileAs('public/' . $request->ruta . "/" . $datos->id, $request->poster, "poster." . $request->file('poster')->getClientOriginalExtension());
                                 } catch (\Exception $e) {
                                     $rutaPoster = 0;
                                 }
                             } else {
-                                $rutaPoster = 1; 
+                                if ($datos->cambioPoster == true) {
+                                    $ffprobe = FFProbe::create();
+                                    $duracion = (int) $ffprobe->format(storage_path('app/' . $rutaVideo))->get('duration');
+                                    $timeSkip = rand(1, $duracion - 3);
+                                    $videoOpen = $request->ruta . "/" . $datos->id . "/video." . $request->file('file')->getClientOriginalExtension();
+                                    try {
+                                        FFMpeg2::fromDisk('public')
+                                        ->open($videoOpen)
+                                        ->getFrameFromSeconds($timeSkip)
+                                        ->addFilter(function (FrameFilters $filters) {
+                                            $filters->custom('scale=320:180');
+                                        })
+                                        ->export()
+                                        ->toDisk('public')
+                                        ->save($request->ruta . "/" . $datos->id . "/poster.png");
+                                        $rutaPoster = 'poster.png';
+                                    } catch (\Throwable $th) {
+                                        $rutaPoster = 0; 
+                                        $resp["msj"] = "Error al subir el poster predeterminado.";
+                                    }
+                                } else {
+                                    $rutaPoster = 1; 
+                                }
                             }
 
                             if ($rutaVideo == 0 && $rutaPoster == 0) {
