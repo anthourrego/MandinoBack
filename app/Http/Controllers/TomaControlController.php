@@ -25,8 +25,7 @@ class TomaControlController extends Controller
      * @param  \App\Models\toma_control  $toma_control
      * @return \Illuminate\Http\Response
      */
-    public function show(Request $request)
-    {
+    public function show(Request $request) {
         $query = toma_control::select(
                     'toma_controls.id'
                     ,'toma_controls.nombre'
@@ -91,7 +90,6 @@ class TomaControlController extends Controller
             
             if($toma->save()){
                 
-
                 $cont = 0;
                 foreach ($datos->categorias as $value) {
                     try {
@@ -140,10 +138,10 @@ class TomaControlController extends Controller
                                 FFMpeg2::fromDisk('public')
                                 ->open($videoOpen)
                                 ->getFrameFromSeconds($timeSkip)
+                                ->export()
                                 ->addFilter(function (FrameFilters $filters) {
                                     $filters->custom('scale=320:180');
                                 })
-                                ->export()
                                 ->toDisk('public')
                                 ->save($request->ruta . "/" . $toma->id . "/poster.png");
                                 $rutaPoster = 'poster.png';
@@ -197,7 +195,7 @@ class TomaControlController extends Controller
             $toma = toma_control::find($datos->id);
 
             if(!empty($toma)){
-                if ($toma->nombre != $datos->nombre || $toma->descripcion != $datos->descripcion || $toma->visibilidad != $datos->visibilidad || $toma->comentarios != $datos->comentarios || $toma->estado != $datos->estado || $datos->categoritasModificadas == true || $datos->cambioPoster == true) {
+                if ($toma->nombre != $datos->nombre || $toma->descripcion != $datos->descripcion || $toma->visibilidad != $datos->visibilidad || $toma->comentarios != $datos->comentarios || $toma->estado != $datos->estado || $datos->categoritasModificadas == true || $datos->cambioPoster == true || $datos->cambioVideo == true) {
 
                     $toma->nombre = $datos->nombre;
                     $toma->descripcion = $datos->descripcion;
@@ -226,14 +224,31 @@ class TomaControlController extends Controller
                             DB::rollback();
                             $resp["msj"] = "No fue posible guardar a " . $datos->nombre;
                         } else {
-
                             $rutaVideo = 0;
                             $rutaPoster = 0;
+
                             if ($request->file && $datos->cambioVideo) {
                                 try {
                                     $rutaVideo = Storage::putFileAs('public/' . $request->ruta . "/" . $toma->id, $request->file, "video." . $request->file('file')->getClientOriginalExtension());
                                 } catch (\Exception $e) {
                                     $rutaVideo = 0;
+                                }
+
+                                if ($rutaVideo != 0) {
+                                    try {
+                                        $ffprobe = FFProbe::create();
+                                        $duracion = (int) $ffprobe->format(storage_path('app/' . $rutaVideo))->get('duration');
+                                        $timeSkip = rand(1, $duracion - 3);
+
+                                        $gifPath = storage_path("app/public/" . $request->ruta . "/" . $toma->id . "/preview.gif");
+                                        $ffmpeg = FFMpeg::create();
+                                        $ffmpegVideo = $ffmpeg->open(storage_path('app/' . $rutaVideo));
+                                        $ffmpegVideo->gif(TimeCode::fromSeconds($timeSkip), new Dimension(320, 180), 3)->save($gifPath);
+                                    } catch (\Throwable $th) {
+                                        $resp["msj"] = "Error al crear la vista previa.";
+                                        $rutaPoster = 0; 
+                                        $rutaVideo = 0;
+                                    }
                                 }
                             }
 
@@ -245,20 +260,29 @@ class TomaControlController extends Controller
                                 }
                             } else {
                                 if ($datos->cambioPoster == true) {
-                                    $ffprobe = FFProbe::create();
-                                    $duracion = (int) $ffprobe->format(storage_path('app/' . $rutaVideo))->get('duration');
-                                    $timeSkip = rand(1, $duracion - 3);
-                                    $videoOpen = $request->ruta . "/" . $datos->id . "/video." . $request->file('file')->getClientOriginalExtension();
+                                    if ($request->file && $datos->cambioVideo) {
+                                        $ffprobe2 = FFProbe::create();
+                                        $duracion = (int) $ffprobe2->format(storage_path('app/' . $rutaVideo))->get('duration');
+                                        $timeSkip = rand(1, $duracion - 3);
+                                        $videoOpen = $request->ruta . "/" . $datos->id . "/video." . $request->file('file')->getClientOriginalExtension();
+                                    } else {
+                                        $videoOpen = $request->ruta . "/" . $datos->id . "/" . $toma->ruta;
+                                        $ffprobe2 = FFProbe::create();
+                                        $duracion = (int) $ffprobe2->format(storage_path('app/public/' . $videoOpen))->get('duration');
+                                        $timeSkip = rand(1, $duracion - 3);
+                                    }
+
                                     try {
                                         FFMpeg2::fromDisk('public')
                                         ->open($videoOpen)
                                         ->getFrameFromSeconds($timeSkip)
+                                        ->export()
                                         ->addFilter(function (FrameFilters $filters) {
                                             $filters->custom('scale=320:180');
                                         })
-                                        ->export()
                                         ->toDisk('public')
                                         ->save($request->ruta . "/" . $datos->id . "/poster.png");
+                                        
                                         $rutaPoster = 'poster.png';
                                     } catch (\Throwable $th) {
                                         $rutaPoster = 0; 
@@ -271,7 +295,7 @@ class TomaControlController extends Controller
 
                             if ($rutaVideo == 0 && $rutaPoster == 0) {
                                 DB::rollback();
-                                $resp["msj"] = "Error al subir el video.";
+                                //$resp["msj"] = "Error al subir el video.";
                             } else {
                                 DB::commit();
                                 $resp["success"] = true;
