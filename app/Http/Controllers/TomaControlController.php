@@ -79,6 +79,13 @@ class TomaControlController extends Controller
         if($validar->isEmpty()){
             DB::beginTransaction();
 
+            $configFFP = [
+                'ffmpeg.binaries'  => resource_path('ffmpeg/ffmpeg'), // the path to the FFMpeg binary
+                'ffprobe.binaries' => resource_path('ffmpeg/ffprobe'), // the path to the FFProbe binary
+                'timeout'          => 3600, // the timeout for the underlying process
+                'ffmpeg.threads'   => 12,   // the number of threads that FFMpeg should use
+            ];
+
             $toma = new toma_control;
             $toma->nombre = $datos->nombre;
             $toma->visibilidad = $datos->visibilidad;
@@ -120,7 +127,7 @@ class TomaControlController extends Controller
                     }
 
                     if($rutaVideo !== 0) {
-                        $ffprobe = FFProbe::create();
+                        $ffprobe = FFProbe::create($configFFP);
                         $duracion = (int) $ffprobe->format(storage_path('app/' . $rutaVideo))->get('duration');
                         $timeSkip = rand(1, $duracion - 3);
                         $videoOpen = $request->ruta . "/" . $toma->id . "/video." . $request->file('file')->getClientOriginalExtension();
@@ -135,15 +142,10 @@ class TomaControlController extends Controller
                             }
                         } else {
                             try {
-                                FFMpeg2::fromDisk('public')
-                                ->open($videoOpen)
-                                ->getFrameFromSeconds($timeSkip)
-                                ->export()
-                                ->addFilter(function (FrameFilters $filters) {
-                                    $filters->custom('scale=320:180');
-                                })
-                                ->toDisk('public')
-                                ->save($request->ruta . "/" . $toma->id . "/poster.png");
+                                $ffmpeg = FFMpeg::create($configFFP);
+                                $ffmpeg->open(storage_path('app/' . $rutaVideo))
+                                ->frame(TimeCode::fromSeconds($timeSkip))
+                                ->save(storage_path("app/public/" . $request->ruta . "/" . $toma->id . "/poster.png"));
                                 $rutaPoster = 'poster.png';
                             } catch (\Throwable $th) {
                                 $rutaPoster = 0; 
@@ -153,7 +155,7 @@ class TomaControlController extends Controller
 
                         try {
                            $gifPath = storage_path("app/public/" . $request->ruta . "/" . $toma->id . "/preview.gif");
-                           $ffmpeg = FFMpeg::create();
+                           $ffmpeg = FFMpeg::create($configFFP);
                            $ffmpegVideo = $ffmpeg->open(storage_path('app/' . $rutaVideo));
                            $ffmpegVideo->gif(TimeCode::fromSeconds($timeSkip), new Dimension(320, 180), 3)->save($gifPath);
                         } catch (\Throwable $th) {

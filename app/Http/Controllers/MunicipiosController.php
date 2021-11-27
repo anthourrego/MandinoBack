@@ -147,9 +147,9 @@ class MunicipiosController extends Controller {
             ["p.flag", 1]
             ,["d.flag", 1]
             ,["m.flag", 1]
-        ])->orderBy('m.name', 'asc');
+        ])->orderBy('m.name', 'asc')->get();
 
-        return $query->get();
+        return $query;
     }
 
         /**
