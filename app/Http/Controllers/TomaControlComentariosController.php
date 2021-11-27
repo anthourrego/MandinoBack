@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\toma_control_comentarios;
 use Illuminate\Http\Request;
 use DB;
+use DateTime;
 
 class TomaControlComentariosController extends Controller
 {
@@ -54,7 +55,12 @@ class TomaControlComentariosController extends Controller
       $comentarios = $comentarios->where("toma_control_comentarios.fk_comentario", $comentario);
     }
     $comentarios = $comentarios->get();
+    $toma_control = new TomaControlController();
     foreach ($comentarios as $valor) {
+      $date1 = new DateTime();
+      $date2 = new DateTime($valor->created_at);
+      $diff = $date1->diff($date2);
+      $valor->haceFecha = $toma_control->formatoFecha($diff);
       if ($valor->contHijos > 0) {
         $valor->children = $this->lista($id, $valor->id);
       }
