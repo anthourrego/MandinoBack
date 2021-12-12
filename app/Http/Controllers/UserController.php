@@ -155,7 +155,6 @@ class UserController extends Controller {
         return $resp;
     }
 
-
     public function obtener(Request $request){
         $query = User::select(
             "users.id"
@@ -398,7 +397,7 @@ class UserController extends Controller {
         
     }
 
-    public function guardarPermiso(Request $request){
+    public function guardarPermiso2(Request $request){
         $resp["success"] = false;
         DB::beginTransaction();
 
@@ -412,6 +411,57 @@ class UserController extends Controller {
                     ,"fk_permiso" => $value
                     ,"tipo" => 0
                 ]);
+            } catch (\Exception $e) {
+                DB::rollback();
+                $cont++;
+                break;
+            }
+        }
+
+        if ($cont == 0) {
+            DB::commit();
+            $resp["success"] = true;
+            $resp["msj"] = "Permisos actualizados correctamente.";
+        } else {
+            DB::rollback();
+            $resp["msj"] = "Error al actualizar los permisos.";
+        }
+
+        return $resp;
+    }
+
+    public function guardarPermiso(Request $request){
+        $resp["success"] = false;
+        DB::beginTransaction();
+
+        DB::table('permisos_sistema')->where("fk_usuario", $request->idUsuario)->delete(); 
+        
+        $cont = 0;
+        $perfil = new PerfilesController();
+        $permisoSeleccionados = $perfil->permisosGuardar($request->permisos, []);
+        foreach ($permisoSeleccionados as $value) {
+            try {
+                $validar = DB::table('permisos_sistema')
+                    ->select("id")
+                    ->where("fk_perfil", $request->idPerfil)
+                    ->where("fk_permiso", $value)
+                    ->whereNull('fk_usuario')
+                    ->first();
+                if (!isset($validar->id)) {
+                    $validar = DB::table('permisos_sistema')
+                        ->select("id")
+                        ->where("fk_usuario", $request->idUsuario)
+                        ->where("fk_permiso", $value)
+                        ->first();
+                    if (!isset($validar->id)) {
+                        DB::table('permisos_sistema')->insert([
+                            "fk_usuario" => $request->idUsuario
+                            ,"fk_permiso" => $value
+                            ,"fk_perfil" => $request->idPerfil
+                            ,"tipo" => 0
+                        ]);    
+                    }
+                }
             } catch (\Exception $e) {
                 DB::rollback();
                 $cont++;

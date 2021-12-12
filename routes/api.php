@@ -126,7 +126,7 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::post('cambiarEstado', [PerfilesController::class, 'cambiarEstado']);
         Route::post('obtener', [PerfilesController::class, 'show']);
         Route::get('arbol/{idPerfil}', [PerfilesController::class, 'arbol']);
-        Route::get('permisos/{idPerfil}', [PerfilesController::class, 'permisos']);
+        Route::get('permisos/{idPerfil}/{idUsuario}', [PerfilesController::class, 'permisos']);
         Route::post('guardarPermiso', [PerfilesController::class, 'guardarPermiso']);
     });
 
