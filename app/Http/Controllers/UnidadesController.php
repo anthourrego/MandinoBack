@@ -55,29 +55,40 @@ class UnidadesController extends Controller
     }
 
     public function crear(Request $request){
+        $nombre = $request->nombre;
+        $descripcion = $request->descripcion;
+        $estado = $request->estado;
+
+        return $this->crearUnidad($nombre, $descripcion, $estado);
+    }
+
+    public function crearUnidad($nombre, $descripcion, $estado){
+
         $resp["success"] = false;
         $validar = unidades::where([
-            ['nombre', $request->nombre], 
+            ['nombre', $nombre], 
         ])->get();
 
         if($validar->isEmpty()){
             $unidad = new unidades;
-            $unidad->nombre = $request->nombre;
-            $unidad->descripcion = $request->descripcion;
-            $unidad->estado = $request->estado;
+            $unidad->nombre =$nombre;
+            $unidad->descripcion =$descripcion;
+            $unidad->estado =$estado;
 
             if($unidad->save()){
                 $resp["success"] = true;
                 $resp["msj"] = "Se ha creado la unidad correctamente.";
+                $resp["id"] = $unidad->id;
             }else{
-                $resp["msj"] = "No se ha creado la unidad " . $request->nombre;
+                $resp["msj"] = "No se ha creado la unidad " . $nombre;
             }
         }else{
-            $resp["msj"] = "la unidad " . $request->nombre . " ya se encuentra registrado.";
+            $resp["msj"] = "la unidad " . $nombre . " ya se encuentra registrado.";
         }
 
         return $resp;
     }
+
 
     public function actualizar(Request $request){
         $resp["success"] = false;
@@ -139,7 +150,7 @@ class UnidadesController extends Controller
     }
 
     public function traerUnidad($id){
-        return unidades::select( "nombre", "descripcion")->where("id", $id)->get();
+        return unidades::select("id", "nombre", "descripcion", "estado")->where("id", $id)->get();
     }
 
 

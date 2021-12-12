@@ -127,7 +127,7 @@ class LeccionesController extends Controller
     }
 
     public function traerLeccion($id){
-        return unidades::select( "nombre", "tipo")->where("id", $id)->get();
+        return lecciones::select("*")->where("id", $id)->get();
     }
 
     // listado lecciones_unidades
@@ -178,7 +178,6 @@ class LeccionesController extends Controller
 
     }
 
-    
     //desasignar lecciones_unidades
     public function desasignar(Request $request){
 
