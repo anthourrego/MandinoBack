@@ -103,16 +103,17 @@ class UserController extends Controller {
                             } catch (\Exception $e) {
                                 DB::rollback();
                                 $rutaFotoPerfil = 0;
-                                $resp["msj"] = "Error al subir el poster.";
+                                $resp["msj"] = "Error al subir la foto de perfil.";
                             }
                         }
 
-                        if ($rutaFotoPerfil != 0){
+                        if ($rutaFotoPerfil !== 0){
                             DB::commit();
                             $resp["success"] = true;
                             $resp["msj"] = "Se ha creado el usuario";
                             $resp["id"]= $usuario->id;
                         } else {
+                            $resp["msj"] = "Error al crear el usuario";
                             DB::rollback();
                         }
 
@@ -307,16 +308,17 @@ class UserController extends Controller {
                                 } catch (\Exception $e) {
                                     DB::rollback();
                                     $rutaFotoPerfil = 0;
-                                    $resp["msj"] = "Error al subir el poster.";
+                                    $resp["msj"] = "Error al subir la foto de perfil.";
                                 }
                             }
 
-                            if ($rutaFotoPerfil != 0){
+                            if ($rutaFotoPerfil !== 0){
                                 DB::commit();
                                 $resp["success"] = true;
                                 $resp["msj"] = "Se han actualizado los datos";
                                 $resp["id"]= $usuario->id;
                             } else {
+                                $resp["msj"] = "Error al editar el usuario";
                                 DB::rollback();
                             }
 
