@@ -288,26 +288,18 @@ class CursosController extends Controller
             $curso = $cursos[0];
             try{
                 // creación de nuevo curso
+                DB::beginTransaction();
                 $nuevoCurso = $this->crearCurso($nombre, $curso->descripcion, $curso->estado);
-                //if($nuevoCurso['id']){
-                if(true){
+                if($nuevoCurso['id']){
                     // listado de unidades que hacen parte del curso para proceder a clonarlas
                     $unidadesController = new UnidadesController();
                     $leccionesController = new LeccionesController();
                     $oldUnidadesCursos = $unidadesController->listarUnidadesCursos($id);
-                    
-                    //fk_curso: 1
-                    //unidad_descripcion: "nada"
-                    //unidad_id: 1
-                    //unidad_nombre: "Unidad 1"
-                    //unidades_cursos_dependencia: null
-                    //unidades_cursos_estado: 1
-                    //unidades_cursos_id: 1
-                    //unidades_cursos_orden: 1
 
                     // creación estructura de nuevas unidades y lecciones
                     $nuevasUnidades = array();
                     $nuevasLecciones = array();
+                    $unidadesIds = array();
         
                     foreach( $oldUnidadesCursos as $unidadCurso ){
                         $result = $unidadesController->traerUnidad($unidadCurso->unidad_id);
@@ -315,21 +307,34 @@ class CursosController extends Controller
                         $unidad->nombre = $unidad->nombre."-".$nombre;
                         array_push($nuevasUnidades, $unidad);
 
-                        $nuevasLecciones[$unidad->nombre] = array();
+
+
+
+                        $nombreNuevo =  $unidad->nombre;
+                        $descripcionNuevo =  $unidad->descripcion;
+                        $estadoNuevo =  $unidad->estado;
+
+                        $unidadNueva = $unidadesController->crearUnidad($nombreNuevo, $descripcionNuevo, $estadoNuevo);
+                        if($unidadNueva['id']){
+                            array_push($unidadesIds, $unidadNueva['id']);
+                        }
+
+
+                        $nuevasLecciones[$unidadNueva['id']] = array();
                         $oldLeccionesUnidades = $leccionesController->listarLeccionesUnidades($unidadCurso->unidad_id);
 
+                        
                         foreach( $oldLeccionesUnidades as $leccionUnidad ){
                             $result = $leccionesController->traerLeccion($leccionUnidad->lecciones_id);
                             $leccion = $result[0];
                             $leccion->nombre = $leccion->nombre."-".$nombre;
-                            array_push($nuevasLecciones[$unidad->nombre], $leccion);
+                            array_push($nuevasLecciones[$unidadNueva['id']], $leccion);
                         }
-                    }
 
+                    }
                     
-                    $unidadesIds = array();
                     // creación nuevas Unidades
-                    foreach( $nuevasUnidades as $nuevaUnidad ){
+                    /*foreach( $nuevasUnidades as $nuevaUnidad ){
                         $nombre =  $nuevaUnidad->nombre;
                         $descripcion =  $nuevaUnidad->descripcion;
                         $estado =  $nuevaUnidad->estado;
@@ -339,15 +344,68 @@ class CursosController extends Controller
                             array_push($unidadesIds, $unidad['id']);
                         }
                     }
-                    
-                    return $unidadesIds;
+                    */
+
+                    $leccionesIds = array();
+                    // creación nuevas Lecciones
+                    foreach( $nuevasLecciones as $nuevaLeccion => $lecciones ){
+                        //$leccion = $lecc[0];
+                        $leccionesIds[$nuevaLeccion] = array();
+
+                        foreach($lecciones as $leccion){
+
+                            $nombre = $leccion->nombre;
+                            $contenido = $leccion->contenido;
+                            $estado = $leccion->estado;
+                            $tipo = $leccion->tipo;
+                            $url_contenido = $leccion->url_contenido;
+
+                            // return array($nombre, $contenido, $estado, $tipo, $url_contenido);
+                            $leccionNueva = $leccionesController->crearLeccion($nombre, $contenido, $estado, $tipo, $url_contenido);
+
+                            if($leccionNueva['id']){
+                                array_push($leccionesIds[$nuevaLeccion], array('nuevoId' => $leccionNueva['id'], 'oldId' => $leccion->id));
+                            }
+                        }
+                    }
+
+                    $contUnidades = 1;
+                    //asignar unidades_cursos
+                    foreach($unidadesIds as $idUnidad ){
+                        $unidadesController->asignarUnidadCurso($nuevoCurso['id'], $idUnidad, null, $contUnidades );
+                        $contUnidades++;
+                    }
+
+                    //asignar lecciones_unidades
+                    foreach($leccionesIds as $key=>$leccion ){
+                        $contLecciones = 1;
+                        foreach($leccion as $ids){
+                            //return $key;
+                            $leccionesController->asignarLeccionUnidad($key, $ids['nuevoId'], null, $contLecciones);
+                            //$contLecciones++;
+                        }
+                    }
+
+                    DB::commit();
+                    return array(
+                        'unidades' => $unidadesIds, 
+                        'lecciones' => $leccionesIds, 
+                        "curso" => $nuevoCurso, 
+                        "nuevasLecciones" => $nuevasLecciones,
+                        "nuevasUnidades" => $nuevasUnidades
+                    );
+
+                    $resp["msj"] = "Curso Clonado";
+                    $resp["success"] = true;
+
+                    return $resp;
+
                 }
             }catch(\Exception $e){
-                $resp["msj"] = "Nombre de curso ya existe";
+                $resp["msj"] = "error al clonar curso";
+                DB::rollBack();
                 return $e;//$resp;
             }
-        
-        
         }else{
             $resp["msj"] = "Curso no encontrado";
             return $resp;

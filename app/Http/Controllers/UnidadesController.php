@@ -156,30 +156,45 @@ class UnidadesController extends Controller
 
     // asignación escuelas_cursos
     public function asignar(Request $request){
+
+        
         $resp["success"] = false;
+        $fk_curso = $request->fk_curso;
+        $fk_unidad = $request->fk_unidad;
+        $fk_unidad_dependencia = $request->fk_unidad_dependencia;
+        $estado = 1;
+        $orden = $request->orden;
 
-        try {
-            $query = DB::table('unidades_cursos')->insert([
-               "fk_curso" => $request->fk_curso,
-               "fk_unidad" => $request->fk_unidad,
-               "fk_unidad_dependencia" => $request->fk_unidad_dependencia,
-               "estado" => 1,
-               "orden" => $request->orden        
-            ]);
-
-            $resp["success"] = true;
-            $resp["msj"] = " unidad asignada correctamente.";
+        try{
+            return $this->asignarUnidadCurso($fk_curso, $fk_unidad, $fk_unidad_dependencia , $orden);
             DB::commit();
-
-            return $resp;
-        } catch (\Exception $e) {
+        }catch (\Exception $e) {
             DB::rollback();
-
             $resp["msj"] = " error al asignar unidad.";
 
             return $resp;
         }
 
+    }
+
+    public function asignarUnidadCurso($fk_curso, $fk_unidad, $fk_unidad_dependencia , $orden){
+
+        $resp["success"] = false;
+
+        $query = DB::table('unidades_cursos')->insert([
+            "fk_curso" => $fk_curso,
+            "fk_unidad" => $fk_unidad,
+            "fk_unidad_dependencia" => $fk_unidad_dependencia,
+            "estado" => 1,
+            "orden" => $orden        
+        ]);
+
+        $resp["success"] = true;
+        $resp["msj"] = " unidad asignada correctamente.";
+        DB::commit();
+
+        return $resp;
+    
     }
 
     // listado unidades_cursos

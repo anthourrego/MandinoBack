@@ -15,31 +15,47 @@ class LeccionesController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function crear(Request $request){
+        $nombre = $request->nombre;
+        $contenido = $request->contenido;
+        $estado = $request->estado;
+        $tipo = $request->tipo;
+        $url_contenido = $request->url_contenido;
 
+        return $this->crearLeccion($nombre, $contenido, $estado, $tipo, $url_contenido);
+    }
+
+    public function crearLeccion($nombre, $contenido, $estado, $tipo, $url_contenido){
         $resp["success"] = false;
-        /* 
-            $validar = lecciones::where([
-                ['nombre', $request->nombre], 
-            ])->get();
-            $validar->isEmpty()
-        */
+         
+        $validar = lecciones::where([
+            ['nombre', $nombre], 
+        ])->get();
 
-        $leccion = new lecciones;
-        $leccion->nombre = $request->nombre;
-        $leccion->contenido = $request->contenido;
-        $leccion->estado = $request->estado;
-        $leccion->tipo = $request->tipo;
-        $leccion->url_contenido = $request->url_contenido;
 
-        if($leccion->save()){
-            $resp["success"] = true;
-            $resp["msj"] = "Se ha creado la lección correctamente.";
+        if($validar->isEmpty()){
+            $leccion = new lecciones;
+            $leccion->nombre = $nombre;
+            $leccion->contenido = $contenido;
+            $leccion->estado = $estado;
+            $leccion->tipo = $tipo;
+            $leccion->url_contenido = $url_contenido;
+
+            if($leccion->save()){
+                $resp["success"] = true;
+                $resp["msj"] = "Se ha creado la lección correctamente.";
+                $resp["id"] = $leccion->id;
+            }else{
+                $resp["msj"] = "No se ha creado la lección " . $request->nombre;
+            }
         }else{
-            $resp["msj"] = "No se ha creado la lección " . $request->nombre;
+            $resp["msj"] = "la lección" . $nombre . " ya se encuentra registrada.";
         }
 
         return $resp;
+
     }
+
+
 
     /**
      * Display the specified resource.
@@ -156,11 +172,32 @@ class LeccionesController extends Controller
     public function asignar(Request $request){
         $resp["success"] = false;
         try {
+
+            $fk_unidad = $request->fk_unidad;
+            $fk_leccion = $request->fk_leccion;
+            $fk_leccion_dependencia = $request->fk_leccion_dependencia;
+            $estado = 1;
+            $orden = $request->orden;  
+            DB::commit();
+            return $this->asignarLeccionUnidad($fk_unidad, $fk_leccion, $fk_leccion_dependencia, $orden);
+        } catch (\Exception $e) {
+            DB::rollback();
+            $resp["msj"] = " error al asignar lección.";
+
+            return $resp;
+        }
+    }
+
+    public function asignarLeccionUnidad($fk_unidad, $fk_leccion, $fk_leccion_dependencia, $orden){
+
+        $resp["success"] = false;
+        try {
             $query = DB::table('lecciones_unidades')->insert([
-               "fk_unidad" => $request->fk_unidad,
-               "fk_leccion" => $request->fk_leccion,
+               "fk_unidad" => $fk_unidad,
+               "fk_leccion" => $fk_leccion,
+               "fk_leccion_dependencia" => $fk_leccion_dependencia,
                "estado" => 1,
-               "orden" => $request->orden        
+               "orden" => $orden        
             ]);
 
             $resp["success"] = true;
@@ -172,7 +209,6 @@ class LeccionesController extends Controller
             DB::rollback();
 
             $resp["msj"] = " error al asignar lección.";
-
             return $resp;
         }
 
