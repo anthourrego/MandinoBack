@@ -26,6 +26,21 @@ class TomaControlController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function show(Request $request) {
+
+        $visualizacion = DB::table('toma_control_visualizaciones')
+            ->selectRaw('COUNT(*) AS cantVistas, fk_toma_control')
+            ->groupBy('fk_toma_control');
+        
+        $MeGusta = DB::table('toma_control_me_gustas')
+            ->selectRaw('COUNT(*) AS cantMeGusta, fk_toma_control')
+            ->where("me_gusta", 1)
+            ->groupBy('fk_toma_control');
+
+        $NoMeGusta = DB::table('toma_control_me_gustas')
+            ->selectRaw('COUNT(*) AS cantNoMeGusta, fk_toma_control')
+            ->where("me_gusta", 0)
+            ->groupBy('fk_toma_control');
+
         $query = toma_control::select(
                     'toma_controls.id'
                     ,'toma_controls.nombre'
@@ -36,9 +51,21 @@ class TomaControlController extends Controller
                     ,'toma_controls.created_at'
                     ,'toma_controls.ruta'
                     ,'toma_controls.poster'
+                    ,'tcv.cantVistas'
+                    ,'tcmg.cantMeGusta'
+                    ,'tcmg2.cantNoMeGusta'
                 )->selectRaw("GROUP_CONCAT(tcuc.fk_categoria) AS categorias")
                 ->selectRaw("'preview.gif' AS gif")
-                ->join("toma_control_u_categorias AS tcuc", "toma_controls.id", "tcuc.fk_toma_control");
+                ->join("toma_control_u_categorias AS tcuc", "toma_controls.id", "tcuc.fk_toma_control")
+                ->leftJoinSub($visualizacion, "tcv", function ($join) {
+                    $join->on("toma_controls.id", "=", "tcv.fk_toma_control");
+                })
+                ->leftJoinSub($MeGusta, "tcmg", function ($join) {
+                    $join->on("toma_controls.id", "=", "tcmg.fk_toma_control");
+                })
+                ->leftJoinSub($NoMeGusta, "tcmg2", function ($join) {
+                    $join->on("toma_controls.id", "=", "tcmg2.fk_toma_control");
+                });
         if ($request->estado != '') {
             $query = $query->where("toma_controls.estado", $request->estado);
         }

@@ -280,7 +280,7 @@ class UserController extends Controller {
                             $usuario->fk_perfil != $datos->fk_perfil ||
                             $usuario->foto != $datos->foto
                         ) {
-                        
+                        $perfilViejo = $usuario->fk_perfil;
                         $usuario->nro_documento = $datos->nro_documento;
                         $usuario->usuario = $datos->usuario;
                         $usuario->nombre1 = $datos->nombre1;
@@ -294,6 +294,14 @@ class UserController extends Controller {
                         $usuario->fk_municipio = $datos->fk_municipio;
                         $usuario->fk_perfil = $datos->fk_perfil == "null" ? null : $datos->fk_perfil;
                         DB::beginTransaction();
+
+                        if ($perfilViejo != $datos->fk_perfil) {
+                            DB::table('permisos_sistema')
+                                ->where("fk_perfil", $perfilViejo)
+                                ->where('fk_usuario', $datos->id)
+                                ->delete();
+                        }
+                        
                         if ($usuario->save()) {
 
                             $rutaFotoPerfil = "foto";
