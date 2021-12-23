@@ -153,7 +153,6 @@ class UnidadesController extends Controller
         return unidades::select("id", "nombre", "descripcion", "estado")->where("id", $id)->get();
     }
 
-
     // asignación escuelas_cursos
     public function asignar(Request $request){
 
@@ -311,6 +310,69 @@ class UnidadesController extends Controller
         }
         
         return $resp;
+
+    }
+
+    
+    public function clonar(Request $request){
+        $resp["success"] = false;
+
+        $id = $request->id; //id del curso a clonar 
+        $nombre = $request->nombre;
+        $unidades = unidades::select("descripcion", "estado", "nombre")->where("id", $id)->get();
+        if(!($unidades->isEmpty())){
+            try{
+                $unidad = $unidades[0];
+                DB::beginTransaction();
+                // creación de nueva unidad
+                $nuevaUnidad = $this->crearUnidad($unidad->nombre."-".$nombre, $unidad->descripcion, $unidad->estado);
+                $leccionesController = new LeccionesController();
+                $oldLeccionesUnidades = $leccionesController->listarLeccionesUnidades($id);
+                
+                $nuevasLecciones = array();
+                foreach( $oldLeccionesUnidades as $leccionUnidad ){
+                    $result = $leccionesController->traerLeccion($leccionUnidad->lecciones_id);
+                    $leccion = $result[0];
+                    $leccion->nombre = $leccion->nombre."-".$nombre;
+                    array_push($nuevasLecciones, $leccion);
+                }
+
+
+                $leccionesIds = array();
+                foreach( $nuevasLecciones as $nuevaLeccion => $leccion ){
+
+                    $nombre = $leccion->nombre;
+                    $contenido = $leccion->contenido;
+                    $estado = $leccion->estado;
+                    $tipo = $leccion->tipo;
+                    $url_contenido = $leccion->url_contenido;
+
+                    $leccionNueva = $leccionesController->crearLeccion($nombre, $contenido, $estado, $tipo, $url_contenido);
+
+                    if($leccionNueva['id']){
+                        array_push($leccionesIds, array('nuevoId' => $leccionNueva['id'], 'oldId' => $leccion->id));
+                    }
+                }
+
+
+                //asignar lecciones_unidades
+                $contLecciones = 1;
+                foreach($leccionesIds as $leccion ){
+                    $leccionesController->asignarLeccionUnidad($nuevaUnidad['id'], $leccion['nuevoId'], null, $contLecciones);
+                    $contLecciones++; 
+                }
+
+                DB::commit();
+                $resp["msj"] = "Curso Clonado";
+                $resp["success"] = true;
+                return $resp;
+                
+            }catch(\Exception $e){
+                $resp["msj"] = "nombre de unidad ya existe";
+                DB::rollBack();
+                return $e;
+            }
+        }
 
     }
 

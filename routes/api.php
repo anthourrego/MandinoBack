@@ -189,6 +189,7 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::post('editar', [UnidadesController::class, 'actualizar']);
         Route::post('cambiarEstado', [UnidadesController::class, 'cambiarEstado']);
         Route::get('traerUnidad/{id}', [UnidadesController::class, 'traerUnidad']);
+        Route::post('clonar', [UnidadesController::class, 'clonar']);
     });
 
     //Escuelas-Cursos
