@@ -330,14 +330,19 @@ class UnidadesController extends Controller
                 $oldLeccionesUnidades = $leccionesController->listarLeccionesUnidades($id);
                 
                 $nuevasLecciones = array();
+                $idsDependencias = array();
+
                 foreach( $oldLeccionesUnidades as $leccionUnidad ){
+
+                    $idsDependencias[$leccionUnidad->lecciones_id] = array('dependencia' => $leccionUnidad->lecciones_unidades_dependencia );
+
                     $result = $leccionesController->traerLeccion($leccionUnidad->lecciones_id);
                     $leccion = $result[0];
                     $leccion->nombre = $leccion->nombre."-".$nombre;
                     array_push($nuevasLecciones, $leccion);
                 }
 
-
+                // return $idsDependencias;
                 $leccionesIds = array();
                 foreach( $nuevasLecciones as $nuevaLeccion => $leccion ){
 
@@ -348,17 +353,23 @@ class UnidadesController extends Controller
                     $url_contenido = $leccion->url_contenido;
 
                     $leccionNueva = $leccionesController->crearLeccion($nombre, $contenido, $estado, $tipo, $url_contenido);
-
                     if($leccionNueva['id']){
+                        $idsDependencias[$leccion->id]['nuevoId'] = $leccionNueva['id'];
                         array_push($leccionesIds, array('nuevoId' => $leccionNueva['id'], 'oldId' => $leccion->id));
                     }
                 }
 
-
                 //asignar lecciones_unidades
                 $contLecciones = 1;
                 foreach($leccionesIds as $leccion ){
-                    $leccionesController->asignarLeccionUnidad($nuevaUnidad['id'], $leccion['nuevoId'], null, $contLecciones);
+
+                    $dependencia = null;
+                    if(isset($idsDependencias[$leccion['oldId']]['dependencia'])){
+                        $dep = $idsDependencias[$leccion['oldId']]['dependencia'];
+                        $dependencia = $idsDependencias[$dep]['nuevoId'];
+                    }
+                    
+                    $leccionesController->asignarLeccionUnidad($nuevaUnidad['id'], $leccion['nuevoId'], $dependencia, $contLecciones);
                     $contLecciones++; 
                 }
 
