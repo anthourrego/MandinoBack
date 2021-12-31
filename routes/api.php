@@ -232,4 +232,9 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::get('listarLeccionesUnidades/{idUnidad}', [LeccionesController::class, 'listarLeccionesUnidades']);
     });
 
+    // Videos
+    Route::prefix('videos')->group(function () {
+        Route::post('crear', [LeccionesController::class, 'crearVideo']);
+    });
+
 });

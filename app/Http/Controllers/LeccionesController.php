@@ -4,7 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Models\lecciones;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Response;
 use DB;
+use DateTime;
+use FFMpeg AS FFMpeg2;
+use FFMpeg\FFMpeg;
+use FFMpeg\FFProbe;
+use FFMpeg\Coordinate\TimeCode;
+use FFMpeg\Coordinate\Dimension;
+use FFMpeg\Filters\Frame\FrameFilters;
 
 class LeccionesController extends Controller
 {
@@ -310,5 +320,83 @@ class LeccionesController extends Controller
         return $resp;
 
     }
+
+    public function crearVideo(Request $request){
+        $resp["success"] = false;
+        $datos = json_decode($request->datos);
+        
+
+
+        DB::beginTransaction();
+
+        $configFFP = [
+            'ffmpeg.binaries'  => resource_path('ffmpeg/ffmpeg.exe'), // the path to the FFMpeg binary
+            'ffprobe.binaries' => resource_path('ffmpeg/ffprobe.exe'), // the path to the FFProbe binary
+            'timeout'          => 3600, // the timeout for the underlying process
+            'ffmpeg.threads'   => 12,   // the number of threads that FFMpeg should use
+        ];
+
+        $video = array(
+            "ruta" => "video.".$request->file('file')->getClientOriginalExtension(),
+            "poster" => isset($request->poster) ? "poster.".$request->file('poster')->getClientOriginalExtension() : 'poster.png'
+        );
+        
+        
+        try {
+            $rutaVideo = Storage::putFileAs('public/' . $request->ruta . "/" . $request->nombre , $request->file, "video." . $request->file('file')->getClientOriginalExtension());
+        } catch (\Exception $e) {
+            $resp["msj"] = "Error al subir el video.";
+        }
+
+        if(isset($rutaVideo)) {
+            $ffprobe = FFProbe::create($configFFP);
+            $duracion = (int) $ffprobe->format(storage_path('app/' . $rutaVideo))->get('duration');
+            $timeSkip = rand(1, $duracion - 3);
+            
+
+            return  $rutaVideo;
+
+            if(isset($request->poster)){
+                try {
+                    $rutaPoster = Storage::putFileAs('public/' . $request->ruta . "/" . $request->nombre , $request->poster, "poster." . $request->file('poster')->getClientOriginalExtension());
+                } catch (\Exception $e) {
+                    $resp["msj"] = "Error al subir el poster.";
+                }
+            } else {
+                try {
+                    $ffmpeg = FFMpeg::create($configFFP);
+                    $ffmpeg->open(storage_path('app/' . $rutaVideo))
+                    ->frame(TimeCode::fromSeconds($timeSkip))
+                    ->save(storage_path("app/public/" . $request->ruta . "/" . $toma->id . "/poster.png"));
+                    $rutaPoster = 'poster.png';
+                } catch (\Throwable $th) { 
+                    $resp["msj"] = "Error al subir el poster predeterminado.";
+                }
+            }
+
+            try {
+                $gifPath = storage_path("app/public/" . $request->ruta . "/" . $toma->id . "/preview.gif");
+                $ffmpeg = FFMpeg::create($configFFP);
+                $ffmpegVideo = $ffmpeg->open(storage_path('app/' . $rutaVideo));
+                $ffmpegVideo->gif(TimeCode::fromSeconds($timeSkip), new Dimension(320, 180), 3)->save($gifPath);
+            } catch (\Throwable $th) {
+                $resp["msj"] = "Error al crear la vista previa.";
+                $rutaPoster = 0; 
+                $rutaVideo == 0;
+            }
+        }
+
+        if ($rutaVideo === 0 || $rutaPoster === 0) {
+            DB::rollback();
+            $delete = Storage::deleteDirectory('public/' . $request->ruta . "/" . $toma->id);
+        } else {
+            DB::commit();
+            $resp["success"] = true;
+            $resp["msj"] = $datos->nombre . " se ha creado correctamente.";
+        }
+        
+        return $resp;
+    }
+
 }
 
