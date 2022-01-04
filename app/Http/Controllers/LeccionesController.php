@@ -323,9 +323,8 @@ class LeccionesController extends Controller
 
     public function crearVideo(Request $request){
         $resp["success"] = false;
+        $resp["nombre"]= $request->nombre;
         $datos = json_decode($request->datos);
-        
-
 
         DB::beginTransaction();
 
@@ -353,9 +352,6 @@ class LeccionesController extends Controller
             $duracion = (int) $ffprobe->format(storage_path('app/' . $rutaVideo))->get('duration');
             $timeSkip = rand(1, $duracion - 3);
             
-
-            return  $rutaVideo;
-
             if(isset($request->poster)){
                 try {
                     $rutaPoster = Storage::putFileAs('public/' . $request->ruta . "/" . $request->nombre , $request->poster, "poster." . $request->file('poster')->getClientOriginalExtension());
@@ -367,7 +363,7 @@ class LeccionesController extends Controller
                     $ffmpeg = FFMpeg::create($configFFP);
                     $ffmpeg->open(storage_path('app/' . $rutaVideo))
                     ->frame(TimeCode::fromSeconds($timeSkip))
-                    ->save(storage_path("app/public/" . $request->ruta . "/" . $toma->id . "/poster.png"));
+                    ->save(storage_path("app/public/" . $request->ruta . "/" . $request->nombre . "/poster.png"));
                     $rutaPoster = 'poster.png';
                 } catch (\Throwable $th) { 
                     $resp["msj"] = "Error al subir el poster predeterminado.";
@@ -375,7 +371,7 @@ class LeccionesController extends Controller
             }
 
             try {
-                $gifPath = storage_path("app/public/" . $request->ruta . "/" . $toma->id . "/preview.gif");
+                $gifPath = storage_path("app/public/" . $request->ruta . "/" . $request->nombre . "/preview.gif");
                 $ffmpeg = FFMpeg::create($configFFP);
                 $ffmpegVideo = $ffmpeg->open(storage_path('app/' . $rutaVideo));
                 $ffmpegVideo->gif(TimeCode::fromSeconds($timeSkip), new Dimension(320, 180), 3)->save($gifPath);
@@ -385,17 +381,44 @@ class LeccionesController extends Controller
                 $rutaVideo == 0;
             }
         }
-
+        
+        // return  [$rutaVideo, $rutaPoster];
         if ($rutaVideo === 0 || $rutaPoster === 0) {
             DB::rollback();
-            $delete = Storage::deleteDirectory('public/' . $request->ruta . "/" . $toma->id);
+            $delete = Storage::deleteDirectory('public/' . $request->ruta . "/" . $request->nombre);
         } else {
             DB::commit();
             $resp["success"] = true;
-            $resp["msj"] = $datos->nombre . " se ha creado correctamente.";
+            $resp['pathVideo'] = $rutaVideo; 
+            $resp['pathPic'] = $rutaPoster;
+            $resp["msj"] = $request->nombre . " se ha creado correctamente.";
         }
         
         return $resp;
+    }
+
+    public function getVideo($id, $tipo, $filename, $navegador){
+        $path = storage_path('app/public/videos/'. $id . '/' . $filename);
+        if (!File::exists($path)) {
+            if($tipo == 1) {
+                $path = resource_path('assets/videos/error.mp4');
+            } else {
+                $path = resource_path('assets/image/nofoto.png');
+            }
+        }
+
+        $file = File::get($path);
+        $size = File::size($path);
+        $type = File::mimeType($path);
+
+        $codigo = 206;
+        if ($navegador == 'firefox') $codigo = 200;
+
+        $response = Response::make($file, $codigo);
+        $response->header("Content-Type", $type); 
+        $response->header("Content-Range", "bytes 0-" . ($size - 1) . "/" . $size); 
+
+        return $response;
     }
 
 }

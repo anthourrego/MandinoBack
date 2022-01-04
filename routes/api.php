@@ -235,6 +235,7 @@ Route::middleware(['guest', 'cors'])->group(function () {
     // Videos
     Route::prefix('videos')->group(function () {
         Route::post('crear', [LeccionesController::class, 'crearVideo']);
+        Route::get('getVideo/{id}/{tipo}/{filename}/{navegador}', [LeccionesController::class, 'getVideo']);
     });
 
 });
