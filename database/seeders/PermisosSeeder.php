@@ -144,6 +144,15 @@ class PermisosSeeder extends Seeder
                 ,'fk_permiso' => 12
                 ,'created_at' => date('Y-m-d H:m:s')
                 ,'updated_at' => date('Y-m-d H:m:s')
+            ],[
+                'id' => 15
+                ,'nombre' => "plataforma"
+                ,'tag' => 'Plataforma'
+                ,'icono' => 'fas fa-clipboard-list'
+                ,'ruta' => 'plataforma'
+                ,'fk_permiso' => 1
+                ,'created_at' => date('Y-m-d H:m:s')
+                ,'updated_at' => date('Y-m-d H:m:s')
             ]
         ]);
     }

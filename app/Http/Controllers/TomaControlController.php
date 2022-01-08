@@ -50,6 +50,7 @@ class TomaControlController extends Controller
                     ,'toma_controls.estado'
                     ,'toma_controls.created_at'
                     ,'toma_controls.ruta'
+                    ,'toma_controls.anexo'
                     ,'toma_controls.poster'
                     ,'tcv.cantVistas'
                     ,'tcmg.cantMeGusta'
@@ -121,6 +122,7 @@ class TomaControlController extends Controller
             $toma->estado = $datos->estado;
             $toma->ruta = "video." . $request->file('file')->getClientOriginalExtension();
             $toma->poster = isset($request->poster) ? "poster." . $request->file('poster')->getClientOriginalExtension() : 'poster.png';
+            $toma->anexo = isset($request->documentoAnexo) ? "anexo." . $request->file('anexo')->getClientOriginalExtension() : null;
             
             if($toma->save()){
                 
@@ -192,7 +194,17 @@ class TomaControlController extends Controller
                         }
                     }
 
-                    if ($rutaVideo === 0 || $rutaPoster === 0) {
+                    $rutaDoc = 1;
+                    if($request->documentoAnexo) {
+                        try {
+                            $rutaDoc = Storage::putFileAs('public/' . $request->ruta . "/" . $toma->id, $request->documentoAnexo, "anexo." . $request->file('anexo')->getClientOriginalExtension());
+                        } catch (\Exception $e) {
+                            $rutaDoc = 0;
+                            $resp["msj"] = "Error al subir el anexo.";
+                        } 
+                    }
+
+                    if ($rutaVideo === 0 || $rutaPoster === 0 || $rutaDoc === 0) {
                         DB::rollback();
                         $delete = Storage::deleteDirectory('public/' . $request->ruta . "/" . $toma->id);
                     } else {
@@ -232,7 +244,7 @@ class TomaControlController extends Controller
             $toma = toma_control::find($datos->id);
 
             if(!empty($toma)){
-                if ($toma->nombre != $datos->nombre || $toma->descripcion != $datos->descripcion || $toma->visibilidad != $datos->visibilidad || $toma->comentarios != $datos->comentarios || $toma->estado != $datos->estado || $datos->categoritasModificadas == true || $datos->cambioPoster == true || $datos->cambioVideo == true) {
+                if ($toma->nombre != $datos->nombre || $toma->descripcion != $datos->descripcion || $toma->visibilidad != $datos->visibilidad || $toma->comentarios != $datos->comentarios || $toma->estado != $datos->estado || $datos->categoritasModificadas == true || $datos->cambioPoster == true || $datos->cambioVideo == true || $datos->documentoAnexo == true) {
 
                     $toma->nombre = $datos->nombre;
                     $toma->descripcion = $datos->descripcion;
@@ -336,6 +348,21 @@ class TomaControlController extends Controller
                                 } else {
                                     $rutaPoster = 1; 
                                 }
+                            }
+
+                            $rutaDoc = 1;
+                            if($datos->documentoAnexo) {
+                                try {
+                                    $rutaDoc = Storage::putFileAs('public/' . $request->ruta . "/" . $toma->id, $request->anexo, "anexo." . $request->file('anexo')->getClientOriginalExtension());
+
+                                    $toma->anexo = "anexo." . $request->file('anexo')->getClientOriginalExtension();
+                                    if (!$toma->save()) {
+                                        $rutaDoc = 0;
+                                    }
+                                } catch (\Exception $e) {
+                                    $rutaDoc = 0;
+                                    $resp["msj"] = "Error al subir el anexo.";
+                                } 
                             }
 
                             if ($rutaVideo === 0 && $rutaPoster === 0) {
@@ -561,5 +588,29 @@ class TomaControlController extends Controller
         }
     
         return $str;
+    }
+
+    public function descargarAnexo(Request $request){
+        $toma = toma_control::find($request->id);
+        $path = storage_path('app/public/toma-control/'. $toma->id . '/' . $toma->anexo);
+        if (File::exists($path)) {
+            /* $type = File::mimeType($path);
+            
+            $file = Storage::disk('public')->get($request->ruta . '/' . $toma->id . '/' . $toma->anexo);
+            $response = Response::make($file, 200);
+            $response->header("Content-Type", $type);
+            //return $response;
+            $datos = array(
+                "archivo" => $response,
+                "valido" => 1
+            );
+            return json_encode($datos); */
+        } else {
+            /* $datos = array(
+                "valido" => 0
+            );
+            return json_encode($datos); */
+        }
+
     }
 }
