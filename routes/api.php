@@ -235,7 +235,17 @@ Route::middleware(['guest', 'cors'])->group(function () {
     // Videos
     Route::prefix('videos')->group(function () {
         Route::post('crear', [LeccionesController::class, 'crearVideo']);
+        Route::post('actualizar', [LeccionesController::class, 'crearVideo']);
         Route::get('getVideo/{id}/{tipo}/{filename}/{navegador}', [LeccionesController::class, 'getVideo']);
     });
+
+    // Archivos
+    Route::prefix('archivos')->group(function () {
+        Route::post('subir', [LeccionesController::class, 'subirArchivo']);
+        Route::get('traerTodos/{folderName}', [LeccionesController::class, 'traerTodosArchivos']);
+        Route::post('eliminar', [LeccionesController::class, 'eliminarArchivo']);
+
+    });
+    
 
 });

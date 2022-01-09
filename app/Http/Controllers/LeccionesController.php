@@ -118,7 +118,7 @@ class LeccionesController extends Controller
                         $resp["msj"] = "No se han guardado cambios";
                     }
                 } else {
-                    $resp["msj"] = "Por favor realice algún cambio";
+                    $resp["msj"] = "no hay cambios";
                 }
             }else{
                 $resp["msj"] = "No se ha encontrado la lección";
@@ -321,6 +321,7 @@ class LeccionesController extends Controller
 
     }
 
+    // función para crear video en lección
     public function crearVideo(Request $request){
         $resp["success"] = false;
         $resp["nombre"]= $request->nombre;
@@ -335,11 +336,6 @@ class LeccionesController extends Controller
             'ffmpeg.threads'   => 12,   // the number of threads that FFMpeg should use
         ];
 
-        $video = array(
-            "ruta" => "video.".$request->file('file')->getClientOriginalExtension(),
-            "poster" => isset($request->poster) ? "poster.".$request->file('poster')->getClientOriginalExtension() : 'poster.png'
-        );
-        
         
         try {
             $rutaVideo = Storage::putFileAs('public/' . $request->ruta . "/" . $request->nombre , $request->file, "video." . $request->file('file')->getClientOriginalExtension());
@@ -358,12 +354,16 @@ class LeccionesController extends Controller
                 } catch (\Exception $e) {
                     $resp["msj"] = "Error al subir el poster.";
                 }
-            } else {
+            }
+            else {
                 try {
-                    $ffmpeg = FFMpeg::create($configFFP);
-                    $ffmpeg->open(storage_path('app/' . $rutaVideo))
-                    ->frame(TimeCode::fromSeconds($timeSkip))
-                    ->save(storage_path("app/public/" . $request->ruta . "/" . $request->nombre . "/poster.png"));
+
+                    if(!isset($request->editar)){
+                        $ffmpeg = FFMpeg::create($configFFP);
+                        $ffmpeg->open(storage_path('app/' . $rutaVideo))
+                        ->frame(TimeCode::fromSeconds($timeSkip))
+                        ->save(storage_path("app/public/" . $request->ruta . "/" . $request->nombre . "/poster.png"));
+                    }
                     $rutaPoster = 'poster.png';
                 } catch (\Throwable $th) { 
                     $resp["msj"] = "Error al subir el poster predeterminado.";
@@ -419,6 +419,60 @@ class LeccionesController extends Controller
         $response->header("Content-Range", "bytes 0-" . ($size - 1) . "/" . $size); 
 
         return $response;
+    }
+
+    public function subirArchivo(Request $request){
+
+        $file = $request->file('file');
+
+        try {
+            $ruta = Storage::putFileAs('public/archivos/' . $request->folder, $file, $file->getClientOriginalName());
+        } catch (\Exception $e) { 
+            $resp["success"] = false;
+            $resp["msj"] = "Error al subir el archivo: ".$file->getClientOriginalName();
+        }
+
+        $resp["success"] = true;
+        $resp["msj"] = "archivo subido";
+        $resp["path"] = $ruta;
+
+        return $resp;
+    }
+
+    public function traerTodosArchivos($folderName){
+        try{
+            $path = storage_path('app/public/archivos/'.$folderName);
+            $files = File::allFiles($path);
+            $names = [];
+            if(isset($files)){
+                foreach($files as $file){
+                    $obj = array(
+                        "subido" => True,
+                        "name" => $file->getFilename()
+                    );
+                    array_push($names, $obj);
+                }
+            }
+            return $names;
+        }
+        catch(\Exception $e){
+            // directorio no existe :()
+            return [];
+        }
+    }
+
+    public function eliminarArchivo(Request $request){
+
+        $folder = $request->folderName;
+        $file =  $request->fileName;
+
+        try {
+            $ruta = storage_path('app/public/archivos/'.$folder.'/'.$file);
+            return File::delete($ruta);
+        } catch (\Exception $e) {
+           return $e;
+        }
+        
     }
 
 }
