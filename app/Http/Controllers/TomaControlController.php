@@ -15,6 +15,7 @@ use FFMpeg\FFProbe;
 use FFMpeg\Coordinate\TimeCode;
 use FFMpeg\Coordinate\Dimension;
 use FFMpeg\Filters\Frame\FrameFilters;
+use App\Http\VideoStream;
 
 class TomaControlController extends Controller
 {
@@ -360,18 +361,24 @@ class TomaControlController extends Controller
             }
         }
 
-        $file = File::get($path);
-        $size = File::size($path);
-        $type = File::mimeType($path);
-
-        $codigo = 206;
-        if ($navegador == 'firefox') $codigo = 200;
-
-        $response = Response::make($file, $codigo);
-        $response->header("Content-Type", $type); 
-        $response->header("Content-Range", "bytes 0-" . ($size - 1) . "/" . $size); 
-
-        return $response;
+        if ($tipo == 1){
+            $stream = new VideoStream($path);
+            $stream->start();
+        } else {
+            $file = File::get($path);
+            $size = File::size($path);
+            $type = File::mimeType($path);
+    
+            $codigo = 206;
+            if ($navegador == 'firefox') $codigo = 200;
+            //return($size);
+            $response = Response::make($file, $codigo);
+            $response->header("Content-Type", $type); 
+            $response->header("Content-Length", $size);
+            $response->header("Content-Range", "bytes 0-" . ($size - 1) . "/" . $size); 
+    
+            return $response;
+        }
     }
 
     public function deleteFile(Request $request){
