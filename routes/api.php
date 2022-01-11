@@ -246,6 +246,4 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::post('eliminar', [LeccionesController::class, 'eliminarArchivo']);
 
     });
-    
-
 });
