@@ -464,6 +464,7 @@ class TomaControlController extends Controller
                 ,'toma_controls.created_at'
                 ,'toma_controls.ruta'
                 ,'toma_controls.poster'
+                ,'toma_controls.anexo'
                 ,'tcv.*'
                 ,'tcmg.id AS idMeGusta'
                 ,'tcmg.me_gusta AS meGusta'
@@ -597,27 +598,15 @@ class TomaControlController extends Controller
         return $str;
     }
 
-    public function descargarAnexo(Request $request){
-        $toma = toma_control::find($request->id);
+    public function descargarAnexo($id){
+        $toma = toma_control::find($id);
         $path = storage_path('app/public/toma-control/'. $toma->id . '/' . $toma->anexo);
         if (File::exists($path)) {
-            /* $type = File::mimeType($path);
-            
-            $file = Storage::disk('public')->get($request->ruta . '/' . $toma->id . '/' . $toma->anexo);
+            $type = File::mimeType($path);
+            $file = Storage::disk('public')->get('toma-control/' . $toma->id . '/' . $toma->anexo);
             $response = Response::make($file, 200);
             $response->header("Content-Type", $type);
-            //return $response;
-            $datos = array(
-                "archivo" => $response,
-                "valido" => 1
-            );
-            return json_encode($datos); */
-        } else {
-            /* $datos = array(
-                "valido" => 0
-            );
-            return json_encode($datos); */
+            return $response;
         }
-
     }
 }
