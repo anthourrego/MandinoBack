@@ -65,8 +65,6 @@ class LeccionesController extends Controller
 
     }
 
-
-
     /**
      * Display the specified resource.
      *
@@ -177,7 +175,6 @@ class LeccionesController extends Controller
 
     }
 
-    
     // asignación lecciones_unidades
     public function asignar(Request $request){
         $resp["success"] = false;
@@ -325,6 +322,8 @@ class LeccionesController extends Controller
     public function crearVideo(Request $request){
         $resp["success"] = false;
         $resp["nombre"]= $request->nombre;
+        $editar = isset($request->editar) ? True : False;
+
         $datos = json_decode($request->datos);
 
         DB::beginTransaction();
@@ -337,60 +336,78 @@ class LeccionesController extends Controller
         ];
 
         
-        try {
-            $rutaVideo = Storage::putFileAs('public/' . $request->ruta . "/" . $request->nombre , $request->file, "video." . $request->file('file')->getClientOriginalExtension());
-        } catch (\Exception $e) {
-            $resp["msj"] = "Error al subir el video.";
+        if(isset($request->file)){
+            try {
+                $rutaVideo = Storage::putFileAs('public/' . $request->ruta . "/" . $request->nombre , $request->file, "video." . $request->file('file')->getClientOriginalExtension());
+            } catch (\Exception $e) {
+                $resp["msj"] = "Error al subir el video.";
+            }
+
+            // códdigo que genera gif (el que lea esto es gay)
+            /*if(isset($rutaVideo)) {
+                $ffprobe = FFProbe::create($configFFP);
+                $duracion = (int) $ffprobe->format(storage_path('app/' . $rutaVideo))->get('duration');
+                $timeSkip = rand(1, $duracion - 3);
+
+
+                
+                try {
+                    $gifPath = storage_path("app/public/" . $request->ruta . "/" . $request->nombre . "/preview.gif");
+                    $ffmpeg = FFMpeg::create($configFFP);
+                    $ffmpegVideo = $ffmpeg->open(storage_path('app/' . $rutaVideo));
+                    $ffmpegVideo->gif(TimeCode::fromSeconds($timeSkip), new Dimension(320, 180), 3)->save($gifPath);
+                } catch (\Throwable $th) {
+                    $resp["msj"] = "Error al crear la vista previa.";
+                    $error = $th;
+                    $rutaPoster = 0; 
+                    $rutaVideo = 0;
+                }
+                
+            }
+            */
         }
 
-        if(isset($rutaVideo)) {
-            $ffprobe = FFProbe::create($configFFP);
-            $duracion = (int) $ffprobe->format(storage_path('app/' . $rutaVideo))->get('duration');
-            $timeSkip = rand(1, $duracion - 3);
-            
-            if(isset($request->poster)){
-                try {
-                    $rutaPoster = Storage::putFileAs('public/' . $request->ruta . "/" . $request->nombre , $request->poster, "poster." . $request->file('poster')->getClientOriginalExtension());
-                } catch (\Exception $e) {
-                    $resp["msj"] = "Error al subir el poster.";
-                }
-            }
-            else {
-                try {
 
-                    if(!isset($request->editar)){
-                        $ffmpeg = FFMpeg::create($configFFP);
-                        $ffmpeg->open(storage_path('app/' . $rutaVideo))
-                        ->frame(TimeCode::fromSeconds($timeSkip))
-                        ->save(storage_path("app/public/" . $request->ruta . "/" . $request->nombre . "/poster.png"));
-                    }
-                    $rutaPoster = 'poster.png';
-                } catch (\Throwable $th) { 
-                    $resp["msj"] = "Error al subir el poster predeterminado.";
-                }
-            }
-
+        if(isset($request->poster)){
             try {
-                $gifPath = storage_path("app/public/" . $request->ruta . "/" . $request->nombre . "/preview.gif");
-                $ffmpeg = FFMpeg::create($configFFP);
-                $ffmpegVideo = $ffmpeg->open(storage_path('app/' . $rutaVideo));
-                $ffmpegVideo->gif(TimeCode::fromSeconds($timeSkip), new Dimension(320, 180), 3)->save($gifPath);
-            } catch (\Throwable $th) {
-                $resp["msj"] = "Error al crear la vista previa.";
-                $rutaPoster = 0; 
-                $rutaVideo == 0;
+                $rutaPoster = Storage::putFileAs('public/' . $request->ruta . "/" . $request->nombre , $request->poster, "poster." . $request->file('poster')->getClientOriginalExtension());
+            } catch (\Exception $e) {
+                $resp["msj"] = "Error al subir el poster.";
+                $error = $th;
+            }
+        }
+        else {
+            try {
+
+                if(!isset($request->editar)){
+                    $ffmpeg = FFMpeg::create($configFFP);
+                    $ffmpeg->open(storage_path('app/' . $rutaVideo))
+                    ->frame(TimeCode::fromSeconds($timeSkip))
+                    ->save(storage_path("app/public/" . $request->ruta . "/" . $request->nombre . "/poster.png"));
+                }
+                $rutaPoster = 'poster.png';
+            } catch (\Throwable $th) { 
+                $resp["msj"] = "Error al subir el poster predeterminado.";
+                $error = $th;
             }
         }
         
-        // return  [$rutaVideo, $rutaPoster];
-        if ($rutaVideo === 0 || $rutaPoster === 0) {
+        if (isset($error)) {
             DB::rollback();
             $delete = Storage::deleteDirectory('public/' . $request->ruta . "/" . $request->nombre);
+            $resp["success"] = false;
         } else {
             DB::commit();
             $resp["success"] = true;
-            $resp['pathVideo'] = $rutaVideo; 
-            $resp['pathPic'] = $rutaPoster;
+            
+            if(isset($rutaVideo)) {
+                $resp['pathVideo'] = $rutaVideo;
+            }
+
+            if(isset($rutaPoster)){
+                $resp['pathPic'] = $rutaPoster;
+            }
+
             $resp["msj"] = $request->nombre . " se ha creado correctamente.";
         }
         
