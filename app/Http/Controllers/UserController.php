@@ -169,6 +169,7 @@ class UserController extends Controller {
             ,"users.foto"
             ,"users.email"
             ,"users.telefono"
+            ,"users.created_at"
             ,"users.estado"
             ,"users.fk_municipio"
             ,"users.fk_perfil"
