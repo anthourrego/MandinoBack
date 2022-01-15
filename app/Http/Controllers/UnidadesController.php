@@ -288,4 +288,19 @@ class UnidadesController extends Controller
 
     }
 
+    public function listaUnidadesProgreso($idCurso){
+        $query = DB::table('unidades_cursos')
+            ->join('unidades', 'unidades_cursos.fk_unidad', '=', 'unidades.id')
+            ->where('unidades_cursos.fk_curso', $idCurso)
+            ->where('unidades_cursos.estado', 1)
+            ->select(
+                "unidades_cursos.id AS unidadesCursosId",
+                "unidades.id AS unidadId",
+                "unidades.nombre AS nombre", 
+                "unidades.descripcion AS descripcion",
+            )->orderBy('unidades_cursos.orden','asc');
+        
+        return $query->get();
+    }
+
 }

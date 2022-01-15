@@ -267,4 +267,21 @@ class CursosController extends Controller
     public function traerCurso($id){
         return cursos::select( "nombre", "descripcion")->where("id", $id)->get();
     }
+
+    // listado escuelas_cursos
+    public function listaCursosProgreso($idEscuela){
+        $query = DB::table('escuelas_cursos')
+            ->join('cursos', 'escuelas_cursos.fk_curso', '=', 'cursos.id')
+            ->where('escuelas_cursos.fk_escuela', $idEscuela)
+            ->where('escuelas_cursos.estado', 1)
+            ->select(
+                "escuelas_cursos.id as escuelasCursoId",
+                "cursos.id as cursoId",
+                "cursos.nombre as nombre", 
+                "cursos.descripcion as descripcion",
+            )->orderBy('escuelas_cursos.orden','asc');
+        
+        return $query->get();
+
+    }
 }

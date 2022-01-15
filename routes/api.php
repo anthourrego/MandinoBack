@@ -158,6 +158,7 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::post('actualizarOrden', [CursosController::class, 'actualizarOrden']);
         Route::post('agregarDependencia', [CursosController::class, 'agregarDependencia']);
         Route::get('listarEscuelasCursos/{idEscuela}', [CursosController::class, 'listarEscuelasCursos']);
+        Route::get('listaCursosProgreso/{idEscuela}', [CursosController::class, 'listaCursosProgreso']);
     });
     
     
@@ -199,6 +200,7 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::post('actualizarOrden', [UnidadesController::class, 'actualizarOrden']);
         Route::post('agregarDependencia', [UnidadesController::class, 'agregarDependencia']);
         Route::get('listarUnidadesCursos/{idCurso}', [UnidadesController::class, 'listarUnidadesCursos']);
+        Route::get('listaUnidadesProgreso/{idCurso}', [UnidadesController::class, 'listaUnidadesProgreso']);
     });
     
     //Comentarios
