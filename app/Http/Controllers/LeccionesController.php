@@ -275,5 +275,25 @@ class LeccionesController extends Controller
         return $resp;
 
     }
+
+    // listado lecciones_unidades
+    public function listarLeccionesProgreso($idUnidad){
+    
+        $query = DB::table('lecciones_unidades')
+            ->join('lecciones', 'lecciones_unidades.fk_leccion', '=', 'lecciones.id')
+            ->where('lecciones_unidades.fk_unidad', $idUnidad)
+            ->where('lecciones_unidades.estado',1)
+            ->select(
+                "lecciones_unidades.id as leccionesUnidadesId",
+                "lecciones_unidades.fk_leccion_dependencia as leccionesUnidadesDependencia",
+                "lecciones.id as leccionesId",
+                "lecciones.nombre as nombre", 
+                "lecciones.tipo as leccionesTipo"
+            )
+            ->orderBy('lecciones_unidades.orden','asc');
+        
+        return $query->get();
+
+    }
 }
 

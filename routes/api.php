@@ -232,6 +232,7 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::post('actualizarOrden', [LeccionesController::class, 'actualizarOrden']);
         Route::post('agregarDependencia', [LeccionesController::class, 'agregarDependencia']);
         Route::get('listarLeccionesUnidades/{idUnidad}', [LeccionesController::class, 'listarLeccionesUnidades']);
+        Route::get('listarLeccionesProgreso/{idUnidad}', [LeccionesController::class, 'listarLeccionesProgreso']);
     });
 
 });
