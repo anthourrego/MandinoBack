@@ -284,11 +284,12 @@ class LeccionesController extends Controller
             ->where('lecciones_unidades.fk_unidad', $idUnidad)
             ->where('lecciones_unidades.estado',1)
             ->select(
-                "lecciones_unidades.id as leccionesUnidadesId",
-                "lecciones_unidades.fk_leccion_dependencia as leccionesUnidadesDependencia",
-                "lecciones.id as leccionesId",
+                "lecciones_unidades.id as unidadesId",
+                "lecciones_unidades.fk_leccion_dependencia as unidadDependencia",
+                "lecciones.id as id",
+                "lecciones.contenido",
                 "lecciones.nombre as nombre", 
-                "lecciones.tipo as leccionesTipo"
+                "lecciones.tipo as tipo"
             )
             ->orderBy('lecciones_unidades.orden','asc');
         
