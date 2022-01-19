@@ -55,29 +55,40 @@ class UnidadesController extends Controller
     }
 
     public function crear(Request $request){
+        $nombre = $request->nombre;
+        $descripcion = $request->descripcion;
+        $estado = $request->estado;
+
+        return $this->crearUnidad($nombre, $descripcion, $estado);
+    }
+
+    public function crearUnidad($nombre, $descripcion, $estado){
+
         $resp["success"] = false;
         $validar = unidades::where([
-            ['nombre', $request->nombre], 
+            ['nombre', $nombre], 
         ])->get();
 
         if($validar->isEmpty()){
             $unidad = new unidades;
-            $unidad->nombre = $request->nombre;
-            $unidad->descripcion = $request->descripcion;
-            $unidad->estado = $request->estado;
+            $unidad->nombre =$nombre;
+            $unidad->descripcion =$descripcion;
+            $unidad->estado =$estado;
 
             if($unidad->save()){
                 $resp["success"] = true;
                 $resp["msj"] = "Se ha creado la unidad correctamente.";
+                $resp["id"] = $unidad->id;
             }else{
-                $resp["msj"] = "No se ha creado la unidad " . $request->nombre;
+                $resp["msj"] = "No se ha creado la unidad " . $nombre;
             }
         }else{
-            $resp["msj"] = "la unidad " . $request->nombre . " ya se encuentra registrado.";
+            $resp["msj"] = "la unidad " . $nombre . " ya se encuentra registrado.";
         }
 
         return $resp;
     }
+
 
     public function actualizar(Request $request){
         $resp["success"] = false;
@@ -139,36 +150,50 @@ class UnidadesController extends Controller
     }
 
     public function traerUnidad($id){
-        return unidades::select( "nombre", "descripcion")->where("id", $id)->get();
+        return unidades::select("id", "nombre", "descripcion", "estado")->where("id", $id)->get();
     }
-
 
     // asignación escuelas_cursos
     public function asignar(Request $request){
+
+        
         $resp["success"] = false;
+        $fk_curso = $request->fk_curso;
+        $fk_unidad = $request->fk_unidad;
+        $fk_unidad_dependencia = $request->fk_unidad_dependencia;
+        $estado = 1;
+        $orden = $request->orden;
 
-        try {
-            $query = DB::table('unidades_cursos')->insert([
-               "fk_curso" => $request->fk_curso,
-               "fk_unidad" => $request->fk_unidad,
-               "fk_unidad_dependencia" => $request->fk_unidad_dependencia,
-               "estado" => 1,
-               "orden" => $request->orden        
-            ]);
-
-            $resp["success"] = true;
-            $resp["msj"] = " unidad asignada correctamente.";
+        try{
+            return $this->asignarUnidadCurso($fk_curso, $fk_unidad, $fk_unidad_dependencia , $orden);
             DB::commit();
-
-            return $resp;
-        } catch (\Exception $e) {
+        }catch (\Exception $e) {
             DB::rollback();
-
             $resp["msj"] = " error al asignar unidad.";
 
             return $resp;
         }
 
+    }
+
+    public function asignarUnidadCurso($fk_curso, $fk_unidad, $fk_unidad_dependencia , $orden){
+
+        $resp["success"] = false;
+
+        $query = DB::table('unidades_cursos')->insert([
+            "fk_curso" => $fk_curso,
+            "fk_unidad" => $fk_unidad,
+            "fk_unidad_dependencia" => $fk_unidad_dependencia,
+            "estado" => 1,
+            "orden" => $orden        
+        ]);
+
+        $resp["success"] = true;
+        $resp["msj"] = " unidad asignada correctamente.";
+        DB::commit();
+
+        return $resp;
+    
     }
 
     // listado unidades_cursos
@@ -301,6 +326,79 @@ class UnidadesController extends Controller
             )->orderBy('unidades_cursos.orden','asc');
         
         return $query->get();
+    }
+    
+    public function clonar(Request $request){
+        $resp["success"] = false;
+
+        $id = $request->id; //id del curso a clonar 
+        $nombre = $request->nombre;
+        $unidades = unidades::select("descripcion", "estado", "nombre")->where("id", $id)->get();
+        if(!($unidades->isEmpty())){
+            try{
+                $unidad = $unidades[0];
+                DB::beginTransaction();
+                // creación de nueva unidad
+                $nuevaUnidad = $this->crearUnidad($unidad->nombre."-".$nombre, $unidad->descripcion, $unidad->estado);
+                $leccionesController = new LeccionesController();
+                $oldLeccionesUnidades = $leccionesController->listarLeccionesUnidades($id);
+                
+                $nuevasLecciones = array();
+                $idsDependencias = array();
+
+                foreach( $oldLeccionesUnidades as $leccionUnidad ){
+
+                    $idsDependencias[$leccionUnidad->lecciones_id] = array('dependencia' => $leccionUnidad->lecciones_unidades_dependencia );
+
+                    $result = $leccionesController->traerLeccion($leccionUnidad->lecciones_id);
+                    $leccion = $result[0];
+                    $leccion->nombre = $leccion->nombre."-".$nombre;
+                    array_push($nuevasLecciones, $leccion);
+                }
+
+                // return $idsDependencias;
+                $leccionesIds = array();
+                foreach( $nuevasLecciones as $nuevaLeccion => $leccion ){
+
+                    $nombre = $leccion->nombre;
+                    $contenido = $leccion->contenido;
+                    $estado = $leccion->estado;
+                    $tipo = $leccion->tipo;
+                    $url_contenido = $leccion->url_contenido;
+
+                    $leccionNueva = $leccionesController->crearLeccion($nombre, $contenido, $estado, $tipo, $url_contenido);
+                    if($leccionNueva['id']){
+                        $idsDependencias[$leccion->id]['nuevoId'] = $leccionNueva['id'];
+                        array_push($leccionesIds, array('nuevoId' => $leccionNueva['id'], 'oldId' => $leccion->id));
+                    }
+                }
+
+                //asignar lecciones_unidades
+                $contLecciones = 1;
+                foreach($leccionesIds as $leccion ){
+
+                    $dependencia = null;
+                    if(isset($idsDependencias[$leccion['oldId']]['dependencia'])){
+                        $dep = $idsDependencias[$leccion['oldId']]['dependencia'];
+                        $dependencia = $idsDependencias[$dep]['nuevoId'];
+                    }
+                    
+                    $leccionesController->asignarLeccionUnidad($nuevaUnidad['id'], $leccion['nuevoId'], $dependencia, $contLecciones);
+                    $contLecciones++; 
+                }
+
+                DB::commit();
+                $resp["msj"] = "Curso Clonado";
+                $resp["success"] = true;
+                return $resp;
+                
+            }catch(\Exception $e){
+                $resp["msj"] = "nombre de unidad ya existe";
+                DB::rollBack();
+                return $e;
+            }
+        }
+
     }
 
 }

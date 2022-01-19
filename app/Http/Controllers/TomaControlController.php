@@ -109,8 +109,8 @@ class TomaControlController extends Controller
             DB::beginTransaction();
 
             $configFFP = [
-                'ffmpeg.binaries'  => resource_path('ffmpeg/ffmpeg'), // the path to the FFMpeg binary
-                'ffprobe.binaries' => resource_path('ffmpeg/ffprobe'), // the path to the FFProbe binary
+                'ffmpeg.binaries'  => resource_path('ffmpeg/ffmpeg.exe'), // the path to the FFMpeg binary
+                'ffprobe.binaries' => resource_path('ffmpeg/ffprobe.exe'), // the path to the FFProbe binary
                 'timeout'          => 3600, // the timeout for the underlying process
                 'ffmpeg.threads'   => 12,   // the number of threads that FFMpeg should use
             ];

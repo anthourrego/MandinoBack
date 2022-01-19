@@ -147,7 +147,7 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::post('editar', [CursosController::class, 'actualizar']);
         Route::post('cambiarEstado', [CursosController::class, 'cambiarEstado']);
         Route::get('traerCurso/{id}', [CursosController::class, 'traerCurso']);
-
+        Route::post('clonar', [CursosController::class, 'clonar']);
     });
 
 
@@ -191,6 +191,7 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::post('editar', [UnidadesController::class, 'actualizar']);
         Route::post('cambiarEstado', [UnidadesController::class, 'cambiarEstado']);
         Route::get('traerUnidad/{id}', [UnidadesController::class, 'traerUnidad']);
+        Route::post('clonar', [UnidadesController::class, 'clonar']);
     });
 
     //Escuelas-Cursos
@@ -235,4 +236,18 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::get('listarLeccionesProgreso/{idUnidad}', [LeccionesController::class, 'listarLeccionesProgreso']);
     });
 
+    // Videos
+    Route::prefix('videos')->group(function () {
+        Route::post('crear', [LeccionesController::class, 'crearVideo']);
+        Route::post('actualizar', [LeccionesController::class, 'crearVideo']);
+        Route::get('getVideo/{id}/{tipo}/{filename}/{navegador}', [LeccionesController::class, 'getVideo']);
+    });
+
+    // Archivos
+    Route::prefix('archivos')->group(function () {
+        Route::post('subir', [LeccionesController::class, 'subirArchivo']);
+        Route::get('traerTodos/{folderName}', [LeccionesController::class, 'traerTodosArchivos']);
+        Route::post('eliminar', [LeccionesController::class, 'eliminarArchivo']);
+
+    });
 });

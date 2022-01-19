@@ -4,7 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Models\lecciones;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Response;
 use DB;
+use DateTime;
+use FFMpeg AS FFMpeg2;
+use FFMpeg\FFMpeg;
+use FFMpeg\FFProbe;
+use FFMpeg\Coordinate\TimeCode;
+use FFMpeg\Coordinate\Dimension;
+use FFMpeg\Filters\Frame\FrameFilters;
 
 class LeccionesController extends Controller
 {
@@ -15,30 +25,44 @@ class LeccionesController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function crear(Request $request){
+        $nombre = $request->nombre;
+        $contenido = $request->contenido;
+        $estado = $request->estado;
+        $tipo = $request->tipo;
+        $url_contenido = $request->url_contenido;
 
+        return $this->crearLeccion($nombre, $contenido, $estado, $tipo, $url_contenido);
+    }
+
+    public function crearLeccion($nombre, $contenido, $estado, $tipo, $url_contenido){
         $resp["success"] = false;
-        /* 
-            $validar = lecciones::where([
-                ['nombre', $request->nombre], 
-            ])->get();
-            $validar->isEmpty()
-        */
+         
+        $validar = lecciones::where([
+            ['nombre', $nombre], 
+        ])->get();
 
-        $leccion = new lecciones;
-        $leccion->nombre = $request->nombre;
-        $leccion->contenido = $request->contenido;
-        $leccion->estado = $request->estado;
-        $leccion->tipo = $request->tipo;
-        $leccion->url_contenido = $request->url_contenido;
 
-        if($leccion->save()){
-            $resp["success"] = true;
-            $resp["msj"] = "Se ha creado la lección correctamente.";
+        if($validar->isEmpty()){
+            $leccion = new lecciones;
+            $leccion->nombre = $nombre;
+            $leccion->contenido = $contenido;
+            $leccion->estado = $estado;
+            $leccion->tipo = $tipo;
+            $leccion->url_contenido = $url_contenido;
+
+            if($leccion->save()){
+                $resp["success"] = true;
+                $resp["msj"] = "Se ha creado la lección correctamente.";
+                $resp["id"] = $leccion->id;
+            }else{
+                $resp["msj"] = "No se ha creado la lección " . $request->nombre;
+            }
         }else{
-            $resp["msj"] = "No se ha creado la lección " . $request->nombre;
+            $resp["msj"] = "la lección" . $nombre . " ya se encuentra registrada.";
         }
 
         return $resp;
+
     }
 
     /**
@@ -92,7 +116,7 @@ class LeccionesController extends Controller
                         $resp["msj"] = "No se han guardado cambios";
                     }
                 } else {
-                    $resp["msj"] = "Por favor realice algún cambio";
+                    $resp["msj"] = "no hay cambios";
                 }
             }else{
                 $resp["msj"] = "No se ha encontrado la lección";
@@ -127,7 +151,7 @@ class LeccionesController extends Controller
     }
 
     public function traerLeccion($id){
-        return unidades::select( "nombre", "tipo")->where("id", $id)->get();
+        return lecciones::select("*")->where("id", $id)->get();
     }
 
     // listado lecciones_unidades
@@ -151,16 +175,36 @@ class LeccionesController extends Controller
 
     }
 
-    
     // asignación lecciones_unidades
     public function asignar(Request $request){
         $resp["success"] = false;
         try {
+
+            $fk_unidad = $request->fk_unidad;
+            $fk_leccion = $request->fk_leccion;
+            $fk_leccion_dependencia = $request->fk_leccion_dependencia;
+            $estado = 1;
+            $orden = $request->orden;  
+            DB::commit();
+            return $this->asignarLeccionUnidad($fk_unidad, $fk_leccion, $fk_leccion_dependencia, $orden);
+        } catch (\Exception $e) {
+            DB::rollback();
+            $resp["msj"] = " error al asignar lección.";
+
+            return $resp;
+        }
+    }
+
+    public function asignarLeccionUnidad($fk_unidad, $fk_leccion, $fk_leccion_dependencia, $orden){
+
+        $resp["success"] = false;
+        try {
             $query = DB::table('lecciones_unidades')->insert([
-               "fk_unidad" => $request->fk_unidad,
-               "fk_leccion" => $request->fk_leccion,
+               "fk_unidad" => $fk_unidad,
+               "fk_leccion" => $fk_leccion,
+               "fk_leccion_dependencia" => $fk_leccion_dependencia,
                "estado" => 1,
-               "orden" => $request->orden        
+               "orden" => $orden        
             ]);
 
             $resp["success"] = true;
@@ -172,13 +216,11 @@ class LeccionesController extends Controller
             DB::rollback();
 
             $resp["msj"] = " error al asignar lección.";
-
             return $resp;
         }
 
     }
 
-    
     //desasignar lecciones_unidades
     public function desasignar(Request $request){
 
@@ -296,5 +338,180 @@ class LeccionesController extends Controller
         return $query->get();
 
     }
+
+    // función para crear video en lección
+    public function crearVideo(Request $request){
+        $resp["success"] = false;
+        $resp["nombre"]= $request->nombre;
+        $editar = isset($request->editar) ? True : False;
+
+        $datos = json_decode($request->datos);
+
+        DB::beginTransaction();
+
+        $configFFP = [
+            'ffmpeg.binaries'  => resource_path('ffmpeg/ffmpeg.exe'), // the path to the FFMpeg binary
+            'ffprobe.binaries' => resource_path('ffmpeg/ffprobe.exe'), // the path to the FFProbe binary
+            'timeout'          => 3600, // the timeout for the underlying process
+            'ffmpeg.threads'   => 12,   // the number of threads that FFMpeg should use
+        ];
+
+        
+        if(isset($request->file)){
+            try {
+                $rutaVideo = Storage::putFileAs('public/' . $request->ruta . "/" . $request->nombre , $request->file, "video." . $request->file('file')->getClientOriginalExtension());
+            } catch (\Exception $e) {
+                $resp["msj"] = "Error al subir el video.";
+            }
+
+            // códdigo que genera gif (el que lea esto es gay)
+            /*if(isset($rutaVideo)) {
+                $ffprobe = FFProbe::create($configFFP);
+                $duracion = (int) $ffprobe->format(storage_path('app/' . $rutaVideo))->get('duration');
+                $timeSkip = rand(1, $duracion - 3);
+
+
+                
+                try {
+                    $gifPath = storage_path("app/public/" . $request->ruta . "/" . $request->nombre . "/preview.gif");
+                    $ffmpeg = FFMpeg::create($configFFP);
+                    $ffmpegVideo = $ffmpeg->open(storage_path('app/' . $rutaVideo));
+                    $ffmpegVideo->gif(TimeCode::fromSeconds($timeSkip), new Dimension(320, 180), 3)->save($gifPath);
+                } catch (\Throwable $th) {
+                    $resp["msj"] = "Error al crear la vista previa.";
+                    $error = $th;
+                    $rutaPoster = 0; 
+                    $rutaVideo = 0;
+                }
+                
+            }
+            */
+        }
+
+
+        if(isset($request->poster)){
+            try {
+                $rutaPoster = Storage::putFileAs('public/' . $request->ruta . "/" . $request->nombre , $request->poster, "poster." . $request->file('poster')->getClientOriginalExtension());
+            } catch (\Exception $e) {
+                $resp["msj"] = "Error al subir el poster.";
+                $error = $th;
+            }
+        }
+        else {
+            try {
+
+                if(!isset($request->editar)){
+                    $ffmpeg = FFMpeg::create($configFFP);
+                    $ffmpeg->open(storage_path('app/' . $rutaVideo))
+                    ->frame(TimeCode::fromSeconds($timeSkip))
+                    ->save(storage_path("app/public/" . $request->ruta . "/" . $request->nombre . "/poster.png"));
+                }
+                $rutaPoster = 'poster.png';
+            } catch (\Throwable $th) { 
+                $resp["msj"] = "Error al subir el poster predeterminado.";
+                $error = $th;
+            }
+        }
+        
+        if (isset($error)) {
+            DB::rollback();
+            $delete = Storage::deleteDirectory('public/' . $request->ruta . "/" . $request->nombre);
+            $resp["success"] = false;
+        } else {
+            DB::commit();
+            $resp["success"] = true;
+            
+            if(isset($rutaVideo)) {
+                $resp['pathVideo'] = $rutaVideo;
+            }
+
+            if(isset($rutaPoster)){
+                $resp['pathPic'] = $rutaPoster;
+            }
+
+            $resp["msj"] = $request->nombre . " se ha creado correctamente.";
+        }
+        
+        return $resp;
+    }
+
+    public function getVideo($id, $tipo, $filename, $navegador){
+        $path = storage_path('app/public/videos/'. $id . '/' . $filename);
+        if (!File::exists($path)) {
+            if($tipo == 1) {
+                $path = resource_path('assets/videos/error.mp4');
+            } else {
+                $path = resource_path('assets/image/nofoto.png');
+            }
+        }
+
+        $file = File::get($path);
+        $size = File::size($path);
+        $type = File::mimeType($path);
+
+        $codigo = 206;
+        if ($navegador == 'firefox') $codigo = 200;
+
+        $response = Response::make($file, $codigo);
+        $response->header("Content-Type", $type); 
+        $response->header("Content-Range", "bytes 0-" . ($size - 1) . "/" . $size); 
+
+        return $response;
+    }
+
+    public function subirArchivo(Request $request){
+
+        $file = $request->file('file');
+
+        try {
+            $ruta = Storage::putFileAs('public/archivos/' . $request->folder, $file, $file->getClientOriginalName());
+        } catch (\Exception $e) { 
+            $resp["success"] = false;
+            $resp["msj"] = "Error al subir el archivo: ".$file->getClientOriginalName();
+        }
+
+        $resp["success"] = true;
+        $resp["msj"] = "archivo subido";
+        $resp["path"] = $ruta;
+
+        return $resp;
+    }
+
+    public function traerTodosArchivos($folderName){
+        try{
+            $path = storage_path('app/public/archivos/'.$folderName);
+            $files = File::allFiles($path);
+            $names = [];
+            if(isset($files)){
+                foreach($files as $file){
+                    $obj = array(
+                        "subido" => True,
+                        "name" => $file->getFilename()
+                    );
+                    array_push($names, $obj);
+                }
+            }
+            return $names;
+        }
+        catch(\Exception $e){
+            // directorio no existe :()
+            return [];
+        }
+    }
+
+    public function eliminarArchivo(Request $request){
+
+        $folder = $request->folderName;
+        $file =  $request->fileName;
+
+        try {
+            $ruta = storage_path('app/public/archivos/'.$folder.'/'.$file);
+            return File::delete($ruta);
+        } catch (\Exception $e) {
+           return $e;
+        }
+        
+    }
+
 }
 
