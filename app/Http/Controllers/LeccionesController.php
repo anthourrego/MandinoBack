@@ -335,7 +335,9 @@ class LeccionesController extends Controller
             )
             ->orderBy('lecciones_unidades.orden','asc');
         
-        return $query->get();
+        $info = $query->get();
+        $info[0]->progreso = 10;
+        return $info;
 
     }
 
