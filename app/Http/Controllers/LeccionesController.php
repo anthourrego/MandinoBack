@@ -367,27 +367,26 @@ class LeccionesController extends Controller
             }
 
             // códdigo que genera gif (el que lea esto es gay)
-            /*if(isset($rutaVideo)) {
+            if(isset($rutaVideo)) {
                 $ffprobe = FFProbe::create($configFFP);
                 $duracion = (int) $ffprobe->format(storage_path('app/' . $rutaVideo))->get('duration');
                 $timeSkip = rand(1, $duracion - 3);
 
-
-                
-                try {
-                    $gifPath = storage_path("app/public/" . $request->ruta . "/" . $request->nombre . "/preview.gif");
-                    $ffmpeg = FFMpeg::create($configFFP);
-                    $ffmpegVideo = $ffmpeg->open(storage_path('app/' . $rutaVideo));
-                    $ffmpegVideo->gif(TimeCode::fromSeconds($timeSkip), new Dimension(320, 180), 3)->save($gifPath);
-                } catch (\Throwable $th) {
-                    $resp["msj"] = "Error al crear la vista previa.";
-                    $error = $th;
-                    $rutaPoster = 0; 
-                    $rutaVideo = 0;
-                }
-                
+                /* 
+                    try {
+                        $gifPath = storage_path("app/public/" . $request->ruta . "/" . $request->nombre . "/preview.gif");
+                        $ffmpeg = FFMpeg::create($configFFP);
+                        $ffmpegVideo = $ffmpeg->open(storage_path('app/' . $rutaVideo));
+                        $ffmpegVideo->gif(TimeCode::fromSeconds($timeSkip), new Dimension(320, 180), 3)->save($gifPath);
+                    } catch (\Throwable $th) {
+                        $resp["msj"] = "Error al crear la vista previa.";
+                        $error = $th;
+                        $rutaPoster = 0; 
+                        $rutaVideo = 0;
+                    }
+                */
             }
-            */
+            
         }
 
 
@@ -401,14 +400,13 @@ class LeccionesController extends Controller
         }
         else {
             try {
-
                 if(!isset($request->editar)){
                     $ffmpeg = FFMpeg::create($configFFP);
                     $ffmpeg->open(storage_path('app/' . $rutaVideo))
                     ->frame(TimeCode::fromSeconds($timeSkip))
                     ->save(storage_path("app/public/" . $request->ruta . "/" . $request->nombre . "/poster.png"));
+                    $rutaPoster = 'poster.png';
                 }
-                $rutaPoster = 'poster.png';
             } catch (\Throwable $th) { 
                 $resp["msj"] = "Error al subir el poster predeterminado.";
                 $error = $th;
