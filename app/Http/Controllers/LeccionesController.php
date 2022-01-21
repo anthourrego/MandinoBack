@@ -319,26 +319,107 @@ class LeccionesController extends Controller
     }
 
     // listado lecciones_unidades
-    public function listarLeccionesProgreso($idUnidad){
+    public function listarLeccionesProgreso($idUnidad, $usuario){
+
+        $progresoAct = DB::table('lecciones_progreso_usuarios')
+            ->select(
+                'lecciones_progreso_usuarios.fecha_completado AS fechProgCompleto',
+                'lecciones_progreso_usuarios.tiempo_video AS tiempoVideoProg',
+                'lecciones_progreso_usuarios.id AS idProgreso',
+                'lecciones_progreso_usuarios.fk_leccion'
+            )->where('lecciones_progreso_usuarios.fk_user', $usuario);
+
+        $progresoActDepende = DB::table('lecciones_progreso_usuarios')
+            ->select(
+                'lecciones_progreso_usuarios.fecha_completado AS fechProgCompletoDepende',
+                'lecciones_progreso_usuarios.fk_leccion'
+            )->where('lecciones_progreso_usuarios.fk_user', $usuario)
+            ->whereNotNull('lecciones_progreso_usuarios.fecha_completado');
     
         $query = DB::table('lecciones_unidades')
-            ->join('lecciones', 'lecciones_unidades.fk_leccion', '=', 'lecciones.id')
-            ->where('lecciones_unidades.fk_unidad', $idUnidad)
-            ->where('lecciones_unidades.estado',1)
             ->select(
                 "lecciones_unidades.id as unidadesId",
-                "lecciones_unidades.fk_leccion_dependencia as unidadDependencia",
+                "lecciones_unidades.fk_leccion_dependencia as leccionDependencia",
                 "lecciones.id as id",
                 "lecciones.contenido",
                 "lecciones.nombre as nombre", 
-                "lecciones.tipo as tipo"
+                "lecciones.tipo as tipo",
+                "lpu.fechProgCompleto",
+                "lpu.tiempoVideoProg",
+                "lpu.idProgreso",
+                "lpu2.fechProgCompletoDepende"
             )
+            ->join('lecciones', 'lecciones_unidades.fk_leccion', '=', 'lecciones.id')
+            ->leftJoinSub($progresoAct, "lpu", function ($join) {
+                $join->on("lecciones.id", "=", "lpu.fk_leccion");
+            })
+            ->leftJoinSub($progresoActDepende, "lpu2", function ($join) {
+                $join->on("lecciones_unidades.fk_leccion_dependencia", "=", "lpu2.fk_leccion");
+            })
+            ->where('lecciones_unidades.fk_unidad', $idUnidad)
+            ->where('lecciones_unidades.estado',1)
             ->orderBy('lecciones_unidades.orden','asc');
         
         $info = $query->get();
-        $info[0]->progreso = 10;
         return $info;
 
+    }
+
+    //creacion progreso lección
+    public function crearProgreso(Request $request){
+        $resp["success"] = false;
+        try {
+
+            $request->fecha_completado = $request->fecha_completado == 0 ? null : date('Y-m-d H-i-s');
+
+            $query = DB::table('lecciones_progreso_usuarios')->insert([
+                "fk_user" => $request->fk_user,
+                "fk_leccion" => $request->fk_leccion,
+                "fecha_completado" => $request->fecha_completado,
+                "tiempo_video" => (isset($request->tiempo_video) ? $request->tiempo_video : null)    
+            ]);
+
+            $resp["success"] = true;
+            $resp["msj"] = "Progreso registrado correctamente.";
+            $resp["fechProgCompleto"] = $request->fecha_completado;
+            $resp['datos'] = $query;
+            DB::commit();
+
+            return $resp;
+        } catch (\Exception $e) {
+            DB::rollback();
+            $resp["msj"] = " error al registrar el progreso.";
+
+            return $resp;
+        }
+    }
+
+    //modificación progreso lección
+    public function actualizarProgreso(Request $request){
+        $resp["success"] = false;
+        try {
+
+            /* $request->fecha_completado = $request->fecha_completado == 0 ? null : date('Y-m-d H-i-s');
+
+            $query = DB::table('lecciones_progreso_usuarios')->insert([
+                "fk_user" => $request->fk_user,
+                "fk_leccion" => $request->fk_leccion,
+                "fecha_completado" => $request->fecha_completado,
+                "tiempo_video" => (isset($request->tiempo_video) ? $request->tiempo_video : null)    
+            ]);
+
+            $resp["success"] = true;
+            $resp["msj"] = "Progreso registrado correctamente.";
+            $resp["fechProgCompleto"] = $request->fecha_completado;
+            DB::commit();
+
+            return $resp; */
+        } catch (\Exception $e) {
+            DB::rollback();
+            $resp["msj"] = " error al asignar lección.";
+
+            return $resp;
+        }
     }
 
     // función para crear video en lección
