@@ -370,19 +370,31 @@ class LeccionesController extends Controller
         $resp["success"] = false;
         try {
 
-            $request->fecha_completado = $request->fecha_completado == 0 ? null : date('Y-m-d H-i-s');
+            $progreso = DB::table('lecciones_progreso_usuarios')
+                ->where('fk_leccion', $request->fk_leccion)
+                ->where('fk_user', $request->fk_user)
+                ->first();
 
-            $query = DB::table('lecciones_progreso_usuarios')->insert([
+            $request->fecha_completado = $request->fecha_completado == 0 ? null : date('Y-m-d H-i-s');
+         
+            if (isset($progreso->id)) {
+                $request->idProgreso = $progreso->id;
+                return $this->actualizarProgreso($request);
+            }
+
+            $id = DB::table('lecciones_progreso_usuarios')->insertGetId([
                 "fk_user" => $request->fk_user,
                 "fk_leccion" => $request->fk_leccion,
                 "fecha_completado" => $request->fecha_completado,
-                "tiempo_video" => (isset($request->tiempo_video) ? $request->tiempo_video : null)    
+                "tiempo_video" => (isset($request->tiempo_video) ? $request->tiempo_video : null),
+                "updated_at" => now(),
+                "created_at" => now() 
             ]);
 
             $resp["success"] = true;
             $resp["msj"] = "Progreso registrado correctamente.";
             $resp["fechProgCompleto"] = $request->fecha_completado;
-            $resp['datos'] = $query;
+            $resp['idProgreso'] = $id;
             DB::commit();
 
             return $resp;
@@ -397,27 +409,41 @@ class LeccionesController extends Controller
     //modificación progreso lección
     public function actualizarProgreso(Request $request){
         $resp["success"] = false;
+        $resp["msj"] = "Ha ocúrrido un problema.";
         try {
 
-            /* $request->fecha_completado = $request->fecha_completado == 0 ? null : date('Y-m-d H-i-s');
+            $request->fecha_completado = $request->fecha_completado == 0 ? null : date('Y-m-d H-i-s');
 
-            $query = DB::table('lecciones_progreso_usuarios')->insert([
-                "fk_user" => $request->fk_user,
-                "fk_leccion" => $request->fk_leccion,
+            $progreso = DB::table('lecciones_progreso_usuarios')
+                ->where('id', $request->idProgreso);
+
+            if (!is_null($progreso->first()->fecha_completado)) {
+                $resp["success"] = true;
+                $resp["msj"] = "Progreso modificado correctamente";
+                $resp["fechProgCompleto"] = $request->fecha_completado;
+                $resp['idProgreso'] = $request->idProgreso;
+                return $resp;
+            }
+
+            $datActr = [
                 "fecha_completado" => $request->fecha_completado,
-                "tiempo_video" => (isset($request->tiempo_video) ? $request->tiempo_video : null)    
-            ]);
+                "tiempo_video" => (isset($request->tiempo_video) ? $request->tiempo_video : null),
+                'updated_at' => now()
+            ];
 
-            $resp["success"] = true;
-            $resp["msj"] = "Progreso registrado correctamente.";
-            $resp["fechProgCompleto"] = $request->fecha_completado;
-            DB::commit();
-
-            return $resp; */
+            if ($progreso->update($datActr)) {
+                $resp["success"] = true;
+                $resp["msj"] = "Progreso modificado correctamente";
+                $resp["fechProgCompleto"] = $request->fecha_completado;
+                $resp['idProgreso'] = $request->idProgreso;
+                DB::commit();
+                return $resp;
+            } else {
+                DB::rollback();
+                return $resp;
+            }
         } catch (\Exception $e) {
             DB::rollback();
-            $resp["msj"] = " error al asignar lección.";
-
             return $resp;
         }
     }

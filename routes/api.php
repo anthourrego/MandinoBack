@@ -239,7 +239,7 @@ Route::middleware(['guest', 'cors'])->group(function () {
     //lecciones-progreso
     Route::prefix('lecciones-progreso')->group(function () {
         Route::post('crear', [LeccionesController::class, 'crearProgreso']);
-        Route::post('editar', [LeccionesController::class, 'actualizarProgreso']);
+        Route::post('actualizar', [LeccionesController::class, 'actualizarProgreso']);
     });
 
     // Videos
