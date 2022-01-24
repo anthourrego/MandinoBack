@@ -313,17 +313,45 @@ class UnidadesController extends Controller
 
     }
 
-    public function listaUnidadesProgreso($idCurso){
+    public function listaUnidadesProgreso($idCurso, $idUser) {
+
+        $lecciones = DB::table('lecciones_unidades')
+            ->selectRaw('
+                COUNT(*) AS cantLecciones,
+                IF(lecciones_progreso_usuarios.fecha_completado, COUNT(*), 0) AS cantLeccionesCompletas,
+                lecciones_unidades.fk_unidad
+            ')
+            ->join('lecciones_progreso_usuarios', 'lecciones_unidades.fk_leccion', '=', 'lecciones_progreso_usuarios.fk_leccion')
+            ->where('lecciones_progreso_usuarios.fk_user', $idUser)
+            ->groupBy('lecciones_unidades.fk_unidad');
+
         $query = DB::table('unidades_cursos')
             ->join('unidades', 'unidades_cursos.fk_unidad', '=', 'unidades.id')
+            ->leftJoinSub($lecciones, "lecciones", function ($join) {
+                $join->on("unidades_cursos.fk_unidad_dependencia", "=", "lecciones.fk_unidad");
+            })
+            ->leftJoinSub($lecciones, "lecciones2", function ($join) {
+                $join->on("lecciones2.fk_unidad", "=", "unidades.id");
+            })
             ->where('unidades_cursos.fk_curso', $idCurso)
             ->where('unidades_cursos.estado', 1)
             ->select(
                 "unidades_cursos.id AS unidadesCursosId",
                 "unidades.id AS unidadId",
-                "unidades.nombre AS nombre", 
-                "unidades.descripcion AS descripcion",
-            )->orderBy('unidades_cursos.orden','asc');
+                "unidades.nombre AS nombre",
+                "unidades_cursos.fk_unidad_dependencia AS unidadDependencia", 
+                "unidades.descripcion AS descripcion"
+            )
+            ->selectRaw(
+                "IF(lecciones.cantLeccionesCompletas IS NULL, 0, lecciones.cantLeccionesCompletas) AS cantLeccionesCompletasDepende,
+                IF(lecciones.cantLecciones IS NULL, 0, lecciones.cantLecciones) AS cantLeccionesDepende,
+                (
+                    (
+                        IF(lecciones2.cantLeccionesCompletas IS NULL, 0, lecciones2.cantLeccionesCompletas) * 100
+                    ) / IF(lecciones2.cantLecciones IS NULL, 0, lecciones2.cantLecciones)
+                ) AS progresoActual"
+            )
+            ->orderBy('unidades_cursos.orden','asc');
         
         return $query->get();
     }

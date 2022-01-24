@@ -279,17 +279,59 @@ class CursosController extends Controller
     }
 
     // listado escuelas_cursos
-    public function listaCursosProgreso($idEscuela){
+    public function listaCursosProgreso($idEscuela, $idUser) {
+
+        $unidades = DB::table('lecciones_unidades')
+            ->selectRaw('IF(
+                COUNT(*) = (
+                    IF(lecciones_progreso_usuarios.fecha_completado, COUNT(*), 0)
+                ), 1, 0) AS Completa,
+                lecciones_unidades.fk_unidad
+            ')
+            ->join('lecciones_progreso_usuarios', 'lecciones_unidades.fk_leccion', '=', 'lecciones_progreso_usuarios.fk_leccion')
+            ->where('lecciones_progreso_usuarios.fk_user', $idUser)
+            ->groupBy('lecciones_unidades.fk_unidad');
+
+        $cursos = DB::table('unidades_cursos')
+            ->selectRaw('COUNT(*) AS cantUnidades,
+                COUNT(UCT.Completa) AS cantUniCompletas,
+                unidades_cursos.fk_curso
+            ')
+            ->leftJoinSub($unidades, "UCT", function ($join) {
+                $join->on("unidades_cursos.fk_unidad", "=", "UCT.fk_unidad");
+            })
+            ->where('unidades_cursos.estado', 1)
+            ->groupBy('unidades_cursos.fk_curso');
+
         $query = DB::table('escuelas_cursos')
             ->join('cursos', 'escuelas_cursos.fk_curso', '=', 'cursos.id')
+            ->leftJoinSub($cursos, "CT", function ($join) {
+                $join->on("escuelas_cursos.fk_curso", "=", "CT.fk_curso");
+            })
+            ->leftJoinSub($cursos, "CT2", function ($join) {
+                $join->on("escuelas_cursos.fk_curso_dependencia", "=", "CT2.fk_curso");
+            })
             ->where('escuelas_cursos.fk_escuela', $idEscuela)
             ->where('escuelas_cursos.estado', 1)
             ->select(
                 "escuelas_cursos.id as escuelasCursoId",
                 "cursos.id as cursoId",
-                "cursos.nombre as nombre", 
+                "cursos.nombre as nombre",
+                "escuelas_cursos.fk_curso_dependencia AS cursoDepende",
                 "cursos.descripcion as descripcion",
-            )->orderBy('escuelas_cursos.orden','asc');
+            )
+            ->selectRaw(
+                "IF(CT2.cantUniCompletas IS NULL, 0, CT2.cantUniCompletas) AS cantUniCompletasDepende,
+                IF(CT2.cantUnidades IS NULL, 0, CT2.cantUnidades) AS cantUnidadesDepende,
+                IF(CT.cantUniCompletas IS NULL, 0, CT.cantUniCompletas) AS cantUniCompletas,
+                IF(CT.cantUnidades IS NULL, 0, CT.cantUnidades) AS cantUnidades,
+                (
+                    (
+                        IF(CT.cantUniCompletas IS NULL, 0, CT.cantUniCompletas) * 100
+                    ) / IF(CT.cantUnidades IS NULL, 0, CT.cantUnidades)
+                ) AS progresoActual"
+            )
+            ->orderBy('escuelas_cursos.orden','asc');
         
         return $query->get();
     }
