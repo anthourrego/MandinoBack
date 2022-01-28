@@ -584,6 +584,17 @@ class LeccionesController extends Controller
         return $resp;
     }
 
+    public function descargarArchivo($folder, $archivo){
+        $path = storage_path('app/public/archivos/'.$folder.'/'.$archivo);
+        if (File::exists($path)) {
+            $type = File::mimeType($path);
+            $file = Storage::disk('public')->get('archivos/'.$folder.'/'.$archivo);
+            $response = Response::make($file, 200);
+            $response->header("Content-Type", $type);
+            return $response;
+        }
+    }
+
     public function traerTodosArchivos($folderName){
         try{
             $path = storage_path('app/public/archivos/'.$folderName);

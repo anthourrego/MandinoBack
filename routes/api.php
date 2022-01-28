@@ -254,6 +254,6 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::post('subir', [LeccionesController::class, 'subirArchivo']);
         Route::get('traerTodos/{folderName}', [LeccionesController::class, 'traerTodosArchivos']);
         Route::post('eliminar', [LeccionesController::class, 'eliminarArchivo']);
-
+        Route::get('descargar/{folderName}/{archivo}', [LeccionesController::class, 'descargarArchivo']);
     });
 });
