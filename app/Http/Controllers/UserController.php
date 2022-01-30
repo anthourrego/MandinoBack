@@ -492,13 +492,72 @@ class UserController extends Controller {
         return $resp;
     }
 
-    public function escuelas($idUsuario, $idRol){
-       $query = DB::table("permisos_sistema AS PS")
+    public function escuelas($idUsuario, $idRol) {
+
+        $lecciones = DB::table('lecciones_unidades')
+            ->selectRaw('COUNT(*) AS cantLecciones, lecciones_unidades.fk_unidad')
+            ->groupBy('lecciones_unidades.fk_unidad');
+        
+        $unidades = DB::table('lecciones_unidades')
+            ->selectRaw('L.cantLecciones,
+                COUNT(lecciones_progreso_usuarios.fecha_completado) AS Completa,
+                lecciones_unidades.fk_unidad
+            ')
+            ->join('lecciones_progreso_usuarios', 'lecciones_unidades.fk_leccion', '=', 'lecciones_progreso_usuarios.fk_leccion')
+            ->leftJoinSub($lecciones, "L", function ($join) {
+                $join->on("lecciones_unidades.fk_unidad", "=", "L.fk_unidad");
+            })
+            ->where('lecciones_progreso_usuarios.fk_user', $idUsuario)
+            ->groupBy('lecciones_unidades.fk_unidad');
+
+        $cursos = DB::table('unidades_cursos')
+            ->selectRaw('SUM(UCT.cantLecciones) AS cantLecciones
+                , SUM(UCT.Completa) AS cantLeccCompletados
+                , unidades_cursos.fk_curso
+            ')
+            ->leftJoinSub($unidades, "UCT", function ($join) {
+                $join->on("unidades_cursos.fk_unidad", "=", "UCT.fk_unidad");
+            })
+            ->where('unidades_cursos.estado', 1)
+            ->groupBy('unidades_cursos.fk_curso');
+
+        $escuelas = DB::table('escuelas_cursos')
+            ->selectRaw('SUM(ECU.cantLecciones) AS cantCursos
+                , SUM(ECU.cantLeccCompletados) AS cantCursCompletados
+                , escuelas_cursos.fk_escuela
+            ')
+            ->leftJoinSub($cursos, "ECU", function ($join) {
+                $join->on("escuelas_cursos.fk_curso", "=", "ECU.fk_curso");
+            })
+            ->where('escuelas_cursos.estado', 1)
+            ->groupBy('escuelas_cursos.fk_escuela');
+        
+        $cantCursos = DB::table('escuelas_cursos')
+            ->selectRaw('COUNT(*) cantCursos, escuelas_cursos.fk_escuela')
+            ->where('escuelas_cursos.estado', 1)
+            ->groupBy('escuelas_cursos.fk_escuela');
+
+
+        $query = DB::table("permisos_sistema AS PS")
                 ->select(
                     "E.id"
                     ,"E.nombre"
                     ,"E.descripcion"
-                )->join("escuelas AS E", "PS.fk_escuelas", "=", "E.id")  
+                    ,"CTC.cantCursos"
+                )->selectRaw(
+                    "(
+                        (
+                            IF(ECT.cantCursCompletados IS NULL, 0, ECT.cantCursCompletados) * 100
+                        ) / IF(ECT.cantCursos IS NULL, 0, ECT.cantCursos)
+                    ) AS progresoActual"
+                )
+                ->join("escuelas AS E", "PS.fk_escuelas", "=", "E.id") 
+                ->leftJoinSub($cantCursos, "CTC", function ($join) {
+                    $join->on("E.id", "=", "CTC.fk_escuela");
+                })
+                ->leftJoinSub($escuelas, "ECT", function ($join) {
+                    $join->on("E.id", "=", "ECT.fk_escuela");
+                })
                 ->where(function($query) use ($idUsuario, $idRol) {
                     return $query->where("PS.fk_perfil", $idRol)
                                 ->orWhere("PS.fk_usuario", $idUsuario);
