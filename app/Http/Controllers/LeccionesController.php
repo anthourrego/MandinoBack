@@ -348,20 +348,6 @@ class LeccionesController extends Controller
                 $ffprobe = FFProbe::create($configFFP);
                 $duracion = (int) $ffprobe->format(storage_path('app/' . $rutaVideo))->get('duration');
                 $timeSkip = rand(1, $duracion - 3);
-
-                /* 
-                    try {
-                        $gifPath = storage_path("app/public/" . $request->ruta . "/" . $request->nombre . "/preview.gif");
-                        $ffmpeg = FFMpeg::create($configFFP);
-                        $ffmpegVideo = $ffmpeg->open(storage_path('app/' . $rutaVideo));
-                        $ffmpegVideo->gif(TimeCode::fromSeconds($timeSkip), new Dimension(320, 180), 3)->save($gifPath);
-                    } catch (\Throwable $th) {
-                        $resp["msj"] = "Error al crear la vista previa.";
-                        $error = $th;
-                        $rutaPoster = 0; 
-                        $rutaVideo = 0;
-                    }
-                */
             }
             
         }
