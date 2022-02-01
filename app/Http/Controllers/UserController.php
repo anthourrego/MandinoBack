@@ -512,9 +512,9 @@ class UserController extends Controller {
             ->groupBy('lecciones_unidades.fk_unidad');
 
         $cursos = DB::table('unidades_cursos')
-            ->selectRaw('SUM(UCT.cantLecciones) AS cantLecciones
-                , SUM(UCT.Completa) AS cantLeccCompletados
+            ->selectRaw('SUM(UCT.Completa) AS cantLeccCompletados
                 , unidades_cursos.fk_curso
+                , COUNT(*) AS cantLecciones
             ')
             ->leftJoinSub($unidades, "UCT", function ($join) {
                 $join->on("unidades_cursos.fk_unidad", "=", "UCT.fk_unidad");
