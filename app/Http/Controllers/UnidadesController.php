@@ -315,6 +315,11 @@ class UnidadesController extends Controller
 
     public function listaUnidadesProgreso($idCurso, $idUser) {
 
+        $cantLecciones = DB::table('lecciones_unidades')
+            ->selectRaw('COUNT(*) AS cantLecciones, lecciones_unidades.fk_unidad')
+            ->where('lecciones_unidades.estado', 1)
+            ->groupBy('lecciones_unidades.fk_unidad');
+
         $lecciones = DB::table('lecciones_unidades')
             ->selectRaw('IF(
                 COUNT(*) = (
@@ -341,6 +346,9 @@ class UnidadesController extends Controller
             ->leftJoinSub($lecciones, "lecciones2", function ($join) {
                 $join->on("lecciones2.fk_unidad", "=", "unidades.id");
             })
+            ->leftJoinSub($cantLecciones, "LCT", function ($join) {
+                $join->on("LCT.fk_unidad", "=", "unidades.id");
+            })
             ->where('unidades_cursos.fk_curso', $idCurso)
             ->where('unidades_cursos.estado', 1)
             ->select(
@@ -351,7 +359,8 @@ class UnidadesController extends Controller
                 "unidades.descripcion AS descripcion",
                 "lecciones2.*",
                 "lecciones.Completa AS completaDepende",
-                "lecciones.progresoActual AS progresoActualDepende"
+                "lecciones.progresoActual AS progresoActualDepende",
+                "LCT.cantLecciones"
             )
             ->orderBy('unidades_cursos.orden','asc');
         

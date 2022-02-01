@@ -122,9 +122,20 @@ class PerfilesController extends Controller {
                         "p.id AS value"
                         ,"p.tag AS text"
                     )->addSelect(['contHijos' => DB::table("permisos AS per")->selectRaw('count(*)')->whereColumn('per.fk_permiso', 'p.id')])
-                    ->selectRaw("(CASE WHEN ps.fk_perfil IS NULL THEN 0 ELSE 1 END) AS checked")
+                    ->selectRaw("(
+                        CASE 
+                            WHEN '$idPerfil' = 'null'
+                                THEN IF(ps.fk_usuario IS NULL, 0, 1)
+                            ELSE IF(ps.fk_perfil IS NULL, 0, 1) 
+                        END
+                    ) AS checked")
                     ->leftjoin("permisos_sistema as ps", function ($join) use ($idPerfil, $idUsuario) {
-                        $join = $join->on('p.id', 'ps.fk_permiso')->where('ps.fk_perfil', $idPerfil)->where('ps.estado', 1);
+                        $join = $join->on('p.id', 'ps.fk_permiso')->where('ps.estado', 1);
+                        if ($idPerfil == 'null') {
+                            $join->whereNull("ps.fk_perfil");
+                        } else {
+                            $join->where('ps.fk_perfil', $idPerfil);
+                        }
                         if (is_null($idUsuario)) {
                             $join->whereNull("ps.fk_usuario");
                         } else {

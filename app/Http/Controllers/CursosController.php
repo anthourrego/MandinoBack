@@ -283,6 +283,7 @@ class CursosController extends Controller
 
         $lecciones = DB::table('lecciones_unidades')
             ->selectRaw('COUNT(*) AS cantLecciones, lecciones_unidades.fk_unidad')
+            ->where('lecciones_unidades.estado', 1)
             ->groupBy('lecciones_unidades.fk_unidad');
         
         $unidades = DB::table('lecciones_unidades')
