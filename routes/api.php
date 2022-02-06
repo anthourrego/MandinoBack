@@ -175,7 +175,10 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::get('visualizar/{video}/{usuario}', [TomaControlController::class, 'videoVisualizar']);
         Route::post('sugeridos', [TomaControlController::class, 'videosSugeridos']);
         Route::post('videos', [TomaControlController::class, 'videos']);
-        Route::get('descargar/{id}', [TomaControlController::class, 'descargarAnexo']);
+        Route::get('descargar/{id}/{name}', [TomaControlController::class, 'descargarAnexo']);
+        Route::get('traerArchivos/{folderName}', [TomaControlController::class, 'traerArchivos']);
+        Route::post('eliminarArchivo', [TomaControlController::class, 'eliminarArchivo']);
+        Route::post('subirArchivo', [TomaControlController::class, 'subirArchivo']);
     });
 
     //Visualizaciones

@@ -19,7 +19,6 @@ class CreateTomaControlsTable extends Migration
             $table->longText('descripcion')->nullable();
             $table->text('poster')->nullable();
             $table->text('ruta');
-            $table->text('anexo')->nullable();
             $table->boolean('visibilidad')->default(1);
             $table->boolean('comentarios')->default(1);
             $table->boolean('estado')->default(1);
