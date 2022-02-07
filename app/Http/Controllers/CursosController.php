@@ -281,36 +281,30 @@ class CursosController extends Controller
     // listado escuelas_cursos
     public function listaCursosProgreso($idEscuela, $idUser) {
 
-        $lecciones = DB::table('lecciones_unidades')
-            ->selectRaw('COUNT(*) AS cantLecciones, lecciones_unidades.fk_unidad')
-            ->where('lecciones_unidades.estado', 1)
-            ->groupBy('lecciones_unidades.fk_unidad');
+        $leccProg = DB::table('lecciones_progreso_usuarios')
+            ->selectRaw('fecha_completado, fk_leccion')
+            ->where('fk_user', $idUser);
         
         $unidades = DB::table('lecciones_unidades')
-            ->selectRaw('L.cantLecciones,
-                COUNT(lecciones_progreso_usuarios.fecha_completado) AS Completa,
+            ->selectRaw('COUNT(*) AS cantLecc,
+                COUNT(LPU.fecha_completado) AS cantLeccCompletas,
                 lecciones_unidades.fk_unidad
             ')
-            ->join('lecciones_progreso_usuarios', 'lecciones_unidades.fk_leccion', '=', 'lecciones_progreso_usuarios.fk_leccion')
-            ->leftJoinSub($lecciones, "L", function ($join) {
-                $join->on("lecciones_unidades.fk_unidad", "=", "L.fk_unidad");
+            ->leftJoinSub($leccProg, "LPU", function ($join) {
+                $join->on("lecciones_unidades.fk_leccion", "=", "LPU.fk_leccion");
             })
-            ->where('lecciones_progreso_usuarios.fk_user', $idUser)
+            ->where('lecciones_unidades.estado', 1)
             ->groupBy('lecciones_unidades.fk_unidad');
 
         $cursos = DB::table('unidades_cursos')
-            ->selectRaw('SUM(UCT.Completa) AS cantLeccCompletados
+            ->selectRaw('SUM(UCT.cantLeccCompletas) AS cantLeccComple
                 , unidades_cursos.fk_curso
-                , COUNT(*) AS cantLecciones
+                , SUM(UCT.cantLecc) AS cantLecc
+                , COUNT(*) AS cantUnidades
             ')
             ->leftJoinSub($unidades, "UCT", function ($join) {
                 $join->on("unidades_cursos.fk_unidad", "=", "UCT.fk_unidad");
             })
-            ->where('unidades_cursos.estado', 1)
-            ->groupBy('unidades_cursos.fk_curso');
-        
-        $cantUni = DB::table('unidades_cursos')
-            ->selectRaw('COUNT(*) cantUnidades, unidades_cursos.fk_curso')
             ->where('unidades_cursos.estado', 1)
             ->groupBy('unidades_cursos.fk_curso');
 
@@ -322,9 +316,6 @@ class CursosController extends Controller
             ->leftJoinSub($cursos, "CT2", function ($join) {
                 $join->on("escuelas_cursos.fk_curso_dependencia", "=", "CT2.fk_curso");
             })
-            ->leftJoinSub($cantUni, "CTU", function ($join) {
-                $join->on("escuelas_cursos.fk_curso", "=", "CTU.fk_curso");
-            })
             ->where('escuelas_cursos.fk_escuela', $idEscuela)
             ->where('escuelas_cursos.estado', 1)
             ->select(
@@ -333,15 +324,15 @@ class CursosController extends Controller
                 "cursos.nombre as nombre",
                 "escuelas_cursos.fk_curso_dependencia AS cursoDepende",
                 "cursos.descripcion as descripcion",
-                "CTU.cantUnidades"
+                "CT.cantUnidades"
             )
             ->selectRaw(
-                "IF(CT2.cantLecciones = CT2.cantLeccCompletados, 1, 0) AS dependeCompleta,
-                IF(CT.cantLecciones = CT.cantLeccCompletados, 1, 0) AS unidadCompleta,
+                "IF(CT2.cantLecc = CT2.cantLeccComple, 1, 0) AS dependeCompleta,
+                IF(CT.cantLecc = CT.cantLeccComple, 1, 0) AS unidadCompleta,
                 (
                     (
-                        IF(CT.cantLeccCompletados IS NULL, 0, CT.cantLeccCompletados) * 100
-                    ) / IF(CT.cantLecciones IS NULL, 0, CT.cantLecciones)
+                        IF(CT.cantLeccComple IS NULL, 0, CT.cantLeccComple) * 100
+                    ) / IF(CT.cantLecc IS NULL, 0, CT.cantLecc)
                 ) AS progresoActual"
             )
             ->orderBy('escuelas_cursos.orden','asc');

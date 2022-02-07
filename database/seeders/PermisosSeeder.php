@@ -47,10 +47,10 @@ class PermisosSeeder extends Seeder
             ],
             [
                 'id' => 4
-                ,'nombre' => "escuelas"
-                ,'tag' => 'Escuelas'
-                ,'icono' => 'fas fa-school'
-                ,'ruta' => 'escuelas'
+                ,'nombre' => "universidad"
+                ,'tag' => 'Universidad'
+                ,'icono' => 'fas fa-university'
+                ,'ruta' => NULL
                 ,'fk_permiso' => 1
                 ,'created_at' => date('Y-m-d H:m:s')
                 ,'updated_at' => date('Y-m-d H:m:s')
@@ -153,31 +153,41 @@ class PermisosSeeder extends Seeder
                 ,'fk_permiso' => 1
                 ,'created_at' => date('Y-m-d H:m:s')
                 ,'updated_at' => date('Y-m-d H:m:s')
-            ],[
+            ],
+            [
                 'id' => 16
-                ,'nombre' => "cursos"
-                ,'tag' => 'Cursos'
-                ,'icono' => 'fas fa-graduation-cap'
-                ,'ruta' => 'cursos'
-                ,'fk_permiso' => 1
+                ,'nombre' => "escuelas"
+                ,'tag' => 'Escuelas'
+                ,'icono' => 'fas fa-school'
+                ,'ruta' => 'escuelas'
+                ,'fk_permiso' => 4
                 ,'created_at' => date('Y-m-d H:m:s')
                 ,'updated_at' => date('Y-m-d H:m:s')
             ],[
                 'id' => 17
-                ,'nombre' => "unidades"
-                ,'tag' => 'Unidades'
-                ,'icono' => 'fas fa-layer-group'
-                ,'ruta' => 'unidades'
-                ,'fk_permiso' => 1
+                ,'nombre' => "cursos"
+                ,'tag' => 'Cursos'
+                ,'icono' => 'fas fa-graduation-cap'
+                ,'ruta' => 'cursos'
+                ,'fk_permiso' => 4
                 ,'created_at' => date('Y-m-d H:m:s')
                 ,'updated_at' => date('Y-m-d H:m:s')
             ],[
                 'id' => 18
+                ,'nombre' => "unidades"
+                ,'tag' => 'Unidades'
+                ,'icono' => 'fas fa-layer-group'
+                ,'ruta' => 'unidades'
+                ,'fk_permiso' => 4
+                ,'created_at' => date('Y-m-d H:m:s')
+                ,'updated_at' => date('Y-m-d H:m:s')
+            ],[
+                'id' => 19
                 ,'nombre' => "lecciones"
                 ,'tag' => 'Lecciones'
                 ,'icono' => 'fas fa-list-ol'
                 ,'ruta' => 'lecciones'
-                ,'fk_permiso' => 1
+                ,'fk_permiso' => 4
                 ,'created_at' => date('Y-m-d H:m:s')
                 ,'updated_at' => date('Y-m-d H:m:s')
             ]
