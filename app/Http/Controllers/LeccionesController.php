@@ -382,6 +382,27 @@ class LeccionesController extends Controller
                 return $this->actualizarProgreso($request);
             }
 
+            if (isset($request->guardarIntento) && $request->guardarIntento == true) {
+
+                $image = str_replace('data:image/png;base64,', '', $request->imagen);
+                $image = base64_decode(str_replace(' ', '+', $image));
+
+                $file = Storage::disk('public')->put($request->carpetaJuegos, $image);
+
+                $idIntentoUsuario = DB::table('intento_leccion_usuario')->insertGetId([
+                    "fk_user" => $request->fk_user,
+                    "fk_leccion" => $request->fk_leccion,
+                    "num_preguntas_correctas" => $request->palabrasTotal,
+                    "num_preguntas_totales" => $request->palabrasCompletadas,
+                    "fecha_inicio" => $request->fechaInicio,
+                    "fecha_final" => $request->fechaFinal,
+                    "captura_pantalla" => $request->nombreCaptura,
+                    "updated_at" => now(),
+                    "created_at" => now() 
+                ]);
+                $resp['idIntento'] = $idIntentoUsuario;
+            }
+
             $id = DB::table('lecciones_progreso_usuarios')->insertGetId([
                 "fk_user" => $request->fk_user,
                 "fk_leccion" => $request->fk_leccion,
@@ -417,6 +438,33 @@ class LeccionesController extends Controller
             $progreso = DB::table('lecciones_progreso_usuarios')
                 ->where('id', $request->idProgreso);
 
+            $datActr = [
+                "fecha_completado" => $request->fecha_completado,
+                "tiempo_video" => (isset($request->tiempo_video) ? $request->tiempo_video : null),
+                'updated_at' => now()
+            ];
+
+            if (isset($request->guardarIntento) && $request->guardarIntento == true) {
+
+                $image = str_replace('data:image/png;base64,', '', $request->imagen);
+                $image = base64_decode(str_replace(' ', '+', $image));
+
+                $file = Storage::disk('public')->put($request->carpetaJuegos, $image);
+
+                $idIntentoUsuario = DB::table('intento_leccion_usuario')->insertGetId([
+                    "fk_user" => $request->fk_user,
+                    "fk_leccion" => $request->fk_leccion,
+                    "num_preguntas_correctas" => $request->palabrasTotal,
+                    "num_preguntas_totales" => $request->palabrasCompletadas,
+                    "fecha_inicio" => $request->fechaInicio,
+                    "fecha_final" => $request->fechaFinal,
+                    "captura_pantalla" => $request->nombreCaptura,
+                    "updated_at" => now(),
+                    "created_at" => now() 
+                ]);
+                $resp['idIntento'] = $idIntentoUsuario;
+            }
+
             if (!is_null($progreso->first()->fecha_completado)) {
                 $resp["success"] = true;
                 $resp["msj"] = "Progreso modificado correctamente";
@@ -424,12 +472,6 @@ class LeccionesController extends Controller
                 $resp['idProgreso'] = $request->idProgreso;
                 return $resp;
             }
-
-            $datActr = [
-                "fecha_completado" => $request->fecha_completado,
-                "tiempo_video" => (isset($request->tiempo_video) ? $request->tiempo_video : null),
-                'updated_at' => now()
-            ];
 
             if ($progreso->update($datActr)) {
                 $resp["success"] = true;
