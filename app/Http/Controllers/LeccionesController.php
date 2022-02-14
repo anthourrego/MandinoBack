@@ -319,7 +319,9 @@ class LeccionesController extends Controller
     }
 
     // listado lecciones_unidades
-    public function listarLeccionesProgreso($idUnidad, $usuario){
+    public function listarLeccionesProgreso($idUnidad, $usuario, $vista) {
+
+        $info = array();
 
         $progresoAct = DB::table('lecciones_progreso_usuarios')
             ->select(
@@ -329,40 +331,107 @@ class LeccionesController extends Controller
                 'lecciones_progreso_usuarios.fk_leccion'
             )->where('lecciones_progreso_usuarios.fk_user', $usuario);
 
-        $progresoActDepende = DB::table('lecciones_progreso_usuarios')
-            ->select(
-                'lecciones_progreso_usuarios.fecha_completado AS fechProgCompletoDepende',
-                'lecciones_progreso_usuarios.fk_leccion'
-            )->where('lecciones_progreso_usuarios.fk_user', $usuario)
-            ->whereNotNull('lecciones_progreso_usuarios.fecha_completado');
+        if ($vista == 'estudiar') {
     
-        $query = DB::table('lecciones_unidades')
-            ->select(
-                "lecciones_unidades.id as unidadesId",
-                "lecciones_unidades.fk_leccion_dependencia as leccionDependencia",
-                "lecciones.id as id",
-                "lecciones.contenido",
-                "lecciones.nombre as nombre", 
-                "lecciones.tipo as tipo",
-                "lpu.fechProgCompleto",
-                "lpu.tiempoVideoProg",
-                "lpu.idProgreso",
-                "lpu2.fechProgCompletoDepende"
-            )
-            ->join('lecciones', 'lecciones_unidades.fk_leccion', '=', 'lecciones.id')
-            ->leftJoinSub($progresoAct, "lpu", function ($join) {
-                $join->on("lecciones.id", "=", "lpu.fk_leccion");
-            })
-            ->leftJoinSub($progresoActDepende, "lpu2", function ($join) {
-                $join->on("lecciones_unidades.fk_leccion_dependencia", "=", "lpu2.fk_leccion");
-            })
-            ->where('lecciones_unidades.fk_unidad', $idUnidad)
-            ->where('lecciones_unidades.estado',1)
-            ->orderBy('lecciones_unidades.orden','asc');
+            $progresoActDepende = DB::table('lecciones_progreso_usuarios')
+                ->select(
+                    'lecciones_progreso_usuarios.fecha_completado AS fechProgCompletoDepende',
+                    'lecciones_progreso_usuarios.fk_leccion'
+                )->where('lecciones_progreso_usuarios.fk_user', $usuario)
+                ->whereNotNull('lecciones_progreso_usuarios.fecha_completado');
         
-        $info = $query->get();
-        return $info;
+            $query = DB::table('lecciones_unidades')
+                ->select(
+                    "lecciones_unidades.id as unidadesId",
+                    "lecciones_unidades.fk_leccion_dependencia as leccionDependencia",
+                    "lecciones.id as id",
+                    "lecciones.contenido",
+                    "lecciones.nombre as nombre", 
+                    "lecciones.tipo as tipo",
+                    "lpu.fechProgCompleto",
+                    "lpu.tiempoVideoProg",
+                    "lpu.idProgreso",
+                    "lpu2.fechProgCompletoDepende"
+                )
+                ->join('lecciones', 'lecciones_unidades.fk_leccion', '=', 'lecciones.id')
+                ->leftJoinSub($progresoAct, "lpu", function ($join) {
+                    $join->on("lecciones.id", "=", "lpu.fk_leccion");
+                })
+                ->leftJoinSub($progresoActDepende, "lpu2", function ($join) {
+                    $join->on("lecciones_unidades.fk_leccion_dependencia", "=", "lpu2.fk_leccion");
+                })
+                ->where('lecciones_unidades.fk_unidad', $idUnidad)
+                ->where('lecciones_unidades.estado',1)
+                ->orderBy('lecciones_unidades.orden','asc');
+            
+            $info = $query->get();
 
+        } else {
+
+            $info = DB::table('lecciones_unidades')
+                ->select(
+                    "lecciones_unidades.id as unidadesId",
+                    "lecciones_unidades.fk_leccion_dependencia as leccionDependencia",
+                    "lecciones.id as id",
+                    "lecciones.contenido",
+                    "lecciones.nombre as nombre", 
+                    "lecciones.tipo as tipo",
+                    "lpu.fechProgCompleto",
+                    "lpu.tiempoVideoProg",
+                    "lpu.idProgreso"
+                )
+                ->join('lecciones', 'lecciones_unidades.fk_leccion', '=', 'lecciones.id')
+                ->leftJoinSub($progresoAct, "lpu", function ($join) {
+                    $join->on("lecciones.id", "=", "lpu.fk_leccion");
+                })
+                ->where('lecciones_unidades.fk_unidad', $idUnidad)
+                ->where('lecciones_unidades.estado',1)
+                ->orderBy('lecciones_unidades.orden','asc')
+                ->get();
+        }
+
+        foreach ($info as $key => $value) {
+            if ($value->tipo == 2 || $value->tipo == 4) {
+                $value->intentos =  $this->obtenerIntentosLeccion($usuario, $value->id);
+            }
+        }
+        return $info;
+    }
+
+    private function obtenerIntentosLeccion($usuario, $idLeccion) {
+        return DB::table('intento_leccion_usuario')
+            ->select(
+                "intento_leccion_usuario.id",
+                "intento_leccion_usuario.num_preguntas_correctas",
+                "intento_leccion_usuario.num_preguntas_totales",
+                "intento_leccion_usuario.fecha_inicio",
+                "intento_leccion_usuario.fecha_final", 
+                "intento_leccion_usuario.captura_pantalla"
+            )
+            ->selectRaw("TIMEDIFF(intento_leccion_usuario.fecha_final, intento_leccion_usuario.fecha_inicio) AS tiempo")
+            ->where('intento_leccion_usuario.fk_leccion', $idLeccion)
+            ->where('intento_leccion_usuario.fk_user', $usuario)
+            ->get();
+    }
+
+    //Obtener screenshot juego
+    public function getScreenShot($id, $filename, $navegador){
+        $path = storage_path('app/public/juegos/'. $id . '/' . $filename);
+        if (!File::exists($path)) {
+            $path = resource_path('assets/image/nofoto.png');
+        }
+
+        $file = File::get($path);
+        $size = File::size($path);
+        $type = File::mimeType($path);
+
+        $codigo = 206;
+        if ($navegador == 'firefox') $codigo = 200;
+
+        $response = Response::make($file, $codigo);
+        $response->header("Content-Type", $type); 
+        $response->header("Content-Range", "bytes 0-" . ($size - 1) . "/" . $size); 
+        return $response;
     }
 
     //creacion progreso lección
@@ -389,7 +458,7 @@ class LeccionesController extends Controller
 
                 $file = Storage::disk('public')->put($request->carpetaJuegos, $image);
 
-                $idIntentoUsuario = DB::table('intento_leccion_usuario')->insertGetId([
+                DB::table('intento_leccion_usuario')->insert([
                     "fk_user" => $request->fk_user,
                     "fk_leccion" => $request->fk_leccion,
                     "num_preguntas_correctas" => $request->palabrasTotal,
@@ -400,7 +469,7 @@ class LeccionesController extends Controller
                     "updated_at" => now(),
                     "created_at" => now() 
                 ]);
-                $resp['idIntento'] = $idIntentoUsuario;
+                $resp['intentos'] = $this->obtenerIntentosLeccion($request->fk_user, $request->fk_leccion);
             }
 
             $id = DB::table('lecciones_progreso_usuarios')->insertGetId([
@@ -451,7 +520,7 @@ class LeccionesController extends Controller
 
                 $file = Storage::disk('public')->put($request->carpetaJuegos, $image);
 
-                $idIntentoUsuario = DB::table('intento_leccion_usuario')->insertGetId([
+                DB::table('intento_leccion_usuario')->insert([
                     "fk_user" => $request->fk_user,
                     "fk_leccion" => $request->fk_leccion,
                     "num_preguntas_correctas" => $request->palabrasTotal,
@@ -462,7 +531,7 @@ class LeccionesController extends Controller
                     "updated_at" => now(),
                     "created_at" => now() 
                 ]);
-                $resp['idIntento'] = $idIntentoUsuario;
+                $resp['intentos'] = $this->obtenerIntentosLeccion($request->fk_user, $request->fk_leccion);
             }
 
             if (!is_null($progreso->first()->fecha_completado)) {

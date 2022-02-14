@@ -236,13 +236,14 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::post('actualizarOrden', [LeccionesController::class, 'actualizarOrden']);
         Route::post('agregarDependencia', [LeccionesController::class, 'agregarDependencia']);
         Route::get('listarLeccionesUnidades/{idUnidad}', [LeccionesController::class, 'listarLeccionesUnidades']);
-        Route::get('listarLeccionesProgreso/{idUnidad}/{usuario}', [LeccionesController::class, 'listarLeccionesProgreso']);
+        Route::get('listarLeccionesProgreso/{idUnidad}/{usuario}/{vista}', [LeccionesController::class, 'listarLeccionesProgreso']);
     });
 
     //lecciones-progreso
     Route::prefix('lecciones-progreso')->group(function () {
         Route::post('crear', [LeccionesController::class, 'crearProgreso']);
         Route::post('actualizar', [LeccionesController::class, 'actualizarProgreso']);
+        Route::get('screen/{id}/{filename}/{navegador}', [LeccionesController::class, 'getScreenShot']);
     });
 
     // Videos
