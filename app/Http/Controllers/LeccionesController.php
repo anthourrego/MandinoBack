@@ -414,6 +414,34 @@ class LeccionesController extends Controller
             ->get();
     }
 
+    //guardar cantidad de intentos de exmane por usuario
+    public function cantidadIntentos(Request $request) {
+        $resp["success"] = false;
+        $resp["msj"] = "No fue posible modificar la cantidad.";
+        try {
+
+            $progreso = DB::table('lecciones_progreso_usuarios')->where('id', $request->progreso);
+
+            $datActr = [
+                "intentos_adicionales" => $request->intentos,
+                'updated_at' => now()
+            ];
+
+            if ($progreso->update($datActr)) {
+                $resp["success"] = true;
+                $resp["msj"] = "Cantidad modificada correctmente";
+                DB::commit();
+                return $resp;
+            } else {
+                DB::rollback();
+                return $resp;
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            return $resp;
+        }
+    }
+
     //Obtener screenshot juego
     public function getScreenShot($id, $filename, $navegador){
         $path = storage_path('app/public/juegos/'. $id . '/' . $filename);

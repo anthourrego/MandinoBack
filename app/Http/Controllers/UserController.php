@@ -567,6 +567,85 @@ class UserController extends Controller {
         return $query; 
     }
 
+    public function listaUnidadesLeccionesAvance($id, $idUser, $tipo) {
+
+        if ($tipo == 'unidades') {
+
+            $cantLecciones = DB::table('lecciones_unidades')
+                ->selectRaw('COUNT(*) AS cantLecciones, lecciones_unidades.fk_unidad')
+                ->where('lecciones_unidades.estado', 1)
+                ->groupBy('lecciones_unidades.fk_unidad');
+    
+            $lecciones = DB::table('lecciones_unidades')
+                ->selectRaw('
+                    COUNT(lecciones_progreso_usuarios.fecha_completado) AS TotalLeccionesComple,
+                    lecciones_unidades.fk_unidad
+                ')
+                ->leftJoin('lecciones_progreso_usuarios', 'lecciones_unidades.fk_leccion', '=', 'lecciones_progreso_usuarios.fk_leccion')
+                ->where('lecciones_progreso_usuarios.fk_user', $idUser)
+                ->groupBy('lecciones_unidades.fk_unidad');
+    
+            $query = DB::table('unidades_cursos')
+                ->join('unidades', 'unidades_cursos.fk_unidad', '=', 'unidades.id')
+                ->leftJoinSub($lecciones, "lecciones2", function ($join) {
+                    $join->on("lecciones2.fk_unidad", "=", "unidades.id");
+                })
+                ->leftJoinSub($cantLecciones, "LCT", function ($join) {
+                    $join->on("LCT.fk_unidad", "=", "unidades.id");
+                })
+                ->where('unidades_cursos.fk_curso', $id)
+                ->where('unidades_cursos.estado', 1)
+                ->select(
+                    "unidades.id AS unidadId",
+                    "unidades.nombre AS nombre",
+                    "unidades.color AS color",
+                    "lecciones2.TotalLeccionesComple",
+                    "LCT.cantLecciones"
+                )
+                ->orderBy('unidades_cursos.orden','asc');
+            
+            return $query->get();
+        } else {
+            
+            $intentosLec = DB::table('intento_leccion_usuario')
+            ->selectRaw('COUNT(*) AS intentos, intento_leccion_usuario.fk_leccion')
+            ->where('intento_leccion_usuario.fk_user', $idUser);
+            
+            $progresoAct = DB::table('lecciones_progreso_usuarios')
+            ->select(
+                'lecciones_progreso_usuarios.fecha_completado AS fechProgCompleto',
+                'lecciones_progreso_usuarios.fk_leccion',
+                //'lecciones_progreso_usuarios.intentos_adicionales',
+                'lecciones_progreso_usuarios.id'
+            )->where('lecciones_progreso_usuarios.fk_user', $idUser);
+
+            $info = DB::table('lecciones_unidades')
+                ->select(
+                    "lecciones_unidades.id as unidadesId",
+                    "lecciones.id as id",
+                    "lecciones.nombre as nombre", 
+                    "lecciones.tipo as tipo",
+                    "lpu.fechProgCompleto",
+                    "lpu.id AS idProgreso",
+                    //"lpu.intentos_adicionales",
+                    "il.intentos"
+                )
+                ->join('lecciones', 'lecciones_unidades.fk_leccion', '=', 'lecciones.id')
+                ->leftJoinSub($progresoAct, "lpu", function ($join) {
+                    $join->on("lecciones.id", "=", "lpu.fk_leccion");
+                })
+                ->leftJoinSub($intentosLec, "il", function ($join) {
+                    $join->on("lecciones.id", "=", "il.fk_leccion");
+                })
+                ->where('lecciones_unidades.fk_unidad', $id)
+                ->where('lecciones_unidades.estado',1)
+                ->orderBy('lecciones_unidades.orden','asc')
+                ->get();
+            return $info;
+        }
+
+    }
+
     public function editarPefil(Request $request){
         $resp["success"] = false;
         $usuario = User::find($request->idUsuario);

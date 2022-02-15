@@ -116,6 +116,7 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::get('categorias/{idUsuario}/{idPerfil}', [UserController::class, 'categorias']);
         Route::get('fotoPerfil/{idUsuario}', [UserController::class, 'fotoPerfil']);
         Route::post('actualizarFotoPerfil', [UserController::class, 'actualizarFotoPerfil']);
+        Route::get('listaUnidadesLeccionesAvance/{id}/{idUser}/{tipo}', [UserController::class, 'listaUnidadesLeccionesAvance']);
     });
 
     //Perfiles
@@ -244,6 +245,7 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::post('crear', [LeccionesController::class, 'crearProgreso']);
         Route::post('actualizar', [LeccionesController::class, 'actualizarProgreso']);
         Route::get('screen/{id}/{filename}/{navegador}', [LeccionesController::class, 'getScreenShot']);
+        Route::post('cantidadIntentos', [LeccionesController::class, 'cantidadIntentos']);
     });
 
     // Videos
