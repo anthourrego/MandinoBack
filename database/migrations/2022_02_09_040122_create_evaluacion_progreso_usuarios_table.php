@@ -15,16 +15,14 @@ class CreateEvaluacionProgresoUsuariosTable extends Migration
     {
         Schema::create('intento_leccion_usuario', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('fk_user');
-            $table->foreignId('fk_leccion');
+            $table->foreignId('fk_leccion_progreso');
             $table->integer('num_preguntas_correctas')->default(0);
             $table->integer('num_preguntas_totales')->default(0);
             $table->dateTime('fecha_inicio');
             $table->dateTime('fecha_final');
             $table->string('captura_pantalla')->nullable();
             $table->timestamps();
-            $table->foreign('fk_user')->references('id')->on('users');
-            $table->foreign('fk_leccion')->references('id')->on('lecciones');
+            $table->foreign('fk_leccion_progreso')->references('id')->on('lecciones_progreso_usuarios');
         });
     }
 
