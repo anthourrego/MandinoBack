@@ -328,6 +328,7 @@ class LeccionesController extends Controller
                 'lecciones_progreso_usuarios.fecha_completado AS fechProgCompleto',
                 'lecciones_progreso_usuarios.tiempo_video AS tiempoVideoProg',
                 'lecciones_progreso_usuarios.id AS idProgreso',
+                'lecciones_progreso_usuarios.intentos_adicionales',
                 'lecciones_progreso_usuarios.fk_leccion'
             )->where('lecciones_progreso_usuarios.fk_user', $usuario);
 
@@ -352,6 +353,8 @@ class LeccionesController extends Controller
                     "lpu.tiempoVideoProg",
                     "lpu.idProgreso",
                     "lpu2.fechProgCompletoDepende"
+                )->selectRaw(
+                    "(IF(lpu.intentos_adicionales IS NULL, 0, lpu.intentos_adicionales) + IF(lecciones.intentos_base IS NULL, 0, lecciones.intentos_base)) AS totalIntentos"
                 )
                 ->join('lecciones', 'lecciones_unidades.fk_leccion', '=', 'lecciones.id')
                 ->leftJoinSub($progresoAct, "lpu", function ($join) {
@@ -379,6 +382,8 @@ class LeccionesController extends Controller
                     "lpu.fechProgCompleto",
                     "lpu.tiempoVideoProg",
                     "lpu.idProgreso"
+                )->selectRaw(
+                    "(IF(lpu.intentos_adicionales IS NULL, 0, lpu.intentos_adicionales) + IF(lecciones.intentos_base IS NULL, 0, lecciones.intentos_base)) AS totalIntentos"
                 )
                 ->join('lecciones', 'lecciones_unidades.fk_leccion', '=', 'lecciones.id')
                 ->leftJoinSub($progresoAct, "lpu", function ($join) {
@@ -392,13 +397,17 @@ class LeccionesController extends Controller
 
         foreach ($info as $key => $value) {
             if ($value->tipo == 2 || $value->tipo == 4) {
-                $value->intentos =  $this->obtenerIntentosLeccion($usuario, $value->id);
+                $value->intentos =  $this->obtenerIntentosLeccion($value->idProgreso);
+                $value->masIntento = true;
+                if ($value->totalIntentos != 0 && count($value->intentos) >= $value->totalIntentos) {
+                    $value->masIntento = false;
+                }
             }
         }
         return $info;
     }
 
-    private function obtenerIntentosLeccion($usuario, $idLeccion) {
+    private function obtenerIntentosLeccion($idProgreso) {
         return DB::table('intento_leccion_usuario')
             ->select(
                 "intento_leccion_usuario.id",
@@ -409,8 +418,7 @@ class LeccionesController extends Controller
                 "intento_leccion_usuario.captura_pantalla"
             )
             ->selectRaw("TIMEDIFF(intento_leccion_usuario.fecha_final, intento_leccion_usuario.fecha_inicio) AS tiempo")
-            ->where('intento_leccion_usuario.fk_leccion', $idLeccion)
-            ->where('intento_leccion_usuario.fk_user', $usuario)
+            ->where('intento_leccion_usuario.fk_leccion_progreso', $idProgreso)
             ->get();
     }
 
@@ -479,27 +487,6 @@ class LeccionesController extends Controller
                 return $this->actualizarProgreso($request);
             }
 
-            if (isset($request->guardarIntento) && $request->guardarIntento == true) {
-
-                $image = str_replace('data:image/png;base64,', '', $request->imagen);
-                $image = base64_decode(str_replace(' ', '+', $image));
-
-                $file = Storage::disk('public')->put($request->carpetaJuegos, $image);
-
-                DB::table('intento_leccion_usuario')->insert([
-                    "fk_user" => $request->fk_user,
-                    "fk_leccion" => $request->fk_leccion,
-                    "num_preguntas_correctas" => $request->palabrasTotal,
-                    "num_preguntas_totales" => $request->palabrasCompletadas,
-                    "fecha_inicio" => $request->fechaInicio,
-                    "fecha_final" => $request->fechaFinal,
-                    "captura_pantalla" => $request->nombreCaptura,
-                    "updated_at" => now(),
-                    "created_at" => now() 
-                ]);
-                $resp['intentos'] = $this->obtenerIntentosLeccion($request->fk_user, $request->fk_leccion);
-            }
-
             $id = DB::table('lecciones_progreso_usuarios')->insertGetId([
                 "fk_user" => $request->fk_user,
                 "fk_leccion" => $request->fk_leccion,
@@ -508,6 +495,26 @@ class LeccionesController extends Controller
                 "updated_at" => now(),
                 "created_at" => now() 
             ]);
+
+            if (isset($request->guardarIntento) && $request->guardarIntento == true) {
+
+                $image = str_replace('data:image/png;base64,', '', $request->imagen);
+                $image = base64_decode(str_replace(' ', '+', $image));
+
+                $file = Storage::disk('public')->put($request->carpetaJuegos, $image);
+
+                DB::table('intento_leccion_usuario')->insert([
+                    "fk_leccion_progreso" => $id,
+                    "num_preguntas_correctas" => $request->palabrasTotal,
+                    "num_preguntas_totales" => $request->palabrasCompletadas,
+                    "fecha_inicio" => $request->fechaInicio,
+                    "fecha_final" => $request->fechaFinal,
+                    "captura_pantalla" => $request->nombreCaptura,
+                    "updated_at" => now(),
+                    "created_at" => now() 
+                ]);
+                $resp['intentos'] = $this->obtenerIntentosLeccion($id);
+            }
 
             $resp["success"] = true;
             $resp["msj"] = "Progreso registrado correctamente.";
@@ -549,8 +556,7 @@ class LeccionesController extends Controller
                 $file = Storage::disk('public')->put($request->carpetaJuegos, $image);
 
                 DB::table('intento_leccion_usuario')->insert([
-                    "fk_user" => $request->fk_user,
-                    "fk_leccion" => $request->fk_leccion,
+                    "fk_leccion_progreso" => $request->idProgreso,
                     "num_preguntas_correctas" => $request->palabrasTotal,
                     "num_preguntas_totales" => $request->palabrasCompletadas,
                     "fecha_inicio" => $request->fechaInicio,
@@ -559,7 +565,7 @@ class LeccionesController extends Controller
                     "updated_at" => now(),
                     "created_at" => now() 
                 ]);
-                $resp['intentos'] = $this->obtenerIntentosLeccion($request->fk_user, $request->fk_leccion);
+                $resp['intentos'] = $this->obtenerIntentosLeccion($request->idProgreso);
             }
 
             if (!is_null($progreso->first()->fecha_completado)) {

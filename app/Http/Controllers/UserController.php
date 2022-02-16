@@ -608,16 +608,19 @@ class UserController extends Controller {
         } else {
             
             $intentosLec = DB::table('intento_leccion_usuario')
-            ->selectRaw('COUNT(*) AS intentos, intento_leccion_usuario.fk_leccion')
-            ->where('intento_leccion_usuario.fk_user', $idUser);
+            ->selectRaw('COUNT(*) AS intentos, intento_leccion_usuario.fk_leccion_progreso')
+            ->groupBy('intento_leccion_usuario.fk_leccion_progreso');
             
             $progresoAct = DB::table('lecciones_progreso_usuarios')
             ->select(
                 'lecciones_progreso_usuarios.fecha_completado AS fechProgCompleto',
                 'lecciones_progreso_usuarios.fk_leccion',
-                //'lecciones_progreso_usuarios.intentos_adicionales',
-                'lecciones_progreso_usuarios.id'
-            )->where('lecciones_progreso_usuarios.fk_user', $idUser);
+                'lecciones_progreso_usuarios.intentos_adicionales',
+                'lecciones_progreso_usuarios.id',
+                'il.intentos'
+            )->leftJoinSub($intentosLec, "il", function ($join) {
+                $join->on("lecciones_progreso_usuarios.id", "=", "il.fk_leccion_progreso");
+            })->where('lecciones_progreso_usuarios.fk_user', $idUser);
 
             $info = DB::table('lecciones_unidades')
                 ->select(
@@ -627,15 +630,13 @@ class UserController extends Controller {
                     "lecciones.tipo as tipo",
                     "lpu.fechProgCompleto",
                     "lpu.id AS idProgreso",
-                    //"lpu.intentos_adicionales",
-                    "il.intentos"
-                )
+                    "lpu.intentos_adicionales",
+                    "lpu.intentos",
+                    "lecciones.intentos_base",
+                )->selectRaw('IF(lecciones.intentos_base < lpu.intentos, (lecciones.intentos_base - lpu.intentos), 0) AS intentoMinimo')
                 ->join('lecciones', 'lecciones_unidades.fk_leccion', '=', 'lecciones.id')
                 ->leftJoinSub($progresoAct, "lpu", function ($join) {
                     $join->on("lecciones.id", "=", "lpu.fk_leccion");
-                })
-                ->leftJoinSub($intentosLec, "il", function ($join) {
-                    $join->on("lecciones.id", "=", "il.fk_leccion");
                 })
                 ->where('lecciones_unidades.fk_unidad', $id)
                 ->where('lecciones_unidades.estado',1)
