@@ -1,0 +1,95 @@
+[
+  {
+    "name": "bgLogin",
+    "pantalla": "login",
+    "url": "fondoInicioSesion.jpg",
+    "urlDef": "assets/img/fondoSecundario.jpg",
+    "title": "Fondo Inicio de Sesión",
+    "colorFondo": true,
+    "filtro": true,
+    "dark": false
+  },
+  {
+    "name" : "imgFrmLogin",
+    "pantalla" : "login",
+    "url": null,
+    "urlDef": "assets/img/imagenLogin.png",
+    "title": "Icono Inicio de Sesión",
+    "filtro": true,
+    "dark": false
+  },
+  {
+    "name" : "bgSections",
+    "pantalla": "secciones",
+    "url": null,
+    "urlDef": "assets/img/fondoPrincipal.jpg",
+    "title": "Fondo Secciones",
+    "colorFondo": true,
+    "filtro": true,
+    "dark": false
+  },
+  {
+    "name": "icnSections",
+    "pantalla": "secciones",
+    "url": null,
+    "urlDef": "assets/img/logo2.png",
+    "title": "Icono Secciones",
+    "filtro": true,
+    "dark": false
+  },
+  {
+    "name" : "accSectionsAdmin",
+    "pantalla": "secciones",
+    "url": null,
+    "urlDef": "assets/img/cara-robot.png",
+    "title": "Icono Secciones Administrativo",
+    "filtro": true,
+    "dark": false
+  },
+  {
+    "name": "accSectionsUni",
+    "pantalla": "secciones",
+    "url": null,
+    "urlDef": "assets/img/universidad-btn.png",
+    "title": "Icono Secciones Cursos",
+    "filtro": true,
+    "dark": false
+  },
+  {
+    "name" : "accSectionsToma",
+    "pantalla": "secciones",
+    "url": null,
+    "urlDef": "assets/img/toma-control-btn.png",
+    "title": "Icono Secciones Toma Control",
+    "filtro": true,
+    "dark": false
+  },
+  {
+    "name": "accSectionsRegre",
+    "pantalla": "secciones",
+    "url": null,
+    "urlDef": "assets/img/retorno-btn.png",
+    "title": "Icono Secciones Retorno",
+    "filtro": true,
+    "dark": false
+  },
+  {
+    "name": "icnMandinoAdmin",
+    "pantalla": "admin",
+    "url": null,
+    "urlDef": "assets/img/logo.png",
+    "title": "Icono Administrativo",
+    "nombre": "Mandino",
+    "filtro": true,
+    "dark": false
+  },
+  {
+    "name": "icnMandinoToma",
+    "pantalla": "admin",
+    "url": null,
+    "urlDef": "assets/img/logo3.png",
+    "title": "Icono Toma Control",
+    "filtro": true,
+    "dark": false
+  }
+]

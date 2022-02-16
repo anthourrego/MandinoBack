@@ -17,6 +17,7 @@ use App\Http\Controllers\UnidadesController;
 use App\Http\Controllers\TomaControlComentariosController;
 use App\Http\Controllers\TomaControlMeGustaController;
 use App\Http\Controllers\LeccionesController;
+use App\Http\Controllers\PlataformaController;
 
 /*
 |--------------------------------------------------------------------------
@@ -261,5 +262,11 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::get('traerTodos/{folderName}', [LeccionesController::class, 'traerTodosArchivos']);
         Route::post('eliminar', [LeccionesController::class, 'eliminarArchivo']);
         Route::get('descargar/{folderName}/{archivo}', [LeccionesController::class, 'descargarArchivo']);
+    });
+
+    // Plataforma
+    Route::prefix('plataforma')->group(function () {
+        Route::get('datos', [PlataformaController::class, 'datosJSON']);
+        Route::get('img/{nombreImg}', [PlataformaController::class, 'devolverImg']);
     });
 });
