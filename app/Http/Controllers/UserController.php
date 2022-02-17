@@ -633,7 +633,7 @@ class UserController extends Controller {
                     "lpu.intentos_adicionales",
                     "lpu.intentos",
                     "lecciones.intentos_base",
-                )->selectRaw('IF(lecciones.intentos_base < lpu.intentos, (lecciones.intentos_base - lpu.intentos), 0) AS intentoMinimo')
+                )->selectRaw('IF(lecciones.intentos_base IS NULL, 0 , lecciones.intentos_base) + IF(lpu.intentos_adicionales IS NULL, 0, lpu.intentos_adicionales) AS sumaIntentos')
                 ->join('lecciones', 'lecciones_unidades.fk_leccion', '=', 'lecciones.id')
                 ->leftJoinSub($progresoAct, "lpu", function ($join) {
                     $join->on("lecciones.id", "=", "lpu.fk_leccion");
