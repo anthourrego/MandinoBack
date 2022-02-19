@@ -450,7 +450,7 @@ class UserController extends Controller {
         $resp["success"] = false;
         DB::beginTransaction();
 
-        DB::table('permisos_sistema')->where("fk_usuario", $request->idUsuario)->delete(); 
+        DB::table('permisos_sistema')->whereNull("fk_escuelas")->where("fk_usuario", $request->idUsuario)->delete(); 
         
         $cont = 0;
         $perfil = new PerfilesController();
@@ -542,7 +542,6 @@ class UserController extends Controller {
             ->selectRaw('COUNT(*) cantCursos, escuelas_cursos.fk_escuela')
             ->where('escuelas_cursos.estado', 1)
             ->groupBy('escuelas_cursos.fk_escuela');
-
 
         $query = DB::table("permisos_sistema AS PS")
                 ->select(
@@ -674,7 +673,7 @@ class UserController extends Controller {
     public function guardarEscualesSinPerfil(Request $request) {
         $user = $request->usuario;
 
-        DB::table('permisos_sistema')->whereNull("fk_perfil")->where('fk_usuario', $user)->delete();
+        DB::table('permisos_sistema')->whereNull("fk_permiso")->whereNull("fk_perfil")->where('fk_usuario', $user)->delete();
 
         $cont = 0;
         foreach ($request->escuelas as $value) {
