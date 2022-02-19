@@ -118,6 +118,8 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::get('fotoPerfil/{idUsuario}', [UserController::class, 'fotoPerfil']);
         Route::post('actualizarFotoPerfil', [UserController::class, 'actualizarFotoPerfil']);
         Route::get('listaUnidadesLeccionesAvance/{id}/{idUser}/{tipo}', [UserController::class, 'listaUnidadesLeccionesAvance']);
+        Route::get('escuelasSinPerfil/{idUser}', [UserController::class, 'escuelasSinPerfil']);
+        Route::post('guardarEscualesSinPerfil', [UserController::class, 'guardarEscualesSinPerfil']);
     });
 
     //Perfiles

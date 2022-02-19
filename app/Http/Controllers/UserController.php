@@ -281,6 +281,11 @@ class UserController extends Controller {
                             $usuario->fk_perfil != $datos->fk_perfil ||
                             $usuario->foto != $datos->foto
                         ) {
+
+                        if (is_null($usuario->fk_perfil) && $datos->fk_perfil > 0) {
+                            DB::table('permisos_sistema')->where('fk_usuario', $datos->id)->whereNull('fk_permiso')->whereNull('fk_perfil')->delete();
+                        }
+
                         $perfilViejo = $usuario->fk_perfil;
                         $usuario->nro_documento = $datos->nro_documento;
                         $usuario->usuario = $datos->usuario;
@@ -645,6 +650,56 @@ class UserController extends Controller {
             return $info;
         }
 
+    }
+
+    public function escuelasSinPerfil($idUser) {
+        $query = DB::table("permisos_sistema AS PS")
+            ->select(
+                "PS.id"
+                ,"PS.fk_escuelas"
+            )->whereNull("PS.fk_perfil")
+            ->where("PS.estado", 1)
+            ->where("PS.fk_usuario", $idUser);
+        
+        $escuelas = DB::table('escuelas')
+            ->selectRaw('escuelas.id AS value, escuelas.nombre AS text, PST.id AS idPermUser')
+            ->leftJoinSub($query, "PST", function ($join) {
+                $join->on("escuelas.id", "=", "PST.fk_escuelas");
+            })
+            ->where('escuelas.estado', 1)
+            ->get();
+        return $escuelas;
+    }
+
+    public function guardarEscualesSinPerfil(Request $request) {
+        $user = $request->usuario;
+
+        DB::table('permisos_sistema')->whereNull("fk_perfil")->where('fk_usuario', $user)->delete();
+
+        $cont = 0;
+        foreach ($request->escuelas as $value) {
+            try {
+                DB::table('permisos_sistema')->insert([
+                    "fk_usuario" => $user
+                    ,"fk_escuelas" => $value
+                    ,"tipo" => 0
+                ]);
+            } catch (\Exception $e) {
+                DB::rollback();
+                $cont++;
+                break;
+            }
+        }
+
+        if ($cont == 0) {
+            DB::commit();
+            $resp["success"] = true;
+            $resp["msj"] = "Escuelas actualizadas correctamente.";
+        } else {
+            DB::rollback();
+            $resp["msj"] = "Error al actualizar las escuelas.";
+        }
+        return $resp;
     }
 
     public function editarPefil(Request $request){
