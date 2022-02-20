@@ -33,6 +33,6 @@ class CreateEvaluacionProgresoUsuariosTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('evaluacion_progreso_usuarios');
+        Schema::dropIfExists('intento_leccion_usuario');
     }
 }

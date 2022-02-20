@@ -15,7 +15,7 @@ class PerfilesSeeder extends Seeder
     public function run(){
         DB::table('perfiles')->insert([
             [
-                "nombre" => 'Pruebas'
+                "nombre" => 'Administrador'
                 ,"created_at" => date('Y-m-d H:m:s')
                 ,"updated_at" => date('Y-m-d H:m:s')
             ]

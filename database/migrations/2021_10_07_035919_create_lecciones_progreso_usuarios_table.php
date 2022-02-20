@@ -19,10 +19,10 @@ class CreateLeccionesProgresoUsuariosTable extends Migration
             $table->foreignId('fk_leccion');
             $table->date('fecha_completado')->nullable();
             $table->integer('tiempo_video')->length(10)->nullable();
-            $table->timestamps();
-
             $table->foreign('fk_user')->references('id')->on('users');
             $table->foreign('fk_leccion')->references('id')->on('lecciones');
+            $table->timestamps();
+
         });
     }
 
@@ -31,8 +31,7 @@ class CreateLeccionesProgresoUsuariosTable extends Migration
      *
      * @return void
      */
-    public function down()
-    {
+    public function down(){
         Schema::dropIfExists('lecciones_progreso_usuarios');
     }
 }
