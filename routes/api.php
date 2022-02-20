@@ -266,5 +266,6 @@ Route::middleware(['guest', 'cors'])->group(function () {
     Route::prefix('plataforma')->group(function () {
         Route::get('datos', [PlataformaController::class, 'datosJSON']);
         Route::get('img/{nombreImg}', [PlataformaController::class, 'devolverImg']);
+        Route::post('actualizar', [PlataformaController::class, 'actualizar']);
     });
 });
