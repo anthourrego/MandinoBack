@@ -38,4 +38,8 @@ class PlataformaController extends Controller{
         return $response;
     }
 
+    public function actualizar(){
+        return "funca";
+    }
+
 }
