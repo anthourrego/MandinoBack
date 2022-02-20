@@ -198,6 +198,7 @@ class TomaControlController extends Controller
                         $delete = Storage::deleteDirectory('public/' . $request->ruta . "/" . $toma->id);
                     } else {
                         DB::commit();
+                        $resp['idInsertado'] = $toma->id;
                         $resp["success"] = true;
                         $resp["msj"] = $datos->nombre . " se ha creado correctamente.";
                     }
