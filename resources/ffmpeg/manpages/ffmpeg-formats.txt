@@ -32,65 +32,52 @@ FORMAT OPTIONS
 	   increase latency. Must be an integer not lesser than 32. It is
 	   5000000 by default.
 
-       max_probe_packets integer (input)
-	   Set the maximum number of buffered packets when probing a codec.
-	   Default is 2500 packets.
-
        packetsize integer (output)
 	   Set packet size.
 
-       fflags flags
-	   Set format flags. Some are implemented for a limited number of
-	   formats.
+       fflags flags (input/output)
+	   Set format flags.
 
-	   Possible values for input files:
+	   Possible values:
 
-	   discardcorrupt
-	       Discard corrupted packets.
+	   ignidx
+	       Ignore index.
 
 	   fastseek
 	       Enable fast, but inaccurate seeks for some formats.
 
 	   genpts
-	       Generate missing PTS if DTS is present.
-
-	   igndts
-	       Ignore DTS if PTS is set. Inert when nofillin is set.
-
-	   ignidx
-	       Ignore index.
-
-	   keepside (deprecated,inert)
-	   nobuffer
-	       Reduce the latency introduced by buffering during initial input
-	       streams analysis.
+	       Generate PTS.
 
 	   nofillin
-	       Do not fill in missing values in packet fields that can be
-	       exactly calculated.
+	       Do not fill in missing values that can be exactly calculated.
 
 	   noparse
 	       Disable AVParsers, this needs "+nofillin" too.
 
+	   igndts
+	       Ignore DTS.
+
+	   discardcorrupt
+	       Discard corrupted frames.
+
 	   sortdts
-	       Try to interleave output packets by DTS. At present, available
-	       only for AVIs with an index.
+	       Try to interleave output packets by DTS.
 
-	   Possible values for output files:
+	   keepside
+	       Do not merge side data.
 
-	   autobsf
-	       Automatically apply bitstream filters as required by the output
-	       format. Enabled by default.
+	   latm
+	       Enable RTP MP4A-LATM payload.
+
+	   nobuffer
+	       Reduce the latency introduced by optional buffering
 
 	   bitexact
 	       Only write platform-, build- and time-independent data.	This
 	       ensures that file and data checksums are reproducible and match
 	       between platforms. Its primary use is for regression testing.
 
-	   flush_packets
-	       Write out packets immediately.
-
-	   latm (deprecated,inert)
 	   shortest
 	       Stop muxing at the end of the shortest stream.  It may be
 	       needed to increase max_interleave_delta to avoid flushing the
@@ -167,7 +154,7 @@ FORMAT OPTIONS
 
        max_interleave_delta integer (output)
 	   Set maximum buffering duration for interleaving. The duration is
-	   expressed in microseconds, and defaults to 10000000 (10 seconds).
+	   expressed in microseconds, and defaults to 1000000 (1 second).
 
 	   To ensure all the streams are interleaved correctly, libavformat
 	   will wait until it has at least one packet for each stream before
@@ -239,8 +226,8 @@ FORMAT OPTIONS
 
        dump_separator string (input)
 	   Separator used to separate the fields printed on the command line
-	   about the Stream parameters.  For example, to separate the fields
-	   with newlines and indentation:
+	   about the Stream parameters.  For example to separate the fields
+	   with newlines and indention:
 
 		   ffprobe -dump_separator "
 					     "	-i ~/videos/matrixbench_mpeg2.mpg
@@ -250,42 +237,33 @@ FORMAT OPTIONS
 	   files that would require too many resources due to a large number
 	   of streams.
 
-       skip_estimate_duration_from_pts bool (input)
-	   Skip estimation of input duration when calculated using PTS.  At
-	   present, applicable for MPEG-PS and MPEG-TS.
-
-       strict, f_strict integer (input/output)
-	   Specify how strictly to follow the standards. "f_strict" is
-	   deprecated and should be used only via the ffmpeg tool.
-
-	   Possible values:
-
-	   very
-	       strictly conform to an older more strict version of the spec or
-	       reference software
-
-	   strict
-	       strictly conform to all the things in the spec no matter what
-	       consequences
-
-	   normal
-	   unofficial
-	       allow unofficial extensions
-
-	   experimental
-	       allow non standardized experimental things, experimental
-	       (unfinished/work in progress/not well tested) decoders and
-	       encoders.  Note: experimental decoders can pose a security
-	       risk, do not use this for decoding untrusted input.
-
    Format stream specifiers
        Format stream specifiers allow selection of one or more streams that
        match specific properties.
 
+       Possible forms of stream specifiers are:
+
+       stream_index
+	   Matches the stream with this index.
+
+       stream_type[:stream_index]
+	   stream_type is one of following: 'v' for video, 'a' for audio, 's'
+	   for subtitle, 'd' for data, and 't' for attachments. If
+	   stream_index is given, then it matches the stream number
+	   stream_index of this type. Otherwise, it matches all streams of
+	   this type.
+
+       p:program_id[:stream_index]
+	   If stream_index is given, then it matches the stream with number
+	   stream_index in the program with the id program_id. Otherwise, it
+	   matches all streams in the program.
+
+       #stream_id
+	   Matches the stream by a format-specific ID.
+
        The exact semantics of stream specifiers is defined by the
        "avformat_match_stream_specifier()" function declared in the
-       libavformat/avformat.h header and documented in the Stream specifiers
-       section in the ffmpeg(1) manual.
+       libavformat/avformat.h header.
 
 DEMUXERS
        Demuxers are configured elements in FFmpeg that can read the multimedia
@@ -310,6 +288,16 @@ DEMUXERS
        Audible Format 2, 3, and 4 demuxer.
 
        This demuxer is used to demux Audible Format 2, 3, and 4 (.aa) files.
+
+   applehttp
+       Apple HTTP Live Streaming demuxer.
+
+       This demuxer presents all AVStreams from all variant streams.  The id
+       field is set to the bitrate variant index number. By setting the
+       discard flags on AVStreams (by pressing 'a' or 'v' in ffplay), the
+       caller can decide which variant streams to actually receive.  The total
+       bitrate of the variant that the stream belongs to is available in a
+       metadata key named "variant_bitrate".
 
    apng
        Animated Portable Network Graphics demuxer.
@@ -482,7 +470,7 @@ DEMUXERS
 
        Examples
 
-       o   Use absolute filenames and include some comments:
+       ·   Use absolute filenames and include some comments:
 
 		   # my first filename
 		   file /mnt/share/file-1.wav
@@ -491,7 +479,7 @@ DEMUXERS
 		   # my third filename including whitespace plus single quote
 		   file '/mnt/share/file 3'\''.wav'
 
-       o   Allow for input format auto-probing, use safe filenames and set the
+       ·   Allow for input format auto-probing, use safe filenames and set the
 	   duration of the first file:
 
 		   ffconcat version 1.0
@@ -522,12 +510,6 @@ DEMUXERS
 
        -flv_metadata bool
 	   Allocate the streams according to the onMetaData array content.
-
-       -flv_ignore_prevtag bool
-	   Ignore the size of previous tag value.
-
-       -flv_full_metadata bool
-	   Output all context of the onMetadata.
 
    gif
        Animated GIF demuxer.
@@ -567,15 +549,6 @@ DEMUXERS
    hls
        HLS demuxer
 
-       Apple HTTP Live Streaming demuxer.
-
-       This demuxer presents all AVStreams from all variant streams.  The id
-       field is set to the bitrate variant index number. By setting the
-       discard flags on AVStreams (by pressing 'a' or 'v' in ffplay), the
-       caller can decide which variant streams to actually receive.  The total
-       bitrate of the variant that the stream belongs to is available in a
-       metadata key named "variant_bitrate".
-
        It accepts the following options:
 
        live_start_index
@@ -590,10 +563,6 @@ DEMUXERS
 	   Maximum number of times a insufficient list is attempted to be
 	   reloaded.  Default value is 1000.
 
-       m3u8_hold_counters
-	   The maximum number of times to load m3u8 when it refreshes without
-	   new segments.  Default value is 1000.
-
        http_persistent
 	   Use persistent HTTP connections. Applicable only for HTTP streams.
 	   Enabled by default.
@@ -601,10 +570,6 @@ DEMUXERS
        http_multiple
 	   Use multiple HTTP connections for downloading HTTP segments.
 	   Enabled by default for HTTP/1.1 servers.
-
-       http_seekable
-	   Use HTTP partial requests for downloading HTTP segments.  0 =
-	   disable, 1 = enable, -1 = auto, Default is auto.
 
    image2
        Image file demuxer.
@@ -721,32 +686,20 @@ DEMUXERS
 	   Set the video size of the images to read. If not specified the
 	   video size is guessed from the first image file in the sequence.
 
-       export_path_metadata
-	   If set to 1, will add two extra fields to the metadata found in
-	   input, making them also available for other filters (see drawtext
-	   filter for examples). Default value is 0. The extra fields are
-	   described below:
-
-	   lavf.image2dec.source_path
-	       Corresponds to the full path to the input file being read.
-
-	   lavf.image2dec.source_basename
-	       Corresponds to the name of the file being read.
-
        Examples
 
-       o   Use ffmpeg for creating a video from the images in the file
+       ·   Use ffmpeg for creating a video from the images in the file
 	   sequence img-001.jpeg, img-002.jpeg, ..., assuming an input frame
 	   rate of 10 frames per second:
 
 		   ffmpeg -framerate 10 -i 'img-%03d.jpeg' out.mkv
 
-       o   As above, but start by reading from a file with index 100 in the
+       ·   As above, but start by reading from a file with index 100 in the
 	   sequence:
 
 		   ffmpeg -framerate 10 -start_number 100 -i 'img-%03d.jpeg' out.mkv
 
-       o   Read images matching the "*.png" glob pattern , that is all the
+       ·   Read images matching the "*.png" glob pattern , that is all the
 	   files terminating with the ".png" suffix:
 
 		   ffmpeg -framerate 10 -pattern_type glob -i "*.png" out.mkv
@@ -755,87 +708,14 @@ DEMUXERS
        The Game Music Emu library is a collection of video game music file
        emulators.
 
-       See <https://bitbucket.org/mpyne/game-music-emu/overview> for more
-       information.
+       See <http://code.google.com/p/game-music-emu/> for more information.
 
-       It accepts the following options:
+       Some files have multiple tracks. The demuxer will pick the first track
+       by default. The track_index option can be used to select a different
+       track. Track indexes start at 0. The demuxer exports the number of
+       tracks as tracks meta data entry.
 
-       track_index
-	   Set the index of which track to demux. The demuxer can only export
-	   one track.  Track indexes start at 0. Default is to pick the first
-	   track. Number of tracks is exported as tracks metadata entry.
-
-       sample_rate
-	   Set the sampling rate of the exported track. Range is 1000 to
-	   999999. Default is 44100.
-
-       max_size (bytes)
-	   The demuxer buffers the entire file into memory. Adjust this value
-	   to set the maximum buffer size, which in turn, acts as a ceiling
-	   for the size of files that can be read.  Default is 50 MiB.
-
-   libmodplug
-       ModPlug based module demuxer
-
-       See <https://github.com/Konstanty/libmodplug>
-
-       It will export one 2-channel 16-bit 44.1 kHz audio stream.  Optionally,
-       a "pal8" 16-color video stream can be exported with or without printed
-       metadata.
-
-       It accepts the following options:
-
-       noise_reduction
-	   Apply a simple low-pass filter. Can be 1 (on) or 0 (off). Default
-	   is 0.
-
-       reverb_depth
-	   Set amount of reverb. Range 0-100. Default is 0.
-
-       reverb_delay
-	   Set delay in ms, clamped to 40-250 ms. Default is 0.
-
-       bass_amount
-	   Apply bass expansion a.k.a. XBass or megabass. Range is 0 (quiet)
-	   to 100 (loud). Default is 0.
-
-       bass_range
-	   Set cutoff i.e. upper-bound for bass frequencies. Range is 10-100
-	   Hz. Default is 0.
-
-       surround_depth
-	   Apply a Dolby Pro-Logic surround effect. Range is 0 (quiet) to 100
-	   (heavy). Default is 0.
-
-       surround_delay
-	   Set surround delay in ms, clamped to 5-40 ms. Default is 0.
-
-       max_size
-	   The demuxer buffers the entire file into memory. Adjust this value
-	   to set the maximum buffer size, which in turn, acts as a ceiling
-	   for the size of files that can be read. Range is 0 to 100 MiB.  0
-	   removes buffer size limit (not recommended). Default is 5 MiB.
-
-       video_stream_expr
-	   String which is evaluated using the eval API to assign colors to
-	   the generated video stream.	Variables which can be used are "x",
-	   "y", "w", "h", "t", "speed", "tempo", "order", "pattern" and "row".
-
-       video_stream
-	   Generate video stream. Can be 1 (on) or 0 (off). Default is 0.
-
-       video_stream_w
-	   Set video frame width in 'chars' where one char indicates 8 pixels.
-	   Range is 20-512. Default is 30.
-
-       video_stream_h
-	   Set video frame height in 'chars' where one char indicates 8
-	   pixels. Range is 20-512. Default is 30.
-
-       video_stream_ptxt
-	   Print metadata on video stream. Includes "speed", "tempo", "order",
-	   "pattern", "row" and "ts" (time in ms). Can be 1 (on) or 0 (off).
-	   Default is 1.
+       For very large files, the max_size option may have to be adjusted.
 
    libopenmpt
        libopenmpt based module demuxer
@@ -862,15 +742,8 @@ DEMUXERS
 	   Set the sample rate for libopenmpt to output.  Range is from 1000
 	   to INT_MAX. The value default is 48000.
 
-   mov/mp4/3gp
-       Demuxer for Quicktime File Format & ISO/IEC Base Media File Format
-       (ISO/IEC 14496-12 or MPEG-4 Part 12, ISO/IEC 15444-12 or JPEG 2000 Part
-       12).
-
-       Registered extensions: mov, mp4, m4a, 3gp, 3g2, mj2, psp, m4b, ism,
-       ismv, isma, f4v
-
-       Options
+   mov/mp4/3gp/QuickTime
+       QuickTime / MP4 demuxer.
 
        This demuxer accepts the following options:
 
@@ -881,77 +754,7 @@ DEMUXERS
        use_absolute_path
 	   Allows loading of external tracks via absolute paths, disabled by
 	   default.  Enabling this poses a security risk. It should only be
-	   enabled if the source is known to be non-malicious.
-
-       seek_streams_individually
-	   When seeking, identify the closest point in each stream
-	   individually and demux packets in that stream from identified
-	   point. This can lead to a different sequence of packets compared to
-	   demuxing linearly from the beginning. Default is true.
-
-       ignore_editlist
-	   Ignore any edit list atoms. The demuxer, by default, modifies the
-	   stream index to reflect the timeline described by the edit list.
-	   Default is false.
-
-       advanced_editlist
-	   Modify the stream index to reflect the timeline described by the
-	   edit list. "ignore_editlist" must be set to false for this option
-	   to be effective.  If both "ignore_editlist" and this option are set
-	   to false, then only the start of the stream index is modified to
-	   reflect initial dwell time or starting timestamp described by the
-	   edit list. Default is true.
-
-       ignore_chapters
-	   Don't parse chapters. This includes GoPro 'HiLight' tags/moments.
-	   Note that chapters are only parsed when input is seekable. Default
-	   is false.
-
-       use_mfra_for
-	   For seekable fragmented input, set fragment's starting timestamp
-	   from media fragment random access box, if present.
-
-	   Following options are available:
-
-	   auto
-	       Auto-detect whether to set mfra timestamps as PTS or DTS
-	       (default)
-
-	   dts Set mfra timestamps as DTS
-
-	   pts Set mfra timestamps as PTS
-
-	   0   Don't use mfra box to set timestamps
-
-       export_all
-	   Export unrecognized boxes within the udta box as metadata entries.
-	   The first four characters of the box type are set as the key.
-	   Default is false.
-
-       export_xmp
-	   Export entire contents of XMP_ box and uuid box as a string with
-	   key "xmp". Note that if "export_all" is set and this option isn't,
-	   the contents of XMP_ box are still exported but with key "XMP_".
-	   Default is false.
-
-       activation_bytes
-	   4-byte key required to decrypt Audible AAX and AAX+ files. See
-	   Audible AAX subsection below.
-
-       audible_fixed_key
-	   Fixed key used for handling Audible AAX/AAX+ files. It has been
-	   pre-set so should not be necessary to specify.
-
-       decryption_key
-	   16-byte key, in hex, to decrypt files encrypted using ISO Common
-	   Encryption (CENC/AES-128 CTR; ISO/IEC 23001-7).
-
-       Audible AAX
-
-       Audible AAX files are encrypted M4B files, and they can be decrypted by
-       specifying a 4 byte activation secret.
-
-	       ffmpeg -activation_bytes 1CEB00DA -i test.aax -vn -c:a copy output.mp4
+	   enabled if the source is known to be non malicious.
 
    mpegts
        MPEG-2 transport stream demuxer.
@@ -961,9 +764,6 @@ DEMUXERS
        resync_size
 	   Set size limit for looking up a new synchronization. Default value
 	   is 65536.
-
-       skip_unknown_pmt
-	   Skip PMTs for programs not defined in the PAT. Default value is 0.
 
        fix_teletext_pts
 	   Override teletext packet PTS and DTS values with the timestamps
@@ -980,10 +780,6 @@ DEMUXERS
 	   Scan and combine all PMTs. The value is an integer with value from
 	   -1 to 1 (-1 means automatic setting, 1 means enabled, 0 means
 	   disabled). Default value is -1.
-
-       merge_pmt_versions
-	   Re-use existing streams when a PMT's version is updated and
-	   elementary streams move to different PIDs. Default value is 0.
 
    mpjpeg
        MJPEG encapsulated in multi-part MIME demuxer.
@@ -1069,21 +865,6 @@ DEMUXERS
 
 	       ffmpeg -i http://www.ted.com/talks/subtitles/id/1/lang/en talk1-en.srt
 
-   vapoursynth
-       Vapoursynth wrapper.
-
-       Due to security concerns, Vapoursynth scripts will not be autodetected
-       so the input format has to be forced. For ff* CLI tools, add "-f
-       vapoursynth" before the input "-i yourscript.vpy".
-
-       This demuxer accepts the following option:
-
-       max_script_size
-	   The demuxer buffers the entire script into memory. Adjust this
-	   value to set the maximum buffer size, which in turn, acts as a
-	   ceiling for the size of scripts that can be read.  Default is 1
-	   MiB.
-
 MUXERS
        Muxers are configured elements in FFmpeg which allow writing multimedia
        streams to a particular type of file.
@@ -1161,34 +942,21 @@ MUXERS
 	   a single audio stream in AVI (see the "amerge" section in the
 	   ffmpeg-filters manual).
 
-       flipped_raw_rgb
-	   If set to true, store positive height for raw RGB bitmaps, which
-	   indicates bitmap is stored bottom-up. Note that this option does
-	   not flip the bitmap which has to be done manually beforehand, e.g.
-	   by using the vflip filter.  Default is false and indicates bitmap
-	   is stored top down.
-
    chromaprint
-       Chromaprint fingerprinter.
+       Chromaprint fingerprinter
 
        This muxer feeds audio data to the Chromaprint library, which generates
-       a fingerprint for the provided audio data. See
-       <https://acoustid.org/chromaprint>
-
-       It takes a single signed native-endian 16-bit raw audio stream of at
-       most 2 channels.
+       a fingerprint for the provided audio data. It takes a single signed
+       native-endian 16-bit raw audio stream.
 
        Options
 
        silence_threshold
-	   Threshold for detecting silence. Range is from -1 to 32767, where
-	   -1 disables silence detection. Silence detection can only be used
-	   with version 3 of the algorithm.  Silence detection must be
-	   disabled for use with the AcoustID service. Default is -1.
+	   Threshold for detecting silence, ranges from 0 to 32767. -1 for
+	   default (required for use with the AcoustID service).
 
        algorithm
-	   Version of algorithm to fingerprint with. Range is 0 to 4.  Version
-	   3 enables silence detection. Default is 1.
+	   Algorithm index to fingerprint with.
 
        fp_format
 	   Format to output the fingerprint as. Accepts the following options:
@@ -1199,7 +967,7 @@ MUXERS
 	       Binary compressed fingerprint
 
 	   base64
-	       Base64 compressed fingerprint (default)
+	       Base64 compressed fingerprint
 
    crc
        CRC (Cyclic Redundancy Check) testing format.
@@ -1266,10 +1034,10 @@ MUXERS
 
        For more information see:
 
-       o   ISO DASH Specification:
+       ·   ISO DASH Specification:
 	   <http://standards.iso.org/ittf/PubliclyAvailableStandards/c065274_ISO_IEC_23009-1_2014.zip>
 
-       o   WebM DASH Specification:
+       ·   WebM DASH Specification:
 	   <https://sites.google.com/a/webmproject.org/wiki/adaptive-streaming/webm-dash-specification>
 
        It creates a MPD manifest file and segment files for each stream.
@@ -1277,103 +1045,75 @@ MUXERS
        The segment filename might contain pre-defined identifiers used with
        SegmentTemplate as defined in section 5.3.9.4.4 of the standard.
        Available identifiers are "$RepresentationID$", "$Number$",
-       "$Bandwidth$" and "$Time$".  In addition to the standard identifiers,
-       an ffmpeg-specific "$ext$" identifier is also supported.  When
-       specified ffmpeg will replace $ext$ in the file name with muxing
-       format's extensions such as mp4, webm etc.,
+       "$Bandwidth$" and "$Time$".
 
-	       ffmpeg -re -i <input> -map 0 -map 0 -c:a libfdk_aac -c:v libx264 \
-	       -b:v:0 800k -b:v:1 300k -s:v:1 320x170 -profile:v:1 baseline \
-	       -profile:v:0 main -bf 1 -keyint_min 120 -g 120 -sc_threshold 0 \
-	       -b_strategy 0 -ar:a:1 22050 -use_timeline 1 -use_template 1 \
-	       -window_size 5 -adaptation_sets "id=0,streams=v id=1,streams=a" \
+	       ffmpeg -re -i <input> -map 0 -map 0 -c:a libfdk_aac -c:v libx264
+	       -b:v:0 800k -b:v:1 300k -s:v:1 320x170 -profile:v:1 baseline
+	       -profile:v:0 main -bf 1 -keyint_min 120 -g 120 -sc_threshold 0
+	       -b_strategy 0 -ar:a:1 22050 -use_timeline 1 -use_template 1
+	       -window_size 5 -adaptation_sets "id=0,streams=v id=1,streams=a"
 	       -f dash /path/to/out.mpd
 
-       min_seg_duration microseconds
-	   This is a deprecated option to set the segment length in
-	   microseconds, use seg_duration instead.
+       -min_seg_duration microseconds
+	   Set the segment length in microseconds.
 
-       seg_duration duration
-	   Set the segment length in seconds (fractional value can be set).
-	   The value is treated as average segment duration when use_template
-	   is enabled and use_timeline is disabled and as minimum segment
-	   duration for all the other use cases.
-
-       frag_duration duration
-	   Set the length in seconds of fragments within segments (fractional
-	   value can be set).
-
-       frag_type type
-	   Set the type of interval for fragmentation.
-
-       window_size size
+       -window_size size
 	   Set the maximum number of segments kept in the manifest.
 
-       extra_window_size size
+       -extra_window_size size
 	   Set the maximum number of segments kept outside of the manifest
 	   before removing from disk.
 
-       remove_at_exit remove
+       -remove_at_exit remove
 	   Enable (1) or disable (0) removal of all segments when finished.
 
-       use_template template
+       -use_template template
 	   Enable (1) or disable (0) use of SegmentTemplate instead of
 	   SegmentList.
 
-       use_timeline timeline
+       -use_timeline timeline
 	   Enable (1) or disable (0) use of SegmentTimeline in
 	   SegmentTemplate.
 
-       single_file single_file
+       -single_file single_file
 	   Enable (1) or disable (0) storing all segments in one file,
 	   accessed using byte ranges.
 
-       single_file_name file_name
+       -single_file_name file_name
 	   DASH-templated name to be used for baseURL. Implies single_file set
-	   to "1". In the template, "$ext$" is replaced with the file name
-	   extension specific for the segment format.
+	   to "1".
 
-       init_seg_name init_name
+       -init_seg_name init_name
 	   DASH-templated name to used for the initialization segment. Default
-	   is "init-stream$RepresentationID$.$ext$". "$ext$" is replaced with
-	   the file name extension specific for the segment format.
+	   is "init-stream$RepresentationID$.m4s"
 
-       media_seg_name segment_name
+       -media_seg_name segment_name
 	   DASH-templated name to used for the media segments. Default is
-	   "chunk-stream$RepresentationID$-$Number%05d$.$ext$". "$ext$" is
-	   replaced with the file name extension specific for the segment
-	   format.
+	   "chunk-stream$RepresentationID$-$Number%05d$.m4s"
 
-       utc_timing_url utc_url
+       -utc_timing_url utc_url
 	   URL of the page that will return the UTC timestamp in ISO format.
 	   Example: "https://time.akamai.com/?iso"
 
-       method method
-	   Use the given HTTP method to create output files. Generally set to
-	   PUT or POST.
-
-       http_user_agent user_agent
+       -http_user_agent user_agent
 	   Override User-Agent field in HTTP header. Applicable only for HTTP
 	   output.
 
-       http_persistent http_persistent
+       -http_persistent http_persistent
 	   Use persistent HTTP connections. Applicable only for HTTP output.
 
-       hls_playlist hls_playlist
+       -hls_playlist hls_playlist
 	   Generate HLS playlist files as well. The master playlist is
-	   generated with the filename hls_master_name.  One media playlist
-	   file is generated for each stream with filenames media_0.m3u8,
+	   generated with the filename master.m3u8.  One media playlist file
+	   is generated for each stream with filenames media_0.m3u8,
 	   media_1.m3u8, etc.
 
-       hls_master_name file_name
-	   HLS master playlist name. Default is "master.m3u8".
-
-       streaming streaming
+       -streaming streaming
 	   Enable (1) or disable (0) chunk streaming mode of output. In chunk
 	   streaming mode, each frame will be a moof fragment which forms a
 	   chunk.
 
-       adaptation_sets adaptation_sets
+       -adaptation_sets adaptation_sets
 	   Assign streams to AdaptationSets. Syntax is "id=x,streams=a,b,c
 	   id=y,streams=d,e" with x and y being the IDs of the adaptation sets
 	   and a,b,c,d and e are the indices of the mapped streams.
@@ -1384,121 +1124,9 @@ MUXERS
 	   When no assignment is defined, this defaults to an AdaptationSet
 	   for each stream.
 
-	   Optional syntax is
-	   "id=x,seg_duration=x,frag_duration=x,frag_type=type,descriptor=descriptor_string,streams=a,b,c
-	   id=y,seg_duration=y,frag_type=type,streams=d,e" and so on,
-	   descriptor is useful to the scheme defined by ISO/IEC
-	   23009-1:2014/Amd.2:2015.  For example, -adaptation_sets
-	   "id=0,descriptor=<SupplementalProperty
-	   schemeIdUri=\"urn:mpeg:dash:srd:2014\"
-	   value=\"0,0,0,1,1,2,2\"/>,streams=v".  Please note that descriptor
-	   string should be a self-closing xml tag.  seg_duration,
-	   frag_duration and frag_type override the global option values for
-	   each adaptation set.  For example, -adaptation_sets
-	   "id=0,seg_duration=2,frag_duration=1,frag_type=duration,streams=v
-	   id=1,seg_duration=2,frag_type=none,streams=a" type_id marks an
-	   adaptation set as containing streams meant to be used for Trick
-	   Mode for the referenced adaptation set.  For example,
-	   -adaptation_sets "id=0,seg_duration=2,frag_type=none,streams=0
-	   id=1,seg_duration=10,frag_type=none,trick_id=0,streams=1"
-
-       timeout timeout
+       -timeout timeout
 	   Set timeout for socket I/O operations. Applicable only for HTTP
 	   output.
-
-       index_correction index_correction
-	   Enable (1) or Disable (0) segment index correction logic.
-	   Applicable only when use_template is enabled and use_timeline is
-	   disabled.
-
-	   When enabled, the logic monitors the flow of segment indexes. If a
-	   streams's segment index value is not at the expected real time
-	   position, then the logic corrects that index value.
-
-	   Typically this logic is needed in live streaming use cases. The
-	   network bandwidth fluctuations are common during long run
-	   streaming. Each fluctuation can cause the segment indexes fall
-	   behind the expected real time position.
-
-       format_options options_list
-	   Set container format (mp4/webm) options using a ":" separated list
-	   of key=value parameters. Values containing ":" special characters
-	   must be escaped.
-
-       global_sidx global_sidx
-	   Write global SIDX atom. Applicable only for single file, mp4
-	   output, non-streaming mode.
-
-       dash_segment_type dash_segment_type
-	   Possible values:
-
-	   auto
-	       If this flag is set, the dash segment files format will be
-	       selected based on the stream codec. This is the default mode.
-
-	   mp4 If this flag is set, the dash segment files will be in in
-	       ISOBMFF format.
-
-	   webm
-	       If this flag is set, the dash segment files will be in in WebM
-	       format.
-
-       ignore_io_errors ignore_io_errors
-	   Ignore IO errors during open and write. Useful for long-duration
-	   runs with network output.
-
-       lhls lhls
-	   Enable Low-latency HLS(LHLS). Adds #EXT-X-PREFETCH tag with current
-	   segment's URI.  Apple doesn't have an official spec for LHLS.
-	   Meanwhile hls.js player folks are trying to standardize a open LHLS
-	   spec. The draft spec is available in
-	   https://github.com/video-dev/hlsjs-rfcs/blob/lhls-spec/proposals/0001-lhls.md
-	   This option will also try to comply with the above open spec, till
-	   Apple's spec officially supports it.  Applicable only when
-	   streaming and hls_playlist options are enabled.  This is an
-	   experimental feature.
-
-       ldash ldash
-	   Enable Low-latency Dash by constraining the presence and values of
-	   some elements.
-
-       master_m3u8_publish_rate master_m3u8_publish_rate
-	   Publish master playlist repeatedly every after specified number of
-	   segment intervals.
-
-       write_prft write_prft
-	   Write Producer Reference Time elements on supported streams. This
-	   also enables writing prft boxes in the underlying muxer. Applicable
-	   only when the utc_url option is enabled.  It's set to auto by
-	   default, in which case the muxer will attempt to enable it only in
-	   modes that require it.
-
-       mpd_profile mpd_profile
-	   Set one or more manifest profiles.
-
-       http_opts http_opts
-	   A :-separated list of key=value options to pass to the underlying
-	   HTTP protocol. Applicable only for HTTP output.
-
-       target_latency target_latency
-	   Set an intended target latency in seconds (fractional value can be
-	   set) for serving. Applicable only when streaming and write_prft
-	   options are enabled.  This is an informative fields clients can use
-	   to measure the latency of the service.
-
-       min_playback_rate min_playback_rate
-	   Set the minimum playback rate indicated as appropriate for the
-	   purposes of automatically adjusting playback latency and buffer
-	   occupancy during normal playback by clients.
-
-       max_playback_rate max_playback_rate
-	   Set the maximum playback rate indicated as appropriate for the
-	   purposes of automatically adjusting playback latency and buffer
-	   occupancy during normal playback by clients.
-
-       update_period update_period
-	    Set the mpd update period ,for dynamic content.
-	    The unit is second.
 
    framecrc
        Per-packet CRC (Cyclic Redundancy Check) testing format.
@@ -1696,22 +1324,16 @@ MUXERS
 
        This muxer supports the following options:
 
-       hls_init_time duration
-	   Set the initial target segment length. Default value is 0.
-
-	   duration must be a time duration specification, see the Time
-	   duration section in the ffmpeg-utils(1) manual.
-
-	   Segment will be cut on the next key frame after this time has
+       hls_init_time seconds
+	   Set the initial target segment length in seconds. Default value is
+	   0.  Segment will be cut on the next key frame after this time has
 	   passed on the first m3u8 list.  After the initial playlist is
 	   filled ffmpeg will cut segments at duration equal to "hls_time"
 
-       hls_time duration
-	   Set the target segment length. Default value is 2.
-
-	   duration must be a time duration specification, see the Time
-	   duration section in the ffmpeg-utils(1) manual.  Segment will be
-	   cut on the next key frame after this time has passed.
+       hls_time seconds
+	   Set the target segment length in seconds. Default value is 2.
+	   Segment will be cut on the next key frame after this time has
+	   passed.
 
        hls_list_size size
 	   Set the maximum number of playlist entries. If set to 0 the list
@@ -1756,10 +1378,6 @@ MUXERS
 	       The start number will be the seconds since epoch (1970-01-01
 	       00:00:00)
 
-	   epoch_us
-	       The start number will be the microseconds since epoch
-	       (1970-01-01 00:00:00)
-
 	   datetime
 	       The start number will be based on the current date/time as
 	       YYYYmmddHHMMSS. e.g. 20161231235759.
@@ -1772,8 +1390,8 @@ MUXERS
 	   filenames.  Default value is 0.
 
        hls_allow_cache allowcache
-	   Explicitly set whether the client MAY (1) or MUST NOT (0) cache
-	   media segments.
+	   Explicitly set whether the client MAY \fIs0(1) or MUST NOT \fIs0(0)
+	   cache media segments.
 
        hls_base_url baseurl
 	   Append baseurl to every entry in the playlist.  Useful to generate
@@ -1797,8 +1415,9 @@ MUXERS
 	   only the file name part without any path info will be contained in
 	   the m3u8 segment list.  Should a relative path be specified, the
 	   path of the created segment files will be relative to the current
-	   working directory.  When strftime_mkdir is set, the whole expanded
-	   value of filename will be written into the m3u8 segment list.
+	   working directory.  When use_localtime_mkdir is set, the whole
+	   expanded value of filename will be written into the m3u8 segment
+	   list.
 
 	   When "var_stream_map" is set with two or more variant streams, the
 	   filename pattern must contain the string "%v", this string
@@ -1814,9 +1433,7 @@ MUXERS
 	   file_1_000.ts, file_1_001.ts, file_1_002.ts, etc.
 
 	   The string "%v" may be present in the filename or in the last
-	   directory name containing the file, but only in one of them.
-	   (Additionally, %v may appear multiple times in the last sub-
-	   directory or filename.) If the string %v is present in the
+	   directory name containing the file. If the string is present in the
 	   directory name, then sub-directories are created after expanding
 	   the directory name pattern. This enables creation of segments
 	   corresponding to different variant streams in subdirectories.
@@ -1830,15 +1447,12 @@ MUXERS
 	   vs1/file_000.ts, vs1/file_001.ts, vs1/file_002.ts, etc.
 
        use_localtime
-	   Same as strftime option, will be deprecated.
-
-       strftime
 	   Use strftime() on filename to expand the segment filename with
 	   localtime.  The segment number is also available in this mode, but
 	   to use it, you need to specify second_level_segment_index hls_flag
 	   and %%d will be the specifier.
 
-		   ffmpeg -i in.nut -strftime 1 -hls_segment_filename 'file-%Y%m%d-%s.ts' out.m3u8
+		   ffmpeg -i in.nut -use_localtime 1 -hls_segment_filename 'file-%Y%m%d-%s.ts' out.m3u8
 
 	   This example will produce the playlist, out.m3u8, and segment
 	   files: file-20160215-1455569023.ts, file-20160215-1455569024.ts,
@@ -1846,26 +1460,23 @@ MUXERS
 	   available. See
 	     "strftime()" documentation.
 
-		   ffmpeg -i in.nut -strftime 1 -hls_flags second_level_segment_index -hls_segment_filename 'file-%Y%m%d-%%04d.ts' out.m3u8
+		   ffmpeg -i in.nut -use_localtime 1 -hls_flags second_level_segment_index -hls_segment_filename 'file-%Y%m%d-%%04d.ts' out.m3u8
 
 	   This example will produce the playlist, out.m3u8, and segment
 	   files: file-20160215-0001.ts, file-20160215-0002.ts, etc.
 
        use_localtime_mkdir
-	   Same as strftime_mkdir option, will be deprecated .
-
-       strftime_mkdir
-	   Used together with -strftime_mkdir, it will create all
+	   Used together with -use_localtime, it will create all
 	   subdirectories which is expanded in filename.
 
-		   ffmpeg -i in.nut -strftime 1 -strftime_mkdir 1 -hls_segment_filename '%Y%m%d/file-%Y%m%d-%s.ts' out.m3u8
+		   ffmpeg -i in.nut -use_localtime 1 -use_localtime_mkdir 1 -hls_segment_filename '%Y%m%d/file-%Y%m%d-%s.ts' out.m3u8
 
 	   This example will create a directory 201560215 (if it does not
 	   exist), and then produce the playlist, out.m3u8, and segment files:
 	   20160215/file-20160215-1455569023.ts,
 	   20160215/file-20160215-1455569024.ts, etc.
 
-		   ffmpeg -i in.nut -strftime 1 -strftime_mkdir 1 -hls_segment_filename '%Y/%m/%d/file-%Y%m%d-%s.ts' out.m3u8
+		   ffmpeg -i in.nut -use_localtime 1 -use_localtime_mkdir 1 -hls_segment_filename '%Y/%m/%d/file-%Y%m%d-%s.ts' out.m3u8
 
 	   This example will create a directory hierarchy 2016/02/15 (if any
 	   of them do not exist), and then produce the playlist, out.m3u8, and
@@ -1930,41 +1541,32 @@ MUXERS
 	   saved as playlist name.key.
 
        -hls_enc_key key
-	   16-octet key to encrypt the segments, by default it is randomly
-	   generated.
+	   Hex-coded 16byte key to encrypt the segments, by default it is
+	   randomly generated.
 
        -hls_enc_key_url keyurl
 	   If set, keyurl is prepended instead of baseurl to the key filename
 	   in the playlist.
 
        -hls_enc_iv iv
-	   16-octet initialization vector for every segment instead of the
-	   autogenerated ones.
+	   Hex-coded 16byte initialization vector for every segment instead of
+	   the autogenerated ones.
 
        hls_segment_type flags
 	   Possible values:
 
 	   mpegts
-	       Output segment files in MPEG-2 Transport Stream format. This is
-	       compatible with all HLS versions.
+	       If this flag is set, the hls segment files will format to
+	       mpegts.	the mpegts files is used in all hls versions.
 
 	   fmp4
-	       Output segment files in fragmented MP4 format, similar to MPEG-
-	       DASH.  fmp4 files may be used in HLS version 7 and above.
+	       If this flag is set, the hls segment files will format to
+	       fragment mp4 looks like dash.  the fmp4 files is used in hls
+	       after version 7.
 
        hls_fmp4_init_filename filename
-	   Set filename to the fragment files header file, default filename is
+	   set filename to the fragment files header file, default filename is
 	   init.mp4.
-
-	   Use "-strftime 1" on filename to expand the segment filename with
-	   localtime.
-
-		   ffmpeg -i in.nut  -hls_segment_type fmp4 -strftime 1 -hls_fmp4_init_filename "%s_init.mp4" out.m3u8
-
-	   This will produce init like this 1602678741_init.mp4
-
-       hls_fmp4_init_resend
-	   Resend init file after m3u8 file refresh every time, default is 0.
 
 	   When "var_stream_map" is set with two or more variant streams, the
 	   filename pattern must contain the string "%v", this string
@@ -2022,11 +1624,6 @@ MUXERS
 	       video segments and when all the segments of that playlist are
 	       guaranteed to start with a Key frame.
 
-	   iframes_only
-	       Add the "#EXT-X-I-FRAMES-ONLY" to playlists that has video
-	       segments and can play only I-frames in the "#EXT-X-BYTERANGE"
-	       mode.
-
 	   split_by_time
 	       Allow segments to start on frames other than keyframes. This
 	       improves behavior on some players when the time between
@@ -2040,28 +1637,28 @@ MUXERS
 	   second_level_segment_index
 	       Makes it possible to use segment indexes as %%d in
 	       hls_segment_filename expression besides date/time values when
-	       strftime is on.	To get fixed width numbers with trailing
+	       use_localtime is on.  To get fixed width numbers with trailing
 	       zeroes, %%0xd format is available where x is the required
 	       width.
 
 	   second_level_segment_size
 	       Makes it possible to use segment sizes (counted in bytes) as
 	       %%s in hls_segment_filename expression besides date/time values
-	       when strftime is on.  To get fixed width numbers with trailing
-	       zeroes, %%0xs format is available where x is the required
-	       width.
+	       when use_localtime is on.  To get fixed width numbers with
+	       trailing zeroes, %%0xs format is available where x is the
+	       required width.
 
 	   second_level_segment_duration
 	       Makes it possible to use segment duration (calculated  in
 	       microseconds) as %%t in hls_segment_filename expression besides
-	       date/time values when strftime is on.  To get fixed width
+	       date/time values when use_localtime is on.  To get fixed width
 	       numbers with trailing zeroes, %%0xt format is available where x
 	       is the required width.
 
 		       ffmpeg -i sample.mpeg \
 			  -f hls -hls_time 3 -hls_list_size 5 \
 			  -hls_flags second_level_segment_index+second_level_segment_size+second_level_segment_duration \
-			  -strftime 1 -strftime_mkdir 1 -hls_segment_filename "segment_%Y%m%d%H%M%S_%%04d_%%08s_%%013t.ts" stream.m3u8
+			  -use_localtime 1 -use_localtime_mkdir 1 -hls_segment_filename "segment_%Y%m%d%H%M%S_%%04d_%%08s_%%013t.ts" stream.m3u8
 
 	       This will produce segments like this:
 	       segment_20170102194334_0003_00122200_0000003000000.ts,
@@ -2072,15 +1669,7 @@ MUXERS
 	       once the segment is complete. A webserver serving up segments
 	       can be configured to reject requests to *.tmp to prevent access
 	       to in-progress segments before they have been added to the m3u8
-	       playlist. This flag also affects how m3u8 playlist files are
-	       created.  If this flag is set, all playlist files will written
-	       into temporary file and renamed after they are complete,
-	       similarly as segments are handled.  But playlists with "file"
-	       protocol and with type ("hls_playlist_type") other than "vod"
-	       are always written into temporary file regardless of this flag.
-	       Master playlist files ("master_pl_name"), if any, with "file"
-	       protocol, are always written into temporary file regardless of
-	       this flag if "master_pl_publish_rate" value is other than zero.
+	       playlist.
 
        hls_playlist_type event
 	   Emit "#EXT-X-PLAYLIST-TYPE:EVENT" in the m3u8 header. Forces
@@ -2130,17 +1719,7 @@ MUXERS
 	   of bitrate 64k and the second variant stream will contain video
 	   stream of bitrate 256k and audio stream of bitrate 32k. Here, two
 	   media playlist with file names out_0.m3u8 and out_1.m3u8 will be
-	   created. If you want something meaningful text instead of indexes
-	   in result names, you may specify names for each or some of the
-	   variants as in the following example.
-
-		   ffmpeg -re -i in.ts -b:v:0 1000k -b:v:1 256k -b:a:0 64k -b:a:1 32k \
-		     -map 0:v -map 0:a -map 0:v -map 0:a -f hls -var_stream_map "v:0,a:0,name:my_hd v:1,a:1,name:my_sd" \
-		     http://example.com/live/out_%v.m3u8
-
-	   This example creates two hls variant streams as in the previous
-	   one.  But here, the two media playlist with file names
-	   out_my_hd.m3u8 and out_my_sd.m3u8 will be created.
+	   created.
 
 		   ffmpeg -re -i in.ts -b:v:0 1000k -b:v:1 256k -b:a:0 64k \
 		     -map 0:v -map 0:a -map 0:v -f hls -var_stream_map "v:0 a:0 v:1" \
@@ -2178,52 +1757,6 @@ MUXERS
 	   By default, a single hls variant containing all the encoded streams
 	   is created.
 
-		   ffmpeg -re -i in.ts -b:a:0 32k -b:a:1 64k -b:v:0 1000k \
-		     -map 0:a -map 0:a -map 0:v -f hls \
-		     -var_stream_map "a:0,agroup:aud_low,default:yes a:1,agroup:aud_low v:0,agroup:aud_low" \
-		     -master_pl_name master.m3u8 \
-		     http://example.com/live/out_%v.m3u8
-
-	   This example creates two audio only and one video only variant
-	   streams. In addition to the #EXT-X-STREAM-INF tag for each variant
-	   stream in the master playlist, #EXT-X-MEDIA tag is also added for
-	   the two audio only variant streams and they are mapped to the one
-	   video only variant streams with audio group name 'aud_low', and the
-	   audio group have default stat is NO or YES.
-
-	   By default, a single hls variant containing all the encoded streams
-	   is created.
-
-		   ffmpeg -re -i in.ts -b:a:0 32k -b:a:1 64k -b:v:0 1000k \
-		     -map 0:a -map 0:a -map 0:v -f hls \
-		     -var_stream_map "a:0,agroup:aud_low,default:yes,language:ENG a:1,agroup:aud_low,language:CHN v:0,agroup:aud_low" \
-		     -master_pl_name master.m3u8 \
-		     http://example.com/live/out_%v.m3u8
-
-	   This example creates two audio only and one video only variant
-	   streams. In addition to the #EXT-X-STREAM-INF tag for each variant
-	   stream in the master playlist, #EXT-X-MEDIA tag is also added for
-	   the two audio only variant streams and they are mapped to the one
-	   video only variant streams with audio group name 'aud_low', and the
-	   audio group have default stat is NO or YES, and one audio have and
-	   language is named ENG, the other audio language is named CHN.
-
-	   By default, a single hls variant containing all the encoded streams
-	   is created.
-
-		   ffmpeg -y -i input_with_subtitle.mkv \
-		    -b:v:0 5250k -c:v h264 -pix_fmt yuv420p -profile:v main -level 4.1 \
-		    -b:a:0 256k \
-		    -c:s webvtt -c:a mp2 -ar 48000 -ac 2 -map 0:v -map 0:a:0 -map 0:s:0 \
-		    -f hls -var_stream_map "v:0,a:0,s:0,sgroup:subtitle" \
-		    -master_pl_name master.m3u8 -t 300 -hls_time 10 -hls_init_time 4 -hls_list_size \
-		    10 -master_pl_publish_rate 10  -hls_flags \
-		    delete_segments+discont_start+split_by_time ./tmp/video.m3u8
-
-	   This example adds "#EXT-X-MEDIA" tag with "TYPE=SUBTITLES" in the
-	   master playlist with webvtt subtitle group name 'subtitle'. Please
-	   make sure the input file has one text subtitle stream at least.
-
        cc_stream_map
 	   Map string which specifies different closed captions groups and
 	   their attributes. The closed captions stream groups are separated
@@ -2243,7 +1776,7 @@ MUXERS
 		     http://example.com/live/out.m3u8
 
 	   This example adds "#EXT-X-MEDIA" tag with "TYPE=CLOSED-CAPTIONS" in
-	   the master playlist with group name 'cc', language 'en' (english)
+	   the master playlist with group name 'cc', langauge 'en' (english)
 	   and INSTREAM-ID 'CC1'. Also, it adds "CLOSED-CAPTIONS" attribute
 	   with group name 'cc' for the output variant stream.
 
@@ -2286,25 +1819,17 @@ MUXERS
 	   Set timeout for socket I/O operations. Applicable only for HTTP
 	   output.
 
-       -ignore_io_errors
-	   Ignore IO errors during open, write and delete. Useful for long-
-	   duration runs with network output.
-
-       headers
-	   Set custom HTTP headers, can override built in default headers.
-	   Applicable only for HTTP output.
-
    ico
        ICO file muxer.
 
        Microsoft's icon file format (ICO) has some strict limitations that
        should be noted:
 
-       o   Size cannot exceed 256 pixels in any dimension
+       ·   Size cannot exceed 256 pixels in any dimension
 
-       o   Only BMP and PNG images can be stored
+       ·   Only BMP and PNG images can be stored
 
-       o   If a BMP image is used, it must be one of the following pixel
+       ·   If a BMP image is used, it must be one of the following pixel
 	   formats:
 
 		   BMP Bit Depth      FFmpeg Pixel Format
@@ -2315,9 +1840,9 @@ MUXERS
 		   24bit	      bgr24
 		   32bit	      bgra
 
-       o   If a BMP image is used, it must use the BITMAPINFOHEADER DIB header
+       ·   If a BMP image is used, it must use the BITMAPINFOHEADER DIB header
 
-       o   If a PNG image is used, it must use the rgba pixel format
+       ·   If a PNG image is used, it must use the rgba pixel format
 
    image2
        Image file muxer.
@@ -2343,34 +1868,6 @@ MUXERS
        filenames of the form img-001.bmp, img-002.bmp, ..., img-010.bmp, etc.
        The pattern "img%%-%d.jpg" will specify a sequence of filenames of the
        form img%-1.jpg, img%-2.jpg, ..., img%-10.jpg, etc.
-
-       The image muxer supports the .Y.U.V image file format. This format is
-       special in that that each image frame consists of three files, for each
-       of the YUV420P components. To read or write this image file format,
-       specify the name of the '.Y' file. The muxer will automatically open
-       the '.U' and '.V' files as required.
-
-       Options
-
-       frame_pts
-	   If set to 1, expand the filename with pts from pkt->pts.  Default
-	   value is 0.
-
-       start_number
-	   Start the sequence from the specified number. Default value is 1.
-
-       update
-	   If set to 1, the filename will always be interpreted as just a
-	   filename, not a pattern, and the corresponding file will be
-	   continuously overwritten with new images. Default value is 0.
-
-       strftime
-	   If set to 1, expand the filename with date and time information
-	   from "strftime()". Default value is 0.
-
-       protocol_opts options_list
-	   Set protocol options as a :-separated list of key=value parameters.
-	   Values containing the ":" special character must be escaped.
 
        Examples
 
@@ -2406,10 +1903,29 @@ MUXERS
 
 	       ffmpeg -f v4l2 -r 1 -i /dev/video0 -copyts -f image2 -frame_pts true %d.jpg"
 
-       A more complex example is to publish contents of your desktop directly
-       to a WebDAV server every second:
+       Options
 
-	       ffmpeg -f x11grab -framerate 1 -i :0.0 -q:v 6 -update 1 -protocol_opts method=PUT http://example.com/desktop.jpg
+       frame_pts
+	   If set to 1, expand the filename with pts from pkt->pts.  Default
+	   value is 0.
+
+       start_number
+	   Start the sequence from the specified number. Default value is 1.
+
+       update
+	   If set to 1, the filename will always be interpreted as just a
+	   filename, not a pattern, and the corresponding file will be
+	   continuously overwritten with new images. Default value is 0.
+
+       strftime
+	   If set to 1, expand the filename with date and time information
+	   from "strftime()". Default value is 0.
+
+       The image muxer supports the .Y.U.V image file format. This format is
+       special in that that each image frame consists of three files, for each
+       of the YUV420P components. To read or write this image file format,
+       specify the name of the '.Y' file. The muxer will automatically open
+       the '.U' and '.V' files as required.
 
    matroska
        Matroska container muxer.
@@ -2421,8 +1937,7 @@ MUXERS
        The recognized metadata settings in this muxer are:
 
        title
-	   Set title name provided to a single track. This gets mapped to the
-	   FileDescription element for a stream written as attachment.
+	   Set title name provided to a single track.
 
        language
 	   Specify the language of the track in the Matroska languages form.
@@ -2513,45 +2028,12 @@ MUXERS
 
 	   If this option is set to a non-zero value, the muxer will reserve a
 	   given amount of space in the file header and then try to write the
-	   cues there when the muxing finishes. If the reserved space does not
-	   suffice, no Cues will be written, the file will be finalized and
-	   writing the trailer will return an error.  A safe size for most use
-	   cases should be about 50kB per hour of video.
+	   cues there when the muxing finishes. If the available space does
+	   not suffice, muxing will fail. A safe size for most use cases
+	   should be about 50kB per hour of video.
 
 	   Note that cues are only written if the output is seekable and this
 	   option will have no effect if it is not.
-
-       default_mode
-	   This option controls how the FlagDefault of the output tracks will
-	   be set.  It influences which tracks players should play by default.
-	   The default mode is infer.
-
-	   infer
-	       In this mode, for each type of track (audio, video or
-	       subtitle), if there is a track with disposition default of this
-	       type, then the first such track (i.e. the one with the lowest
-	       index) will be marked as default; if no such track exists, the
-	       first track of this type will be marked as default instead (if
-	       existing). This ensures that the default flag is set in a
-	       sensible way even if the input originated from containers that
-	       lack the concept of default tracks.
-
-	   infer_no_subs
-	       This mode is the same as infer except that if no subtitle track
-	       with disposition default exists, no subtitle track will be
-	       marked as default.
-
-	   passthrough
-	       In this mode the FlagDefault is set if and only if the
-	       AV_DISPOSITION_DEFAULT flag is set in the disposition of the
-	       corresponding stream.
-
-       flipped_raw_rgb
-	   If set to true, store positive height for raw RGB bitmaps, which
-	   indicates bitmap is stored bottom-up. Note that this option does
-	   not flip the bitmap which has to be done manually beforehand, e.g.
-	   by using the vflip filter.  Default is false and indicates bitmap
-	   is stored top down.
 
    md5
        MD5 testing format.
@@ -2646,12 +2128,6 @@ MUXERS
 	   This option is implicitly set when writing ismv (Smooth Streaming)
 	   files.
 
-       -movflags skip_sidx
-	   Skip writing of sidx atom. When bitrate overhead due to sidx atom
-	   is high, this option could be used for cases where sidx atom is not
-	   mandatory.  When global_sidx flag is enabled, this option will be
-	   ignored.
-
        -movflags faststart
 	   Run a second pass moving the index (moov atom) to the beginning of
 	   the file.  This operation can take a while, and will not work in
@@ -2694,20 +2170,6 @@ MUXERS
 	   such as video tracks with B-frames. Additionally, eases conformance
 	   with the DASH-IF interoperability guidelines.
 
-	   This option is implicitly set when writing ismv (Smooth Streaming)
-	   files.
-
-       -write_prft
-	   Write producer time reference box (PRFT) with a specified time
-	   source for the NTP field in the PRFT box. Set value as wallclock to
-	   specify timesource as wallclock time and pts to specify timesource
-	   as input packets' PTS values.
-
-	   Setting value to pts is applicable only for a live encoding use
-	   case, where PTS values are set as as wallclock time at the source.
-	   For example, an encoding use case with decklink capture source
-	   where video_pts and audio_pts are set to abs_wallclock.
-
        Example
 
        Smooth Streaming content can be pushed in real time to a publishing
@@ -2715,11 +2177,18 @@ MUXERS
 
 	       ffmpeg -re <<normal input/transcoding options>> -movflags isml+frag_keyframe -f ismv http://server/publishingpoint.isml/Streams(Encoder1)
 
+       Audible AAX
+
+       Audible AAX files are encrypted M4B files, and they can be decrypted by
+       specifying a 4 byte activation secret.
+
+	       ffmpeg -activation_bytes 1CEB00DA -i test.aax -vn -c:a copy output.mp4
+
    mp3
        The MP3 muxer writes a raw MP3 stream with the following optional
        features:
 
-       o   An ID3v2 metadata header at the beginning (enabled by default).
+       ·   An ID3v2 metadata header at the beginning (enabled by default).
 	   Versions 2.3 and 2.4 are supported, the "id3v2_version" private
 	   option controls which one is used (3 or 4). Setting "id3v2_version"
 	   to 0 disables the ID3v2 header completely.
@@ -2737,13 +2206,13 @@ MUXERS
 	   It is therefore advised to provide the pictures as soon as possible
 	   to avoid excessive buffering.
 
-       o   A Xing/LAME frame right after the ID3v2 header (if present). It is
+       ·   A Xing/LAME frame right after the ID3v2 header (if present). It is
 	   enabled by default, but will be written only if the output is
 	   seekable. The "write_xing" private option can be used to disable
 	   it.	The frame contains various information that may be useful to
 	   the decoder, like the audio duration or encoder delay.
 
-       o   A legacy ID3v1 tag at the end of the file (disabled by default). It
+       ·   A legacy ID3v1 tag at the end of the file (disabled by default). It
 	   may be enabled with the "write_id3v1" private option, but as its
 	   capabilities are very limited, its usage is not recommended.
 
@@ -2796,7 +2265,7 @@ MUXERS
 	   following options:
 
 	   hex_value
-	       Any hexadecimal value between 0x01 and 0xff as defined in ETSI
+	       Any hexdecimal value between 0x01 to 0xff as defined in ETSI
 	       300 468.
 
 	   digital_tv
@@ -2821,14 +2290,11 @@ MUXERS
 	       Advanced Codec Digital HDTV service.
 
        mpegts_pmt_start_pid integer
-	   Set the first PID for PMTs. Default is 0x1000, minimum is 0x0020,
-	   maximum is 0x1ffa. This option has no effect in m2ts mode where the
-	   PMT PID is fixed 0x0100.
+	   Set the first PID for PMT. Default is 0x1000. Max is 0x1f00.
 
        mpegts_start_pid integer
-	   Set the first PID for elementary streams. Default is 0x0100,
-	   minimum is 0x0020, maximum is 0x1ffa. This option has no effect in
-	   m2ts mode where the elementary stream PIDs are fixed.
+	   Set the first PID for data packets. Default is 0x0100. Max is
+	   0x0f00.
 
        mpegts_m2ts_mode boolean
 	   Enable m2ts mode if set to 1. Default value is "-1" which disables
@@ -2858,6 +2324,10 @@ MUXERS
 	   initial_discontinuity
 	       Mark the initial packet of each stream as discontinuity.
 
+       resend_headers integer
+	   Reemit PAT/PMT before writing the next packet. This option is
+	   deprecated: use mpegts_flags instead.
+
        mpegts_copyts boolean
 	   Preserve original timestamps, if value is set to 1. Default value
 	   is "-1", which results in shifting timestamps so that they start
@@ -2868,16 +2338,13 @@ MUXERS
 
        pcr_period integer
 	   Override the default PCR retransmission time in milliseconds.
-	   Default is "-1" which means that the PCR interval will be
-	   determined automatically: 20 ms is used for CBR streams, the
-	   highest multiple of the frame duration which is less than 100 ms is
-	   used for VBR streams.
+	   Ignored if variable muxrate is selected. Default is 20.
 
-       pat_period duration
-	   Maximum time in seconds between PAT/PMT tables. Default is 0.1.
+       pat_period double
+	   Maximum time in seconds between PAT/PMT tables.
 
-       sdt_period duration
-	   Maximum time in seconds between SDT tables. Default is 0.5.
+       sdt_period double
+	   Maximum time in seconds between SDT tables.
 
        tables_version integer
 	   Set PAT, PMT and SDT version (default 0, valid values are from 0 to
@@ -2906,7 +2373,7 @@ MUXERS
 		    -metadata service_name="Some Channel" \
 		    out.ts
 
-   mxf, mxf_d10, mxf_opatom
+   mxf, mxf_d10
        MXF muxer.
 
        Options
@@ -2916,7 +2383,7 @@ MUXERS
        store_user_comments bool
 	   Set if user comments should be stored if available or never.  IRT
 	   D-10 does not allow user comments. The default is thus to write
-	   them for mxf and mxf_opatom but not for mxf_d10
+	   them for mxf but not for mxf_d10
 
    null
        Null muxer.
@@ -3210,23 +2677,23 @@ MUXERS
 
        Examples
 
-       o   Remux the content of file in.mkv to a list of segments out-000.nut,
+       ·   Remux the content of file in.mkv to a list of segments out-000.nut,
 	   out-001.nut, etc., and write the list of generated segments to
 	   out.list:
 
 		   ffmpeg -i in.mkv -codec hevc -flags +cgop -g 60 -map 0 -f segment -segment_list out.list out%03d.nut
 
-       o   Segment input and set output format options for the output
+       ·   Segment input and set output format options for the output
 	   segments:
 
 		   ffmpeg -i in.mkv -f segment -segment_time 10 -segment_format_options movflags=+faststart out%03d.mp4
 
-       o   Segment the input file according to the split points specified by
+       ·   Segment the input file according to the split points specified by
 	   the segment_times option:
 
 		   ffmpeg -i in.mkv -codec copy -map 0 -f segment -segment_list out.csv -segment_times 1,2,3,5,8,13,21 out%03d.nut
 
-       o   Use the ffmpeg force_key_frames option to force key frames in the
+       ·   Use the ffmpeg force_key_frames option to force key frames in the
 	   input at the specified location, together with the segment option
 	   segment_time_delta to account for possible roundings operated when
 	   setting key frame times.
@@ -3237,17 +2704,17 @@ MUXERS
 	   In order to force key frames on the input file, transcoding is
 	   required.
 
-       o   Segment the input file by splitting the input file according to the
+       ·   Segment the input file by splitting the input file according to the
 	   frame numbers sequence specified with the segment_frames option:
 
 		   ffmpeg -i in.mkv -codec copy -map 0 -f segment -segment_list out.csv -segment_frames 100,200,300,500,800 out%03d.nut
 
-       o   Convert the in.mkv to TS segments using the "libx264" and "aac"
+       ·   Convert the in.mkv to TS segments using the "libx264" and "aac"
 	   encoders:
 
 		   ffmpeg -i in.mkv -map 0 -codec:v libx264 -codec:a aac -f ssegment -segment_list out.list out%03d.ts
 
-       o   Segment the input file, and create an M3U8 live playlist (can be
+       ·   Segment the input file, and create an M3U8 live playlist (can be
 	   used as live HLS source):
 
 		   ffmpeg -re -i in.mkv -codec copy -map 0 -f segment -segment_list playlist.m3u8 \
@@ -3276,45 +2743,6 @@ MUXERS
 	   Specify whether to remove all fragments when finished. Default 0
 	   (do not remove).
 
-   streamhash
-       Per stream hash testing format.
-
-       This muxer computes and prints a cryptographic hash of all the input
-       frames, on a per-stream basis. This can be used for equality checks
-       without having to do a complete binary comparison.
-
-       By default audio frames are converted to signed 16-bit raw audio and
-       video frames to raw video before computing the hash, but the output of
-       explicit conversions to other codecs can also be used. Timestamps are
-       ignored. It uses the SHA-256 cryptographic hash function by default,
-       but supports several other algorithms.
-
-       The output of the muxer consists of one line per stream of the form:
-       streamindex,streamtype,algo=hash, where streamindex is the index of the
-       mapped stream, streamtype is a single character indicating the type of
-       stream, algo is a short string representing the hash function used, and
-       hash is a hexadecimal number representing the computed hash.
-
-       hash algorithm
-	   Use the cryptographic hash function specified by the string
-	   algorithm.  Supported values include "MD5", "murmur3", "RIPEMD128",
-	   "RIPEMD160", "RIPEMD256", "RIPEMD320", "SHA160", "SHA224", "SHA256"
-	   (default), "SHA512/224", "SHA512/256", "SHA384", "SHA512", "CRC32"
-	   and "adler32".
-
-       Examples
-
-       To compute the SHA-256 hash of the input converted to raw audio and
-       video, and store it in the file out.sha256:
-
-	       ffmpeg -i INPUT -f streamhash out.sha256
-
-       To print an MD5 hash to stdout use the command:
-
-	       ffmpeg -i INPUT -f streamhash -hash md5 -
-
-       See also the hash and framehash muxers.
-
    fifo
        The fifo pseudo-muxer allows the separation of encoding and muxing by
        using first-in-first-out queue and running the actual muxer in a
@@ -3329,10 +2757,10 @@ MUXERS
        The behavior of the fifo muxer if the queue fills up or if the output
        fails is selectable,
 
-       o   output can be transparently restarted with configurable delay
+       ·   output can be transparently restarted with configurable delay
 	   between retries based on real time or time of the processed stream.
 
-       o   encoding can be blocked during temporary failure, or continue
+       ·   encoding can be blocked during temporary failure, or continue
 	   transparently dropping packets in case fifo queue fills up.
 
        fifo_format
@@ -3389,15 +2817,9 @@ MUXERS
 	   queue overflow or failure. This option is set to 0 (false) by
 	   default.
 
-       timeshift duration
-	   Buffer the specified amount of packets and delay writing the
-	   output. Note that queue_size must be big enough to store the
-	   packets for timeshift. At the end of the input the fifo buffer is
-	   flushed at realtime speed.
-
        Examples
 
-       o   Stream something to rtmp server, continue processing the stream at
+       ·   Stream something to rtmp server, continue processing the stream at
 	   real-time rate even in case of temporary failure (network outage)
 	   and attempt to recover streaming every second indefinitely.
 
@@ -3405,43 +2827,29 @@ MUXERS
 		     -drop_pkts_on_overflow 1 -attempt_recovery 1 -recovery_wait_time 1 rtmp://example.com/live/stream_name
 
    tee
-       The tee muxer can be used to write the same data to several outputs,
-       such as files or streams.  It can be used, for example, to stream a
-       video over a network and save it to disk at the same time.
+       The tee muxer can be used to write the same data to several files or
+       any other kind of muxer. It can be used, for example, to both stream a
+       video to the network and save it to disk at the same time.
 
        It is different from specifying several outputs to the ffmpeg command-
-       line tool. With the tee muxer, the audio and video data will be encoded
-       only once.  With conventional multiple outputs, multiple encoding
-       operations in parallel are initiated, which can be a very expensive
-       process. The tee muxer is not useful when using the libavformat API
-       directly because it is then possible to feed the same packets to
-       several muxers directly.
-
-       Since the tee muxer does not represent any particular output format,
-       ffmpeg cannot auto-select output streams. So all streams intended for
-       output must be specified using "-map". See the examples below.
-
-       Some encoders may need different options depending on the output
-       format; the auto-detection of this can not work with the tee muxer, so
-       they need to be explicitly specified.  The main example is the
-       global_header flag.
-
-       The slave outputs are specified in the file name given to the muxer,
-       separated by '|'. If any of the slave name contains the '|' separator,
-       leading or trailing spaces or any special character, those must be
-       escaped (see the "Quoting and escaping" section in the ffmpeg-utils(1)
-       manual).
-
-       Options
+       line tool because the audio and video data will be encoded only once
+       with the tee muxer; encoding can be a very expensive process. It is not
+       useful when using the libavformat API directly because it is then
+       possible to feed the same packets to several muxers directly.
 
        use_fifo bool
-	   If set to 1, slave outputs will be processed in separate threads
-	   using the fifo muxer. This allows to compensate for different
+	   If set to 1, slave outputs will be processed in separate thread
+	   using fifo muxer. This allows to compensate for different
 	   speed/latency/reliability of outputs and setup transparent
 	   recovery. By default this feature is turned off.
 
        fifo_options
 	   Options to pass to fifo pseudo-muxer instances. See fifo.
+
+       The slave outputs are specified in the file name given to the muxer,
+       separated by '|'. If any of the slave name contains the '|' separator,
+       leading or trailing spaces or any special character, it must be escaped
+       (see the "Quoting and escaping" section in the ffmpeg-utils(1) manual).
 
        Muxer options can be specified for each slave by prepending them as a
        list of key=value pairs separated by ':', between square brackets. If
@@ -3450,28 +2858,12 @@ MUXERS
 
        The following special options are also recognized:
 
-       f   Specify the format name. Required if it cannot be guessed from the
-	   output URL.
+       f   Specify the format name. Useful if it cannot be guessed from the
+	   output name suffix.
 
        bsfs[/spec]
 	   Specify a list of bitstream filters to apply to the specified
 	   output.
-
-	   It is possible to specify to which streams a given bitstream filter
-	   applies, by appending a stream specifier to the option separated by
-	   "/". spec must be a stream specifier (see Format stream
-	   specifiers).
-
-	   If the stream specifier is not specified, the bitstream filters
-	   will be applied to all streams in the output. This will cause that
-	   output operation to fail if the output contains streams to which
-	   the bitstream filter cannot be applied e.g. "h264_mp4toannexb"
-	   being applied to an output containing an audio stream.
-
-	   Options for a bitstream filter must be specified in the form of
-	   "opt=value".
-
-	   Several bitstream filters can be specified, separated by ",".
 
        use_fifo bool
 	   This allows to override tee muxer use_fifo option for individual
@@ -3481,14 +2873,19 @@ MUXERS
 	   This allows to override tee muxer fifo_options for individual slave
 	   muxer.  See fifo.
 
+	   It is possible to specify to which streams a given bitstream filter
+	   applies, by appending a stream specifier to the option separated by
+	   "/". spec must be a stream specifier (see Format stream
+	   specifiers).  If the stream specifier is not specified, the
+	   bitstream filters will be applied to all streams in the output.
+
+	   Several bitstream filters can be specified, separated by ",".
+
        select
 	   Select the streams that should be mapped to the slave output,
 	   specified by a stream specifier. If not specified, this defaults to
-	   all the mapped streams. This will cause that output operation to
-	   fail if the output format does not accept all mapped streams.
-
-	   You may use multiple stream specifiers separated by commas (",")
-	   e.g.: "a:0,v"
+	   all the input streams. You may use multiple stream specifiers
+	   separated by commas (",") e.g.: "a:0,v"
 
        onfail
 	   Specify behaviour on output failure. This can be set to either
@@ -3499,33 +2896,37 @@ MUXERS
 
        Examples
 
-       o   Encode something and both archive it in a WebM file and stream it
-	   as MPEG-TS over UDP:
+       ·   Encode something and both archive it in a WebM file and stream it
+	   as MPEG-TS over UDP (the streams need to be explicitly mapped):
 
 		   ffmpeg -i ... -c:v libx264 -c:a mp2 -f tee -map 0:v -map 0:a
 		     "archive-20121107.mkv|[f=mpegts]udp://10.0.1.255:1234/"
 
-       o   As above, but continue streaming even if output to local file fails
+       ·   As above, but continue streaming even if output to local file fails
 	   (for example local drive fills up):
 
 		   ffmpeg -i ... -c:v libx264 -c:a mp2 -f tee -map 0:v -map 0:a
 		     "[onfail=ignore]archive-20121107.mkv|[f=mpegts]udp://10.0.1.255:1234/"
 
-       o   Use ffmpeg to encode the input, and send the output to three
+       ·   Use ffmpeg to encode the input, and send the output to three
 	   different destinations. The "dump_extra" bitstream filter is used
 	   to add extradata information to all the output video keyframes
 	   packets, as requested by the MPEG-TS format. The select option is
 	   applied to out.aac in order to make it contain only audio packets.
 
 		   ffmpeg -i ... -map 0 -flags +global_header -c:v libx264 -c:a aac
-			  -f tee "[bsfs/v=dump_extra=freq=keyframe]out.ts|[movflags=+faststart]out.mp4|[select=a]out.aac"
+			  -f tee "[bsfs/v=dump_extra]out.ts|[movflags=+faststart]out.mp4|[select=a]out.aac"
 
-       o   As above, but select only stream "a:1" for the audio output. Note
+       ·   As below, but select only stream "a:1" for the audio output. Note
 	   that a second level escaping must be performed, as ":" is a special
 	   character used to separate options.
 
 		   ffmpeg -i ... -map 0 -flags +global_header -c:v libx264 -c:a aac
-			  -f tee "[bsfs/v=dump_extra=freq=keyframe]out.ts|[movflags=+faststart]out.mp4|[select=\'a:1\']out.aac"
+			  -f tee "[bsfs/v=dump_extra]out.ts|[movflags=+faststart]out.mp4|[select=\'a:1\']out.aac"
+
+       Note: some codecs may need different options depending on the output
+       format; the auto-detection of this can not work with the tee muxer. The
+       main example is the global_header flag.
 
    webm_dash_manifest
        WebM DASH Manifest muxer.
@@ -3536,10 +2937,10 @@ MUXERS
 
        For more information see:
 
-       o   WebM DASH Specification:
+       ·   WebM DASH Specification:
 	   <https://sites.google.com/a/webmproject.org/wiki/adaptive-streaming/webm-dash-specification>
 
-       o   ISO DASH Specification:
+       ·   ISO DASH Specification:
 	   <http://standards.iso.org/ittf/PubliclyAvailableStandards/c065274_ISO_IEC_23009-1_2014.zip>
 
        Options
@@ -3659,7 +3060,7 @@ METADATA
        7.  At the beginning of a chapter section there may be an optional
 	   timebase to be used for start/end values. It must be in form
 	   TIMEBASE=num/den, where num and den are integers. If the timebase
-	   is missing then start/end times are assumed to be in nanoseconds.
+	   is missing then start/end times are assumed to be in milliseconds.
 
 	   Next a chapter section must contain chapter start and end times in
 	   form START=num, END=num, where num is a positive integer.

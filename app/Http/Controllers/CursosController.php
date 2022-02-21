@@ -186,7 +186,7 @@ class CursosController extends Controller
         $resp["success"] = false;
 
         $validar =  DB::table('escuelas_cursos')->where([
-            ['id', '<>', $request->id],
+            ['id', '=', $request->id],
         ])->get();
   
 
@@ -206,9 +206,8 @@ class CursosController extends Controller
                 $resp["msj"] = "Curso es dependencia de otros cursos, no se puede desasignar";
             }
         
-            
         }else{
-            $resp["msj"] = "no se encuentra curso asignado";
+            $resp["msj"] = "No se encuentra curso asignado";
         }
         
         return $resp;
@@ -276,6 +275,68 @@ class CursosController extends Controller
 
     public function traerCurso($id){
         return cursos::select( "nombre", "descripcion")->where("id", $id)->get();
+    }
+
+    // listado escuelas_cursos
+    public function listaCursosProgreso($idEscuela, $idUser) {
+
+        $leccProg = DB::table('lecciones_progreso_usuarios')
+            ->selectRaw('fecha_completado, fk_leccion')
+            ->where('fk_user', $idUser);
+        
+        $unidades = DB::table('lecciones_unidades')
+            ->selectRaw('COUNT(*) AS cantLecc,
+                COUNT(LPU.fecha_completado) AS cantLeccCompletas,
+                lecciones_unidades.fk_unidad
+            ')
+            ->leftJoinSub($leccProg, "LPU", function ($join) {
+                $join->on("lecciones_unidades.fk_leccion", "=", "LPU.fk_leccion");
+            })
+            ->where('lecciones_unidades.estado', 1)
+            ->groupBy('lecciones_unidades.fk_unidad');
+
+        $cursos = DB::table('unidades_cursos')
+            ->selectRaw('SUM(UCT.cantLeccCompletas) AS cantLeccComple
+                , unidades_cursos.fk_curso
+                , SUM(UCT.cantLecc) AS cantLecc
+                , COUNT(*) AS cantUnidades
+            ')
+            ->leftJoinSub($unidades, "UCT", function ($join) {
+                $join->on("unidades_cursos.fk_unidad", "=", "UCT.fk_unidad");
+            })
+            ->where('unidades_cursos.estado', 1)
+            ->groupBy('unidades_cursos.fk_curso');
+
+        $query = DB::table('escuelas_cursos')
+            ->join('cursos', 'escuelas_cursos.fk_curso', '=', 'cursos.id')
+            ->leftJoinSub($cursos, "CT", function ($join) {
+                $join->on("escuelas_cursos.fk_curso", "=", "CT.fk_curso");
+            })
+            ->leftJoinSub($cursos, "CT2", function ($join) {
+                $join->on("escuelas_cursos.fk_curso_dependencia", "=", "CT2.fk_curso");
+            })
+            ->where('escuelas_cursos.fk_escuela', $idEscuela)
+            ->where('escuelas_cursos.estado', 1)
+            ->select(
+                "escuelas_cursos.id as escuelasCursoId",
+                "cursos.id as cursoId",
+                "cursos.nombre as nombre",
+                "escuelas_cursos.fk_curso_dependencia AS cursoDepende",
+                "cursos.descripcion as descripcion",
+                "CT.cantUnidades"
+            )
+            ->selectRaw(
+                "IF(CT2.cantLecc = CT2.cantLeccComple, 1, 0) AS dependeCompleta,
+                IF(CT.cantLecc = CT.cantLeccComple, 1, 0) AS unidadCompleta,
+                (
+                    (
+                        IF(CT.cantLeccComple IS NULL, 0, CT.cantLeccComple) * 100
+                    ) / IF(CT.cantLecc IS NULL, 0, CT.cantLecc)
+                ) AS progresoActual"
+            )
+            ->orderBy('escuelas_cursos.orden','asc');
+        
+        return $query->get();
     }
 
     public function clonar(Request $request){

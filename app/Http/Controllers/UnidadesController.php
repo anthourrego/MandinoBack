@@ -47,7 +47,7 @@ class UnidadesController extends Controller
      */
     public function show(Request $request)
     {
-        $query = unidades::select('id', 'nombre', 'descripcion', 'estado', 'created_at');
+        $query = unidades::select('id', 'nombre', 'descripcion', 'estado', 'created_at', 'color');
         if ($request->estado != '') {
             $query->where("estado", $request->estado);
         }
@@ -58,11 +58,12 @@ class UnidadesController extends Controller
         $nombre = $request->nombre;
         $descripcion = $request->descripcion;
         $estado = $request->estado;
+        $color = $request->color;
 
-        return $this->crearUnidad($nombre, $descripcion, $estado);
+        return $this->crearUnidad($nombre, $descripcion, $estado, $color);
     }
 
-    public function crearUnidad($nombre, $descripcion, $estado){
+    public function crearUnidad($nombre, $descripcion, $estado, $color){
 
         $resp["success"] = false;
         $validar = unidades::where([
@@ -74,6 +75,7 @@ class UnidadesController extends Controller
             $unidad->nombre =$nombre;
             $unidad->descripcion =$descripcion;
             $unidad->estado =$estado;
+            $unidad->color =$color;
 
             if($unidad->save()){
                 $resp["success"] = true;
@@ -102,11 +104,12 @@ class UnidadesController extends Controller
             $unidad = unidades::find($request->id);
 
             if(!empty($unidad)){
-                if ($unidad->nombre != $request->nombre || $unidad->descripcion != $request->descripcion || $unidad->estado != $request->estado) {
+                if ($unidad->nombre != $request->nombre || $unidad->descripcion != $request->descripcion || $unidad->estado != $request->estado || $unidad->color != $request->color) {
 
                     $unidad->nombre = $request->nombre;
                     $unidad->descripcion = $request->descripcion;
                     $unidad->estado = $request->estado;
+                    $unidad->color = $request->color;
                     
                     if ($unidad->save()) {
                         $resp["success"] = true;
@@ -224,7 +227,7 @@ class UnidadesController extends Controller
         $resp["success"] = false;
 
         $validar =  DB::table('unidades_cursos')->where([
-            ['id', '<>', $request->id],
+            ['id', '=', $request->id],
         ])->get();
   
 
@@ -313,19 +316,73 @@ class UnidadesController extends Controller
 
     }
 
+    public function listaUnidadesProgreso($idCurso, $idUser) {
+
+        $cantLecciones = DB::table('lecciones_unidades')
+            ->selectRaw('COUNT(*) AS cantLecciones, lecciones_unidades.fk_unidad')
+            ->where('lecciones_unidades.estado', 1)
+            ->groupBy('lecciones_unidades.fk_unidad');
+
+        $lecciones = DB::table('lecciones_unidades')
+            ->selectRaw('IF(
+                COUNT(*) = (
+                    IF(lecciones_progreso_usuarios.fecha_completado, COUNT(*), 0)
+                ), 1, 0) AS Completa,
+                (
+                    (
+                        IF(
+                            COUNT(lecciones_progreso_usuarios.fecha_completado) IS NULL, 0, COUNT(lecciones_progreso_usuarios.fecha_completado)
+                        ) * 100
+                    ) / COUNT(*)
+                ) AS progresoActual,
+                lecciones_unidades.fk_unidad
+            ')
+            ->leftJoin('lecciones_progreso_usuarios', 'lecciones_unidades.fk_leccion', '=', 'lecciones_progreso_usuarios.fk_leccion')
+            ->where('lecciones_progreso_usuarios.fk_user', $idUser)
+            ->groupBy('lecciones_unidades.fk_unidad');
+
+        $query = DB::table('unidades_cursos')
+            ->join('unidades', 'unidades_cursos.fk_unidad', '=', 'unidades.id')
+            ->leftJoinSub($lecciones, "lecciones", function ($join) {
+                $join->on("unidades_cursos.fk_unidad_dependencia", "=", "lecciones.fk_unidad");
+            })
+            ->leftJoinSub($lecciones, "lecciones2", function ($join) {
+                $join->on("lecciones2.fk_unidad", "=", "unidades.id");
+            })
+            ->leftJoinSub($cantLecciones, "LCT", function ($join) {
+                $join->on("LCT.fk_unidad", "=", "unidades.id");
+            })
+            ->where('unidades_cursos.fk_curso', $idCurso)
+            ->where('unidades_cursos.estado', 1)
+            ->select(
+                "unidades_cursos.id AS unidadesCursosId",
+                "unidades.id AS unidadId",
+                "unidades.nombre AS nombre",
+                "unidades.color AS color",
+                "unidades_cursos.fk_unidad_dependencia AS unidadDependencia", 
+                "unidades.descripcion AS descripcion",
+                "lecciones2.*",
+                "lecciones.Completa AS completaDepende",
+                "lecciones.progresoActual AS progresoActualDepende",
+                "LCT.cantLecciones"
+            )
+            ->orderBy('unidades_cursos.orden','asc');
+        
+        return $query->get();
+    }
     
     public function clonar(Request $request){
         $resp["success"] = false;
 
         $id = $request->id; //id del curso a clonar 
         $nombre = $request->nombre;
-        $unidades = unidades::select("descripcion", "estado", "nombre")->where("id", $id)->get();
+        $unidades = unidades::select("descripcion", "estado", "nombre", "color")->where("id", $id)->get();
         if(!($unidades->isEmpty())){
             try{
                 $unidad = $unidades[0];
                 DB::beginTransaction();
                 // creación de nueva unidad
-                $nuevaUnidad = $this->crearUnidad($unidad->nombre."-".$nombre, $unidad->descripcion, $unidad->estado);
+                $nuevaUnidad = $this->crearUnidad($unidad->nombre."-".$nombre, $unidad->descripcion, $unidad->estado, $unidad->color);
                 $leccionesController = new LeccionesController();
                 $oldLeccionesUnidades = $leccionesController->listarLeccionesUnidades($id);
                 

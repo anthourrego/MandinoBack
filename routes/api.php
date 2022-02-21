@@ -17,6 +17,7 @@ use App\Http\Controllers\UnidadesController;
 use App\Http\Controllers\TomaControlComentariosController;
 use App\Http\Controllers\TomaControlMeGustaController;
 use App\Http\Controllers\LeccionesController;
+use App\Http\Controllers\PlataformaController;
 
 /*
 |--------------------------------------------------------------------------
@@ -116,6 +117,9 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::get('categorias/{idUsuario}/{idPerfil}', [UserController::class, 'categorias']);
         Route::get('fotoPerfil/{idUsuario}', [UserController::class, 'fotoPerfil']);
         Route::post('actualizarFotoPerfil', [UserController::class, 'actualizarFotoPerfil']);
+        Route::get('listaUnidadesLeccionesAvance/{id}/{idUser}/{tipo}', [UserController::class, 'listaUnidadesLeccionesAvance']);
+        Route::get('escuelasSinPerfil/{idUser}/{idPerfil}', [UserController::class, 'escuelasSinPerfil']);
+        Route::post('guardarEscualesSinPerfil', [UserController::class, 'guardarEscualesSinPerfil']);
     });
 
     //Perfiles
@@ -126,7 +130,7 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::post('cambiarEstado', [PerfilesController::class, 'cambiarEstado']);
         Route::post('obtener', [PerfilesController::class, 'show']);
         Route::get('arbol/{idPerfil}', [PerfilesController::class, 'arbol']);
-        Route::get('permisos/{idPerfil}', [PerfilesController::class, 'permisos']);
+        Route::get('permisos/{idPerfil}/{idUsuario}', [PerfilesController::class, 'permisos']);
         Route::post('guardarPermiso', [PerfilesController::class, 'guardarPermiso']);
     });
 
@@ -158,6 +162,7 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::post('actualizarOrden', [CursosController::class, 'actualizarOrden']);
         Route::post('agregarDependencia', [CursosController::class, 'agregarDependencia']);
         Route::get('listarEscuelasCursos/{idEscuela}', [CursosController::class, 'listarEscuelasCursos']);
+        Route::get('listaCursosProgreso/{idEscuela}/{idUser}', [CursosController::class, 'listaCursosProgreso']);
     });
     
     
@@ -174,6 +179,10 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::get('visualizar/{video}/{usuario}', [TomaControlController::class, 'videoVisualizar']);
         Route::post('sugeridos', [TomaControlController::class, 'videosSugeridos']);
         Route::post('videos', [TomaControlController::class, 'videos']);
+        Route::get('descargar/{id}/{name}', [TomaControlController::class, 'descargarAnexo']);
+        Route::get('traerArchivos/{folderName}', [TomaControlController::class, 'traerArchivos']);
+        Route::post('eliminarArchivo', [TomaControlController::class, 'eliminarArchivo']);
+        Route::post('subirArchivo', [TomaControlController::class, 'subirArchivo']);
     });
 
     //Visualizaciones
@@ -199,6 +208,7 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::post('actualizarOrden', [UnidadesController::class, 'actualizarOrden']);
         Route::post('agregarDependencia', [UnidadesController::class, 'agregarDependencia']);
         Route::get('listarUnidadesCursos/{idCurso}', [UnidadesController::class, 'listarUnidadesCursos']);
+        Route::get('listaUnidadesProgreso/{idCurso}/{idUser}', [UnidadesController::class, 'listaUnidadesProgreso']);
     });
     
     //Comentarios
@@ -230,6 +240,15 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::post('actualizarOrden', [LeccionesController::class, 'actualizarOrden']);
         Route::post('agregarDependencia', [LeccionesController::class, 'agregarDependencia']);
         Route::get('listarLeccionesUnidades/{idUnidad}', [LeccionesController::class, 'listarLeccionesUnidades']);
+        Route::get('listarLeccionesProgreso/{idUnidad}/{usuario}/{vista}', [LeccionesController::class, 'listarLeccionesProgreso']);
+    });
+
+    //lecciones-progreso
+    Route::prefix('lecciones-progreso')->group(function () {
+        Route::post('crear', [LeccionesController::class, 'crearProgreso']);
+        Route::post('actualizar', [LeccionesController::class, 'actualizarProgreso']);
+        Route::get('screen/{id}/{filename}/{navegador}', [LeccionesController::class, 'getScreenShot']);
+        Route::post('cantidadIntentos', [LeccionesController::class, 'cantidadIntentos']);
     });
 
     // Videos
@@ -244,6 +263,19 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::post('subir', [LeccionesController::class, 'subirArchivo']);
         Route::get('traerTodos/{folderName}', [LeccionesController::class, 'traerTodosArchivos']);
         Route::post('eliminar', [LeccionesController::class, 'eliminarArchivo']);
+        Route::get('descargar/{folderName}/{archivo}', [LeccionesController::class, 'descargarArchivo']);
+    });
 
+    // Plataforma
+    Route::prefix('plataforma')->group(function () {
+        Route::get('datos', [PlataformaController::class, 'datosJSON']);
+        Route::get('img/{nombreImg}', [PlataformaController::class, 'devolverImg']);
+        Route::post('actualizar', [PlataformaController::class, 'actualizar']);
+    });
+
+    // Evaluaciones
+    Route::prefix('evaluaciones')->group(function () {
+        Route::post('guardar', [LeccionesController::class, 'guardarEvaluacion']);
+        Route::get('estructura/{idLeccion}', [LeccionesController::class, 'evaluacionEstructura']);
     });
 });

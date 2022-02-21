@@ -104,25 +104,43 @@ class PerfilesController extends Controller {
         return datatables()->eloquent($query)->rawColumns(['nombre'])->make(true);
     }
 
-    public function permisos($idPerfil){
+    public function permisos($idPerfil, $idUsuario = 0){
         $resp['permisos'] = $this->arbol($idPerfil);
-        $resp['escuelas'] = $this->escuelas($idPerfil);
-        $resp['categorias'] = $this->categorias($idPerfil);
+        if ($idUsuario == 0) {
+            $resp['escuelas'] = $this->escuelas($idPerfil);
+            $resp['categorias'] = $this->categorias($idPerfil);
+        } else {
+            $resp['permisosUsuario'] = $this->arbol($idPerfil, null, $idUsuario);
+        }
 
         return $resp;
     }
 
-    public function arbol($idPerfil, $permiso = null){
+    public function arbol($idPerfil, $permiso = null, $idUsuario = null){
         $query = DB::table("permisos AS p")
                     ->select(
                         "p.id AS value"
                         ,"p.tag AS text"
                     )->addSelect(['contHijos' => DB::table("permisos AS per")->selectRaw('count(*)')->whereColumn('per.fk_permiso', 'p.id')])
-                    ->selectRaw("(CASE WHEN ps.fk_perfil IS NULL THEN 0 ELSE 1 END) AS checked")
-                    ->leftjoin("permisos_sistema as ps", function ($join) use ($idPerfil) {
-                        $join->on('p.id', 'ps.fk_permiso')
-                        ->where('ps.fk_perfil', $idPerfil)
-                        ->where('ps.estado', 1);
+                    ->selectRaw("(
+                        CASE 
+                            WHEN '$idPerfil' = 'null'
+                                THEN IF(ps.fk_usuario IS NULL, 0, 1)
+                            ELSE IF(ps.fk_perfil IS NULL, 0, 1) 
+                        END
+                    ) AS checked")
+                    ->leftjoin("permisos_sistema as ps", function ($join) use ($idPerfil, $idUsuario) {
+                        $join = $join->on('p.id', 'ps.fk_permiso')->where('ps.estado', 1);
+                        if ($idPerfil == 'null') {
+                            $join->whereNull("ps.fk_perfil");
+                        } else {
+                            $join->where('ps.fk_perfil', $idPerfil);
+                        }
+                        if (is_null($idUsuario)) {
+                            $join->whereNull("ps.fk_usuario");
+                        } else {
+                            $join->where("ps.fk_usuario", $idUsuario);
+                        }
                     });
     
 
@@ -136,7 +154,7 @@ class PerfilesController extends Controller {
 
         foreach ($query as $per) {
             if ($per->contHijos > 0) {
-                $per->children = $this->arbol($idPerfil, $per->value);
+                $per->children = $this->arbol($idPerfil, $per->value, $idUsuario);
             }
         }
 
@@ -180,10 +198,15 @@ class PerfilesController extends Controller {
         DB::beginTransaction();
 
         if (isset($request->permisos)) {
-            DB::table('permisos_sistema')->where("fk_perfil", $request->idPerfil)->whereNotNull('fk_permiso')->delete(); 
+            DB::table('permisos_sistema')->where("fk_perfil", $request->idPerfil)->whereNotNull('fk_permiso')->whereNull('fk_usuario')->delete(); 
             $permisoSeleccionados = $this->permisosGuardar($request->permisos, []);
             foreach ($permisoSeleccionados as $value) {
                 try {
+                    DB::table('permisos_sistema')
+                        ->where("fk_perfil", $request->idPerfil)
+                        ->where('fk_permiso', $value)
+                        ->whereNotNull('fk_usuario')
+                        ->delete(); 
                     DB::table('permisos_sistema')->insert([
                         "fk_perfil" => $request->idPerfil
                         ,"fk_permiso" => $value
@@ -202,6 +225,10 @@ class PerfilesController extends Controller {
             
             foreach ($request->escuelas as $value) {
                 try {
+                    DB::table('permisos_sistema')
+                        ->where('fk_escuelas', $value)
+                        ->whereNotNull('fk_usuario')
+                        ->delete();
                     DB::table('permisos_sistema')->insert([
                         "fk_perfil" => $request->idPerfil
                         ,"fk_escuelas" => $value

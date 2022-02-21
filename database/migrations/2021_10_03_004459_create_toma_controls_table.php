@@ -16,8 +16,8 @@ class CreateTomaControlsTable extends Migration
         Schema::create('toma_controls', function (Blueprint $table) {
             $table->id();
             $table->text('nombre');
-            $table->text('descripcion')->nullable();
-            $table->text('poster')->nullable();;
+            $table->longText('descripcion')->nullable();
+            $table->text('poster')->nullable();
             $table->text('ruta');
             $table->boolean('visibilidad')->default(1);
             $table->boolean('comentarios')->default(1);

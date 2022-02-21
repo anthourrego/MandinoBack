@@ -18,6 +18,7 @@ class CreateUnidadesTable extends Migration
             $table->string('nombre');
             $table->text('descripcion')->nullable();
             $table->boolean("estado")->default(1);
+            $table->string('color')->length(7);
             $table->timestamps();
         });
     }

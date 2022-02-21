@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\lecciones;
+use App\Models\evaluacion_pregunta;
+use App\Models\evaluacion_preguntas_opcione;
+use App\Models\evaluacion_respuesta;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\File;
@@ -34,13 +37,12 @@ class LeccionesController extends Controller
         return $this->crearLeccion($nombre, $contenido, $estado, $tipo, $url_contenido);
     }
 
-    public function crearLeccion($nombre, $contenido, $estado, $tipo, $url_contenido){
+    public function crearLeccion($nombre, $contenido, $estado, $tipo, $url_contenido, $intentos_base = null){
         $resp["success"] = false;
          
         $validar = lecciones::where([
             ['nombre', $nombre], 
         ])->get();
-
 
         if($validar->isEmpty()){
             $leccion = new lecciones;
@@ -49,16 +51,17 @@ class LeccionesController extends Controller
             $leccion->estado = $estado;
             $leccion->tipo = $tipo;
             $leccion->url_contenido = $url_contenido;
+            $leccion->intentos_base = $intentos_base;
 
             if($leccion->save()){
                 $resp["success"] = true;
                 $resp["msj"] = "Se ha creado la lección correctamente.";
                 $resp["id"] = $leccion->id;
             }else{
-                $resp["msj"] = "No se ha creado la lección " . $request->nombre;
+                $resp["msj"] = "No se ha creado la lección {$request->nombre}";
             }
         }else{
-            $resp["msj"] = "la lección" . $nombre . " ya se encuentra registrada.";
+            $resp["msj"] = "La lección {$nombre} ya se encuentra registrada.";
         }
 
         return $resp;
@@ -71,8 +74,7 @@ class LeccionesController extends Controller
      * @param  \App\Models\lecciones  $lecciones
      * @return \Illuminate\Http\Response
      */
-    public function show(Request $request)
-    {
+    public function show(Request $request) {
         $query = lecciones::select('id', 'nombre', 'contenido', 'estado', 'tipo','created_at');
         if ($request->estado != '') {
             $query->where("estado", $request->estado);
@@ -87,8 +89,7 @@ class LeccionesController extends Controller
      * @param  \App\Models\lecciones  $lecciones
      * @return \Illuminate\Http\Response
      */
-    public function actualizar(Request $request)
-    {
+    public function actualizar(Request $request) {
         $resp["success"] = false;
         $validar = lecciones::where([
             ['id', '<>', $request->id],
@@ -107,7 +108,6 @@ class LeccionesController extends Controller
                     $leccion->estado = $request->estado;
                     $leccion->tipo = $request->tipo;
                     $leccion->url_contenido = $request->url_contenido;
-            
                     
                     if ($leccion->save()) {
                         $resp["success"] = true;
@@ -227,7 +227,7 @@ class LeccionesController extends Controller
         $resp["success"] = false;
 
         $validar =  DB::table('lecciones_unidades')->where([
-            ['id', '<>', $request->id],
+            ['id', '=', $request->id],
         ])->get();
   
 
@@ -316,6 +316,332 @@ class LeccionesController extends Controller
         
         return $resp;
 
+    }
+
+    // listado lecciones_unidades
+    public function listarLeccionesProgreso($idUnidad, $usuario, $vista) {
+
+        $info = array();
+
+        $progresoAct = DB::table('lecciones_progreso_usuarios')
+            ->select(
+                'lecciones_progreso_usuarios.fecha_completado AS fechProgCompleto',
+                'lecciones_progreso_usuarios.tiempo_video AS tiempoVideoProg',
+                'lecciones_progreso_usuarios.id AS idProgreso',
+                'lecciones_progreso_usuarios.intentos_adicionales',
+                'lecciones_progreso_usuarios.fk_leccion'
+            )->where('lecciones_progreso_usuarios.fk_user', $usuario);
+
+        if ($vista == 'estudiar') {
+    
+            $progresoActDepende = DB::table('lecciones_progreso_usuarios')
+                ->select(
+                    'lecciones_progreso_usuarios.fecha_completado AS fechProgCompletoDepende',
+                    'lecciones_progreso_usuarios.fk_leccion'
+                )->where('lecciones_progreso_usuarios.fk_user', $usuario)
+                ->whereNotNull('lecciones_progreso_usuarios.fecha_completado');
+        
+            $query = DB::table('lecciones_unidades')
+                ->select(
+                    "lecciones_unidades.id as unidadesId",
+                    "lecciones_unidades.fk_leccion_dependencia as leccionDependencia",
+                    "lecciones.id as id",
+                    "lecciones.contenido",
+                    "lecciones.nombre as nombre", 
+                    "lecciones.tipo as tipo",
+                    "lpu.fechProgCompleto",
+                    "lpu.tiempoVideoProg",
+                    "lpu.idProgreso",
+                    "lpu2.fechProgCompletoDepende"
+                )->selectRaw(
+                    "(IF(lpu.intentos_adicionales IS NULL, 0, lpu.intentos_adicionales) + IF(lecciones.intentos_base IS NULL, 0, lecciones.intentos_base)) AS totalIntentos"
+                )
+                ->join('lecciones', 'lecciones_unidades.fk_leccion', '=', 'lecciones.id')
+                ->leftJoinSub($progresoAct, "lpu", function ($join) {
+                    $join->on("lecciones.id", "=", "lpu.fk_leccion");
+                })
+                ->leftJoinSub($progresoActDepende, "lpu2", function ($join) {
+                    $join->on("lecciones_unidades.fk_leccion_dependencia", "=", "lpu2.fk_leccion");
+                })
+                ->where('lecciones_unidades.fk_unidad', $idUnidad)
+                ->where('lecciones_unidades.estado',1)
+                ->orderBy('lecciones_unidades.orden','asc');
+            
+            $info = $query->get();
+
+        } else {
+
+            $info = DB::table('lecciones_unidades')
+                ->select(
+                    "lecciones_unidades.id as unidadesId",
+                    "lecciones_unidades.fk_leccion_dependencia as leccionDependencia",
+                    "lecciones.id as id",
+                    "lecciones.contenido",
+                    "lecciones.nombre as nombre", 
+                    "lecciones.tipo as tipo",
+                    "lpu.fechProgCompleto",
+                    "lpu.tiempoVideoProg",
+                    "lpu.idProgreso"
+                )->selectRaw(
+                    "(IF(lpu.intentos_adicionales IS NULL, 0, lpu.intentos_adicionales) + IF(lecciones.intentos_base IS NULL, 0, lecciones.intentos_base)) AS totalIntentos"
+                )
+                ->join('lecciones', 'lecciones_unidades.fk_leccion', '=', 'lecciones.id')
+                ->leftJoinSub($progresoAct, "lpu", function ($join) {
+                    $join->on("lecciones.id", "=", "lpu.fk_leccion");
+                })
+                ->where('lecciones_unidades.fk_unidad', $idUnidad)
+                ->where('lecciones_unidades.estado',1)
+                ->orderBy('lecciones_unidades.orden','asc')
+                ->get();
+        }
+
+        foreach ($info as $key => $value) {
+            if ($value->tipo == 2 || $value->tipo == 4) {
+                //Cuando sea una evaluación devolvemos un json
+                if ($value->tipo == 2) {
+                    $value->contenido = $this->evaluacionEstructura($value->id, true);
+                }
+                $value->intentos =  $this->obtenerIntentosLeccion($value->idProgreso);
+                $value->masIntento = true;
+                if ($value->totalIntentos != 0 && count($value->intentos) >= $value->totalIntentos) {
+                    $value->masIntento = false;
+                }
+            }
+        }
+        return $info;
+    }
+
+    private function obtenerIntentosLeccion($idProgreso) {
+        return DB::table('intento_leccion_usuario')
+            ->select(
+                "intento_leccion_usuario.id",
+                "intento_leccion_usuario.num_preguntas_correctas",
+                "intento_leccion_usuario.num_preguntas_totales",
+                "intento_leccion_usuario.fecha_inicio",
+                "intento_leccion_usuario.fecha_final", 
+                "intento_leccion_usuario.captura_pantalla"
+            )
+            ->selectRaw("TIMEDIFF(intento_leccion_usuario.fecha_final, intento_leccion_usuario.fecha_inicio) AS tiempo")
+            ->where('intento_leccion_usuario.fk_leccion_progreso', $idProgreso)
+            ->get();
+    }
+
+    //guardar cantidad de intentos de exmane por usuario
+    public function cantidadIntentos(Request $request) {
+        $resp["success"] = false;
+        $resp["msj"] = "No fue posible modificar la cantidad.";
+        try {
+
+            $progreso = DB::table('lecciones_progreso_usuarios')->where('id', $request->progreso);
+
+            $datActr = [
+                "intentos_adicionales" => $request->intentos,
+                'updated_at' => now()
+            ];
+
+            if ($progreso->update($datActr)) {
+                $resp["success"] = true;
+                $resp["msj"] = "Cantidad modificada correctmente";
+                DB::commit();
+                return $resp;
+            } else {
+                DB::rollback();
+                return $resp;
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            return $resp;
+        }
+    }
+
+    //Obtener screenshot juego
+    public function getScreenShot($id, $filename, $navegador){
+        $path = storage_path('app/public/juegos/'. $id . '/' . $filename);
+        if (!File::exists($path)) {
+            $path = resource_path('assets/image/nofoto.png');
+        }
+
+        $file = File::get($path);
+        $size = File::size($path);
+        $type = File::mimeType($path);
+
+        $codigo = 206;
+        if ($navegador == 'firefox') $codigo = 200;
+
+        $response = Response::make($file, $codigo);
+        $response->header("Content-Type", $type); 
+        $response->header("Content-Range", "bytes 0-" . ($size - 1) . "/" . $size); 
+        return $response;
+    }
+
+    //creacion progreso lección
+    public function crearProgreso(Request $request){
+        $resp["success"] = false;
+        try {
+
+            $progreso = DB::table('lecciones_progreso_usuarios')
+                ->where('fk_leccion', $request->fk_leccion)
+                ->where('fk_user', $request->fk_user)
+                ->first();
+
+            $request->fecha_completado = $request->fecha_completado == 0 ? null : date('Y-m-d H-i-s');
+         
+            if (isset($progreso->id)) {
+                $request->idProgreso = $progreso->id;
+                return $this->actualizarProgreso($request);
+            }
+
+            $id = DB::table('lecciones_progreso_usuarios')->insertGetId([
+                "fk_user" => $request->fk_user,
+                "fk_leccion" => $request->fk_leccion,
+                "fecha_completado" => $request->fecha_completado,
+                "tiempo_video" => (isset($request->tiempo_video) ? $request->tiempo_video : null),
+                "updated_at" => now(),
+                "created_at" => now() 
+            ]);
+
+            if (isset($request->guardarIntento) && $request->guardarIntento == true) {
+
+                if (isset($request->imagen)) {
+                    $image = str_replace('data:image/png;base64,', '', $request->imagen);
+                    $image = base64_decode(str_replace(' ', '+', $image));
+    
+                    $file = Storage::disk('public')->put($request->carpetaJuegos, $image);
+                }
+
+                $idIntentoLeccionUsuario  = DB::table('intento_leccion_usuario')->insertGetId([
+                    "fk_leccion_progreso" => $id,
+                    "num_preguntas_correctas" => $request->palabrasTotal,
+                    "num_preguntas_totales" => $request->palabrasCompletadas,
+                    "fecha_inicio" => $request->fechaInicio,
+                    "fecha_final" => $request->fechaFinal,
+                    "captura_pantalla" => isset($request->nombreCaptura) ? $request->nombreCaptura : null,
+                    "updated_at" => now(),
+                    "created_at" => now() 
+                ]);
+
+                if (isset($request->tipo) && $request->tipo == 2) {
+                    $VALIDANEITOR = false;   
+                    foreach ($request->respuestas as $res) {
+                        foreach ($res['respuestas'] as $res2) {
+                            $evaRespuesta = new evaluacion_respuesta;
+                            $evaRespuesta->fk_intento_leccion = $idIntentoLeccionUsuario;
+                            $evaRespuesta->fk_pregunta_respuesta = $res2;
+
+                            if(!$evaRespuesta->save()) {
+                                $VALIDANEITOR = true;
+                                break;
+                            }
+                        }
+
+                        if($VALIDANEITOR == true){
+                            break;
+                        }
+
+                    }
+                }
+
+                $resp['intentos'] = $this->obtenerIntentosLeccion($id);
+            }
+
+            $resp["success"] = true;
+            $resp["msj"] = "Progreso registrado correctamente.";
+            $resp["fechProgCompleto"] = $request->fecha_completado;
+            $resp['idProgreso'] = $id;
+            DB::commit();
+
+            return $resp;
+        } catch (\Exception $e) {
+            DB::rollback();
+            $resp["msj"] = " Error al registrar el progreso.";
+
+            return $resp;
+        }
+    }
+
+    //modificación progreso lección
+    public function actualizarProgreso(Request $request){
+        $resp["success"] = false;
+        $resp["msj"] = "Ha ocúrrido un problema.";
+        try {
+
+            $request->fecha_completado = $request->fecha_completado == 0 ? null : date('Y-m-d H-i-s');
+
+            $progreso = DB::table('lecciones_progreso_usuarios')
+                ->where('id', $request->idProgreso);
+
+            $datActr = [
+                "fecha_completado" => $request->fecha_completado,
+                "tiempo_video" => (isset($request->tiempo_video) ? $request->tiempo_video : null),
+                'updated_at' => now()
+            ];
+
+            if (isset($request->guardarIntento) && $request->guardarIntento == true) {
+
+                if (isset($request->imagen)) {
+                    $image = str_replace('data:image/png;base64,', '', $request->imagen);
+                    $image = base64_decode(str_replace(' ', '+', $image));
+    
+                    $file = Storage::disk('public')->put($request->carpetaJuegos, $image);
+                }
+
+                $idIntentoLeccionUsuario = DB::table('intento_leccion_usuario')->insertGetId([
+                    "fk_leccion_progreso" => $request->idProgreso,
+                    "num_preguntas_correctas" => $request->palabrasTotal,
+                    "num_preguntas_totales" => $request->palabrasCompletadas,
+                    "fecha_inicio" => $request->fechaInicio,
+                    "fecha_final" => $request->fechaFinal,
+                    "captura_pantalla" => isset($request->nombreCaptura) ? $request->nombreCaptura : null,
+                    "updated_at" => now(),
+                    "created_at" => now() 
+                ]);
+
+                if (isset($request->tipo) && $request->tipo == 2) {
+                    $VALIDANEITOR = false;   
+                    foreach ($request->respuestas as $res) {
+                        foreach ($res['respuestas'] as $res2) {
+                            $evaRespuesta = new evaluacion_respuesta;
+                            $evaRespuesta->fk_intento_leccion = $idIntentoLeccionUsuario;
+                            $evaRespuesta->fk_pregunta_respuesta = $res2;
+
+                            if(!$evaRespuesta->save()) {
+                                $VALIDANEITOR = true;
+                                break;
+                            }
+                        }
+
+                        if($VALIDANEITOR == true){
+                            break;
+                        }
+                    }
+                }
+
+                $resp['intentos'] = $this->obtenerIntentosLeccion($request->idProgreso);
+            }
+
+            if (!is_null($progreso->first()->fecha_completado)) {
+                $resp["success"] = true;
+                $resp["msj"] = "Progreso modificado correctamente";
+                $resp["fechProgCompleto"] = $request->fecha_completado;
+                $resp['idProgreso'] = $request->idProgreso;
+                return $resp;
+            }
+
+            if ($progreso->update($datActr)) {
+                $resp["success"] = true;
+                $resp["msj"] = "Progreso modificado correctamente";
+                $resp["fechProgCompleto"] = $request->fecha_completado;
+                $resp['idProgreso'] = $request->idProgreso;
+                DB::commit();
+                return $resp;
+            } else {
+                DB::rollback();
+                return $resp;
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            return $resp;
+        }
     }
 
     // función para crear video en lección
@@ -440,6 +766,17 @@ class LeccionesController extends Controller
         return $resp;
     }
 
+    public function descargarArchivo($folder, $archivo){
+        $path = storage_path('app/public/archivos/'.$folder.'/'.$archivo);
+        if (File::exists($path)) {
+            $type = File::mimeType($path);
+            $file = Storage::disk('public')->get('archivos/'.$folder.'/'.$archivo);
+            $response = Response::make($file, 200);
+            $response->header("Content-Type", $type);
+            return $response;
+        }
+    }
+
     public function traerTodosArchivos($folderName){
         try{
             $path = storage_path('app/public/archivos/'.$folderName);
@@ -474,6 +811,81 @@ class LeccionesController extends Controller
            return $e;
         }
         
+    }
+
+    public function guardarEvaluacion(Request $request){
+        DB::beginTransaction();
+        $resp["success"] = false;
+        $nombre = $request->nombre;
+        $contenido = $request->contenido;
+        $estado = $request->estado;
+        $tipo = $request->tipo;
+        $url_contenido = $request->url_contenido;
+
+        $leccion = $this->crearLeccion($nombre, $contenido, $estado, $tipo, $url_contenido, 3);
+
+        if($leccion['success'] == true){
+            foreach ($request->preguntas as $pre) {
+                $pregunta = new evaluacion_pregunta;
+                $pregunta->pregunta = $pre['pregunta'];
+                $pregunta->fk_leccion = $leccion['id'];
+                $pregunta->tipo_pregunta = $pre['tipoPregunta'];
+
+                if($pregunta->save()){
+                    foreach ($pre['respuestas'] as $res) {
+                        $opciones = new evaluacion_preguntas_opcione;
+                        $opciones->descripcion = $res['respuesta'];
+                        $opciones->correcta = $res['correcta'] == true ? 1 : 0;
+                        $opciones->fk_pregunta = $pregunta->id;
+
+                        if ($opciones->save()) {
+                            $resp["success"] = true;
+                        } else {
+                            $resp["success"] = false;
+                            $resp["msj"] = "Error al crear las opciones de {$res['respuesta']}";
+                            break;
+                        }
+                    }
+                }else{
+                    $resp["msj"] = "Error al crear las preguntas";
+                    break;
+                }
+            }
+        } else {
+            $resp['msj'] = $leccion['msj'];
+        }
+
+        if ($resp['success'] == true) {
+            $resp['msj'] = "Evaluación creada correctamente."; 
+            DB::commit();
+        } else {
+            DB::rollBack();
+        }
+
+        return $resp;
+    }
+
+
+    function evaluacionEstructura($idLeccion, $random = false){
+        $preguntas = evaluacion_pregunta::select("id", "pregunta", "tipo_pregunta")->where("fk_leccion", $idLeccion);
+
+        if($random == true){
+            $preguntas->inRandomOrder();
+        }
+
+        $preguntas = $preguntas->get();
+
+        foreach ($preguntas as $pre) {
+            $respuestas = evaluacion_preguntas_opcione::select("id", "descripcion AS respuesta", "correcta")->where("fk_pregunta", $pre->id);
+
+            if($random == true){
+                $respuestas->inRandomOrder();
+            }
+
+            $pre->respuestas = $respuestas->get();
+        }
+        
+        return $preguntas;
     }
 
 }
