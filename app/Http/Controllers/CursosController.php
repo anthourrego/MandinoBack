@@ -186,7 +186,7 @@ class CursosController extends Controller
         $resp["success"] = false;
 
         $validar =  DB::table('escuelas_cursos')->where([
-            ['id', '<>', $request->id],
+            ['id', '=', $request->id],
         ])->get();
   
 
@@ -206,9 +206,8 @@ class CursosController extends Controller
                 $resp["msj"] = "Curso es dependencia de otros cursos, no se puede desasignar";
             }
         
-            
         }else{
-            $resp["msj"] = "no se encuentra curso asignado";
+            $resp["msj"] = "No se encuentra curso asignado";
         }
         
         return $resp;

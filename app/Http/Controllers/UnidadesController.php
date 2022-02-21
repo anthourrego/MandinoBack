@@ -227,7 +227,7 @@ class UnidadesController extends Controller
         $resp["success"] = false;
 
         $validar =  DB::table('unidades_cursos')->where([
-            ['id', '<>', $request->id],
+            ['id', '=', $request->id],
         ])->get();
   
 

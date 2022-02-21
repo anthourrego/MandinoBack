@@ -272,4 +272,9 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::get('img/{nombreImg}', [PlataformaController::class, 'devolverImg']);
         Route::post('actualizar', [PlataformaController::class, 'actualizar']);
     });
+
+    // Evaluaciones
+    Route::prefix('evaluaciones')->group(function () {
+        Route::post('guardar', [LeccionesController::class, 'guardarEvaluacion']);
+    });
 });

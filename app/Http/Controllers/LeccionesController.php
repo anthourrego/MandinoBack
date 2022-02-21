@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\lecciones;
+use App\Models\evaluacion_pregunta;
+use App\Models\evaluacion_preguntas_opcione;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\File;
@@ -34,13 +36,12 @@ class LeccionesController extends Controller
         return $this->crearLeccion($nombre, $contenido, $estado, $tipo, $url_contenido);
     }
 
-    public function crearLeccion($nombre, $contenido, $estado, $tipo, $url_contenido){
+    public function crearLeccion($nombre, $contenido, $estado, $tipo, $url_contenido, $intentos_base = null){
         $resp["success"] = false;
          
         $validar = lecciones::where([
             ['nombre', $nombre], 
         ])->get();
-
 
         if($validar->isEmpty()){
             $leccion = new lecciones;
@@ -49,16 +50,17 @@ class LeccionesController extends Controller
             $leccion->estado = $estado;
             $leccion->tipo = $tipo;
             $leccion->url_contenido = $url_contenido;
+            $leccion->intentos_base = $intentos_base;
 
             if($leccion->save()){
                 $resp["success"] = true;
                 $resp["msj"] = "Se ha creado la lección correctamente.";
                 $resp["id"] = $leccion->id;
             }else{
-                $resp["msj"] = "No se ha creado la lección " . $request->nombre;
+                $resp["msj"] = "No se ha creado la lección {$request->nombre}";
             }
         }else{
-            $resp["msj"] = "la lección" . $nombre . " ya se encuentra registrada.";
+            $resp["msj"] = "La lección {$nombre} ya se encuentra registrada.";
         }
 
         return $resp;
@@ -71,8 +73,7 @@ class LeccionesController extends Controller
      * @param  \App\Models\lecciones  $lecciones
      * @return \Illuminate\Http\Response
      */
-    public function show(Request $request)
-    {
+    public function show(Request $request) {
         $query = lecciones::select('id', 'nombre', 'contenido', 'estado', 'tipo','created_at');
         if ($request->estado != '') {
             $query->where("estado", $request->estado);
@@ -87,8 +88,7 @@ class LeccionesController extends Controller
      * @param  \App\Models\lecciones  $lecciones
      * @return \Illuminate\Http\Response
      */
-    public function actualizar(Request $request)
-    {
+    public function actualizar(Request $request) {
         $resp["success"] = false;
         $validar = lecciones::where([
             ['id', '<>', $request->id],
@@ -227,7 +227,7 @@ class LeccionesController extends Controller
         $resp["success"] = false;
 
         $validar =  DB::table('lecciones_unidades')->where([
-            ['id', '<>', $request->id],
+            ['id', '=', $request->id],
         ])->get();
   
 
@@ -774,6 +774,58 @@ class LeccionesController extends Controller
            return $e;
         }
         
+    }
+
+    public function guardarEvaluacion(Request $request){
+        DB::beginTransaction();
+        $resp["success"] = false;
+        $nombre = $request->nombre;
+        $contenido = $request->contenido;
+        $estado = $request->estado;
+        $tipo = $request->tipo;
+        $url_contenido = $request->url_contenido;
+
+        $leccion = $this->crearLeccion($nombre, $contenido, $estado, $tipo, $url_contenido, 3);
+
+        if($leccion['success'] == true){
+            foreach ($request->preguntas as $pre) {
+                $pregunta = new evaluacion_pregunta;
+                $pregunta->pregunta = $pre['pregunta'];
+                $pregunta->fk_leccion = $leccion['id'];
+                $pregunta->tipo_pregunta = $pre['tipoPregunta'];
+
+                if($pregunta->save()){
+                    foreach ($pre['respuestas'] as $res) {
+                        $opciones = new evaluacion_preguntas_opcione;
+                        $opciones->descripcion = $res['respuesta'];
+                        $opciones->correcta = $res['correcta'] == true ? 1 : 0;
+                        $opciones->fk_pregunta = $pregunta->id;
+
+                        if ($opciones->save()) {
+                            $resp["success"] = true;
+                        } else {
+                            $resp["success"] = false;
+                            $resp["msj"] = "Error al crear las opciones de {$res['respuesta']}";
+                            break;
+                        }
+                    }
+                }else{
+                    $resp["msj"] = "Error al crear las preguntas";
+                    break;
+                }
+            }
+        } else {
+            $resp['msj'] = $leccion['msj'];
+        }
+
+        if ($resp['success'] == true) {
+            $resp['msj'] = "Evaluación creada correctamente."; 
+            DB::commit();
+        } else {
+            DB::rollBack();
+        }
+
+        return $resp;
     }
 
 }
