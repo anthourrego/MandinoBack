@@ -502,28 +502,28 @@ class LeccionesController extends Controller
 
             if (isset($request->guardarIntento) && $request->guardarIntento == true) {
 
-                $image = str_replace('data:image/png;base64,', '', $request->imagen);
-                $image = base64_decode(str_replace(' ', '+', $image));
+                if (isset($request->imagen)) {
+                    $image = str_replace('data:image/png;base64,', '', $request->imagen);
+                    $image = base64_decode(str_replace(' ', '+', $image));
+    
+                    $file = Storage::disk('public')->put($request->carpetaJuegos, $image);
+                }
 
-                $file = Storage::disk('public')->put($request->carpetaJuegos, $image);
-
-                DB::table('intento_leccion_usuario')->insert([
+                $idIntentoLeccionUsuario  = DB::table('intento_leccion_usuario')->insertGetId([
                     "fk_leccion_progreso" => $id,
                     "num_preguntas_correctas" => $request->palabrasTotal,
                     "num_preguntas_totales" => $request->palabrasCompletadas,
                     "fecha_inicio" => $request->fechaInicio,
                     "fecha_final" => $request->fechaFinal,
-                    "captura_pantalla" => $request->nombreCaptura,
+                    "captura_pantalla" => isset($request->nombreCaptura) ? $request->nombreCaptura : null,
                     "updated_at" => now(),
                     "created_at" => now() 
                 ]);
 
-                $idIntentoLeccionUsuario = DB::table('intento_leccion_usuario')->latest('id')->first();
-
                 if (isset($request->tipo) && $request->tipo == 2) {
                     $VALIDANEITOR = false;   
                     foreach ($request->respuestas as $res) {
-                        foreach ($res->respuestas as $res2) {
+                        foreach ($res['respuestas'] as $res2) {
                             $evaRespuesta = new evaluacion_respuesta;
                             $evaRespuesta->fk_intento_leccion = $idIntentoLeccionUsuario;
                             $evaRespuesta->fk_pregunta_respuesta = $res2;
@@ -578,21 +578,44 @@ class LeccionesController extends Controller
 
             if (isset($request->guardarIntento) && $request->guardarIntento == true) {
 
-                $image = str_replace('data:image/png;base64,', '', $request->imagen);
-                $image = base64_decode(str_replace(' ', '+', $image));
+                if (isset($request->imagen)) {
+                    $image = str_replace('data:image/png;base64,', '', $request->imagen);
+                    $image = base64_decode(str_replace(' ', '+', $image));
+    
+                    $file = Storage::disk('public')->put($request->carpetaJuegos, $image);
+                }
 
-                $file = Storage::disk('public')->put($request->carpetaJuegos, $image);
-
-                DB::table('intento_leccion_usuario')->insert([
+                $idIntentoLeccionUsuario = DB::table('intento_leccion_usuario')->insertGetId([
                     "fk_leccion_progreso" => $request->idProgreso,
                     "num_preguntas_correctas" => $request->palabrasTotal,
                     "num_preguntas_totales" => $request->palabrasCompletadas,
                     "fecha_inicio" => $request->fechaInicio,
                     "fecha_final" => $request->fechaFinal,
-                    "captura_pantalla" => $request->nombreCaptura,
+                    "captura_pantalla" => isset($request->nombreCaptura) ? $request->nombreCaptura : null,
                     "updated_at" => now(),
                     "created_at" => now() 
                 ]);
+
+                if (isset($request->tipo) && $request->tipo == 2) {
+                    $VALIDANEITOR = false;   
+                    foreach ($request->respuestas as $res) {
+                        foreach ($res['respuestas'] as $res2) {
+                            $evaRespuesta = new evaluacion_respuesta;
+                            $evaRespuesta->fk_intento_leccion = $idIntentoLeccionUsuario;
+                            $evaRespuesta->fk_pregunta_respuesta = $res2;
+
+                            if(!$evaRespuesta->save()) {
+                                $VALIDANEITOR = true;
+                                break;
+                            }
+                        }
+
+                        if($VALIDANEITOR == true){
+                            break;
+                        }
+                    }
+                }
+
                 $resp['intentos'] = $this->obtenerIntentosLeccion($request->idProgreso);
             }
 
