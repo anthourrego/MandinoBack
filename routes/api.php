@@ -276,5 +276,6 @@ Route::middleware(['guest', 'cors'])->group(function () {
     // Evaluaciones
     Route::prefix('evaluaciones')->group(function () {
         Route::post('guardar', [LeccionesController::class, 'guardarEvaluacion']);
+        Route::get('estructura/{idLeccion}', [LeccionesController::class, 'evaluacionEstructura']);
     });
 });

@@ -107,7 +107,6 @@ class LeccionesController extends Controller
                     $leccion->estado = $request->estado;
                     $leccion->tipo = $request->tipo;
                     $leccion->url_contenido = $request->url_contenido;
-            
                     
                     if ($leccion->save()) {
                         $resp["success"] = true;
@@ -397,6 +396,9 @@ class LeccionesController extends Controller
 
         foreach ($info as $key => $value) {
             if ($value->tipo == 2 || $value->tipo == 4) {
+                if ($value->tipo == 2) {
+                    $value->contenido = $this->evaluacionEstructura($value->id, true);
+                }
                 $value->intentos =  $this->obtenerIntentosLeccion($value->idProgreso);
                 $value->masIntento = true;
                 if ($value->totalIntentos != 0 && count($value->intentos) >= $value->totalIntentos) {
@@ -826,6 +828,29 @@ class LeccionesController extends Controller
         }
 
         return $resp;
+    }
+
+
+    function evaluacionEstructura($idLeccion, $random = false){
+        $preguntas = evaluacion_pregunta::select("id", "pregunta", "tipo_pregunta")->where("fk_leccion", $idLeccion);
+
+        if($random == true){
+            $preguntas->inRandomOrder();
+        }
+
+        $preguntas = $preguntas->get();
+
+        foreach ($preguntas as $pre) {
+            $respuestas = evaluacion_preguntas_opcione::select("id", "descripcion AS respuesta", "correcta")->where("fk_pregunta", $pre->id);
+
+            if($random == true){
+                $respuestas->inRandomOrder();
+            }
+
+            $pre->respuestas = $respuestas->get();
+        }
+        
+        return $preguntas;
     }
 
 }
