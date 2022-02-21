@@ -225,6 +225,10 @@ class PerfilesController extends Controller {
             
             foreach ($request->escuelas as $value) {
                 try {
+                    DB::table('permisos_sistema')
+                        ->where('fk_escuelas', $value)
+                        ->whereNotNull('fk_usuario')
+                        ->delete();
                     DB::table('permisos_sistema')->insert([
                         "fk_perfil" => $request->idPerfil
                         ,"fk_escuelas" => $value
