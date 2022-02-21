@@ -286,7 +286,6 @@ class UserController extends Controller {
                             DB::table('permisos_sistema')->where('fk_usuario', $datos->id)->whereNull('fk_permiso')->whereNull('fk_perfil')->delete();
                         }
 
-                        $perfilViejo = $usuario->fk_perfil;
                         $usuario->nro_documento = $datos->nro_documento;
                         $usuario->usuario = $datos->usuario;
                         $usuario->nombre1 = $datos->nombre1;
@@ -300,13 +299,6 @@ class UserController extends Controller {
                         $usuario->fk_municipio = $datos->fk_municipio;
                         $usuario->fk_perfil = $datos->fk_perfil == "null" ? null : $datos->fk_perfil;
                         DB::beginTransaction();
-
-                        if ($perfilViejo != $datos->fk_perfil) {
-                            DB::table('permisos_sistema')
-                                ->where("fk_perfil", $perfilViejo)
-                                ->where('fk_usuario', $datos->id)
-                                ->delete();
-                        }
                         
                         if ($usuario->save()) {
 
@@ -651,17 +643,17 @@ class UserController extends Controller {
 
     }
 
-    public function escuelasSinPerfil($idUser) {
+    public function escuelasSinPerfil($idUser, $idPerfil) {
         $query = DB::table("permisos_sistema AS PS")
             ->select(
-                "PS.id"
-                ,"PS.fk_escuelas"
+                "PS.id", "PS.fk_escuelas", "PS.fk_perfil"
             )->whereNull("PS.fk_perfil")
             ->where("PS.estado", 1)
-            ->where("PS.fk_usuario", $idUser);
+            ->where("PS.fk_usuario", $idUser)
+            ->orWhere("PS.fk_perfil", $idPerfil);
         
         $escuelas = DB::table('escuelas')
-            ->selectRaw('escuelas.id AS value, escuelas.nombre AS text, PST.id AS idPermUser')
+            ->selectRaw('escuelas.id AS value, escuelas.nombre AS text, PST.id AS idPermUser, PST.fk_perfil AS perfPermUser')
             ->leftJoinSub($query, "PST", function ($join) {
                 $join->on("escuelas.id", "=", "PST.fk_escuelas");
             })
