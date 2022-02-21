@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\lecciones;
 use App\Models\evaluacion_pregunta;
 use App\Models\evaluacion_preguntas_opcione;
+use App\Models\evaluacion_respuesta;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\File;
@@ -396,6 +397,7 @@ class LeccionesController extends Controller
 
         foreach ($info as $key => $value) {
             if ($value->tipo == 2 || $value->tipo == 4) {
+                //Cuando sea una evaluación devolvemos un json
                 if ($value->tipo == 2) {
                     $value->contenido = $this->evaluacionEstructura($value->id, true);
                 }
@@ -515,6 +517,30 @@ class LeccionesController extends Controller
                     "updated_at" => now(),
                     "created_at" => now() 
                 ]);
+
+                $idIntentoLeccionUsuario = DB::table('intento_leccion_usuario')->latest('id')->first();
+
+                if (isset($request->tipo) && $request->tipo == 2) {
+                    $VALIDANEITOR = false;   
+                    foreach ($request->respuestas as $res) {
+                        foreach ($res->respuestas as $res2) {
+                            $evaRespuesta = new evaluacion_respuesta;
+                            $evaRespuesta->fk_intento_leccion = $idIntentoLeccionUsuario;
+                            $evaRespuesta->fk_pregunta_respuesta = $res2;
+
+                            if(!$evaRespuesta->save()) {
+                                $VALIDANEITOR = true;
+                                break;
+                            }
+                        }
+
+                        if($VALIDANEITOR == true){
+                            break;
+                        }
+
+                    }
+                }
+
                 $resp['intentos'] = $this->obtenerIntentosLeccion($id);
             }
 
@@ -527,7 +553,7 @@ class LeccionesController extends Controller
             return $resp;
         } catch (\Exception $e) {
             DB::rollback();
-            $resp["msj"] = " error al registrar el progreso.";
+            $resp["msj"] = " Error al registrar el progreso.";
 
             return $resp;
         }
