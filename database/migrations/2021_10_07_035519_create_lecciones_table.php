@@ -22,6 +22,8 @@ class CreateLeccionesTable extends Migration
             $table->integer('orden')->length(11);
             $table->boolean("tipo")->default(1);
             $table->timestamps();
+            $table->integer("porcentaje_ganar")->nullable();
+
         });
     }
 

@@ -37,8 +37,9 @@ class LeccionesController extends Controller
         return $this->crearLeccion($nombre, $contenido, $estado, $tipo, $url_contenido);
     }
 
-    public function crearLeccion($nombre, $contenido, $estado, $tipo, $url_contenido, $intentos_base = null){
+    public function crearLeccion($nombre, $contenido, $estado, $tipo, $url_contenido, $intentos_base = null, $porcentaje_ganar = null){
         $resp["success"] = false;
+    
          
         $validar = lecciones::where([
             ['nombre', $nombre], 
@@ -52,6 +53,7 @@ class LeccionesController extends Controller
             $leccion->tipo = $tipo;
             $leccion->url_contenido = $url_contenido;
             $leccion->intentos_base = $intentos_base;
+            $leccion->porcentaje_ganar = $porcentaje_ganar;
 
             if($leccion->save()){
                 $resp["success"] = true;
@@ -75,7 +77,7 @@ class LeccionesController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function show(Request $request) {
-        $query = lecciones::select('id', 'nombre', 'contenido', 'estado', 'tipo','created_at');
+        $query = lecciones::select('id', 'nombre', 'contenido', 'estado', 'tipo','intentos_base', 'porcentaje_ganar','created_at');
         if ($request->estado != '') {
             $query->where("estado", $request->estado);
         }
@@ -821,8 +823,10 @@ class LeccionesController extends Controller
         $estado = $request->estado;
         $tipo = $request->tipo;
         $url_contenido = $request->url_contenido;
+        $porcentaje_ganar = $request->porcentaje;
 
-        $leccion = $this->crearLeccion($nombre, $contenido, $estado, $tipo, $url_contenido, 3);
+
+        $leccion = $this->crearLeccion($nombre, $contenido, $estado, $tipo, $url_contenido, 3, $porcentaje_ganar);
 
         if($leccion['success'] == true){
             foreach ($request->preguntas as $pre) {
@@ -865,6 +869,75 @@ class LeccionesController extends Controller
         return $resp;
     }
 
+    public function modificarEvaluacion(Request $request){
+        DB::beginTransaction();
+        $resp["success"] = false;
+        
+        // datos lección
+        $nombre = $request->nombre;
+        $contenido = $request->contenido;
+        $estado = $request->estado;
+        $tipo = $request->tipo;
+        $url_contenido = $request->url_contenido;
+        $porcentaje_ganar = $request->porcentaje;
+        // datos evaluación
+        $id = $request->id;
+        $preguntas = $request->preguntas;
+        $respuestasEliminar = $request->respuestasEliminar;
+        $preguntasEliminar = $request->preguntasEliminar;
+
+        // actualización y/o creación de preguntas y respuestas nuevas
+        foreach ($request->preguntas as $pre) {
+            $pregunta = isset($pre['id']) ? evaluacion_pregunta::find($pre['id']) : new evaluacion_pregunta;
+            $pregunta->pregunta = $pre['pregunta'];
+            $pregunta->fk_leccion = $id;
+            $pregunta->tipo_pregunta = $pre['tipoPregunta'];
+
+            if($pregunta->save()){
+
+                foreach ($pre['respuestas'] as $res) {
+
+                    $opciones = isset($res['id']) ? evaluacion_preguntas_opcione::find($res['id']) : new evaluacion_preguntas_opcione;
+                    $opciones->descripcion = $res['respuesta'];
+                    $opciones->correcta = $res['correcta'] == true ? 1 : 0;
+                    $opciones->fk_pregunta = $pregunta->id;
+
+                    if ($opciones->save()) {
+                        $resp["success"] = true;
+                    } else {
+                        $resp["success"] = false;
+                        $resp["msj"] = "Error al crear las opciones de {$res['respuesta']}";
+                        break;
+                    }
+                }
+            }else{
+                $resp["msj"] = "Error al actualizar las preguntas";
+                break;
+            }
+        }
+
+        foreach ($respuestasEliminar as $respEliminar) {
+            $respuestaEliminar = evaluacion_preguntas_opcione::find($respEliminar);
+            $eliminar = $respuestaEliminar->delete();
+        }
+
+        foreach ($preguntasEliminar as $pregEliminar) {
+            $preguntaEliminar = evaluacion_pregunta::find($pregEliminar);
+            $eliminar = $preguntaEliminar->delete();
+        }
+
+
+        if ($resp['success'] == true) {
+            $resp['msj'] = "Evaluación Actualizada correctamente."; 
+            DB::commit();
+        } else {
+            DB::rollBack();
+        }
+
+        return $resp;
+
+
+    }
 
     function evaluacionEstructura($idLeccion, $random = false){
         $preguntas = evaluacion_pregunta::select("id", "pregunta", "tipo_pregunta")->where("fk_leccion", $idLeccion);
