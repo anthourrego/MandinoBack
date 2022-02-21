@@ -918,12 +918,16 @@ class LeccionesController extends Controller
 
         foreach ($respuestasEliminar as $respEliminar) {
             $respuestaEliminar = evaluacion_preguntas_opcione::find($respEliminar);
-            $eliminar = $respuestaEliminar->delete();
+            if(isset($respuestaEliminar)){
+                $eliminar = $respuestaEliminar->delete();
+            }
         }
 
         foreach ($preguntasEliminar as $pregEliminar) {
             $preguntaEliminar = evaluacion_pregunta::find($pregEliminar);
-            $eliminar = $preguntaEliminar->delete();
+            if(isset($preguntaEliminar)){
+                $eliminar = $preguntaEliminar->delete();
+            }
         }
 
 
