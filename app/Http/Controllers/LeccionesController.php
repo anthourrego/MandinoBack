@@ -350,6 +350,7 @@ class LeccionesController extends Controller
                 ->select(
                     "lecciones_unidades.id as unidadesId",
                     "lecciones_unidades.fk_leccion_dependencia as leccionDependencia",
+                    "lecciones_unidades.tiempo_dependencia as tiempoDependencia",
                     "lecciones.id as id",
                     "lecciones.contenido",
                     "lecciones.nombre as nombre", 
@@ -380,6 +381,7 @@ class LeccionesController extends Controller
                 ->select(
                     "lecciones_unidades.id as unidadesId",
                     "lecciones_unidades.fk_leccion_dependencia as leccionDependencia",
+                    "lecciones_unidades.tiempo_dependencia as tiempoDependencia",
                     "lecciones.id as id",
                     "lecciones.contenido",
                     "lecciones.nombre as nombre", 

@@ -322,6 +322,7 @@ class CursosController extends Controller
             ->where('escuelas_cursos.estado', 1)
             ->select(
                 "escuelas_cursos.id as escuelasCursoId",
+                "escuelas_cursos.tiempo_dependencia as tiempoDependencia",
                 "cursos.id as cursoId",
                 "cursos.nombre as nombre",
                 "escuelas_cursos.fk_curso_dependencia AS cursoDepende",

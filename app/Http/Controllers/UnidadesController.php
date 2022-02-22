@@ -360,6 +360,7 @@ class UnidadesController extends Controller
             ->where('unidades_cursos.estado', 1)
             ->select(
                 "unidades_cursos.id AS unidadesCursosId",
+                "unidades_cursos.tiempo_dependencia as tiempoDependencia",
                 "unidades.id AS unidadId",
                 "unidades.nombre AS nombre",
                 "unidades.color AS color",
