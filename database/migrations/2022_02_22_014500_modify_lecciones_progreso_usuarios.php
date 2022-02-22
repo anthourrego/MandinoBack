@@ -12,11 +12,8 @@ class ModifyLeccionesProgresoUsuarios extends Migration
      * @return void
      */
     public function up() {
-        Schema::table('lecciones_progreso_usuarios', function (Blueprint $table) {
-            $table->integer('porcentaje_ganar')->length(3)->nullable();
-        });
-
         Schema::table('lecciones', function (Blueprint $table) {
+            $table->integer('porcentaje_ganar')->length(3)->nullable();
             $table->longText('tiempo_intento')->nullable();
         });
 
