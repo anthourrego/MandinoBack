@@ -13,10 +13,10 @@ class IntroduccionEvaluacion extends Migration
      */
     public function up()
     {
-        /* Schema::table('lecciones_progreso_usuarios', function (Blueprint $table) {
+        Schema::table('lecciones_progreso_usuarios', function (Blueprint $table) {
             $table->dateTime('fecha_completado')->nullable()->change();
             $table->integer('intentos_adicionales')->length(11)->nullable();
-        }); */
+        });
 
         Schema::table('lecciones', function (Blueprint $table) {
             $table->integer('intentos_base')->length(11)->nullable();
@@ -30,8 +30,8 @@ class IntroduccionEvaluacion extends Migration
      */
     public function down()
     {
-        /* Schema::table('lecciones_progreso_usuarios', function (Blueprint $table) {
+        Schema::table('lecciones_progreso_usuarios', function (Blueprint $table) {
             $table->date('fecha_completado')->nullable()->change();
-        }); */
+        });
     }
 }
