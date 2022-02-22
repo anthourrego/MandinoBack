@@ -171,6 +171,7 @@ class CursosController extends Controller
             "escuelas_cursos.orden as escuelas_cursos_orden", 
             "escuelas_cursos.fk_escuela as fk_escuela",
             "escuelas_cursos.fk_curso_dependencia as escuelas_cursos_dependencia",
+            "escuelas_cursos.tiempo_dependencia as escuelas_cursos_tiempo_dependencia", 
             "cursos.id as curso_id", "cursos.nombre as curso_nombre", 
             "cursos.descripcion as curso_descripcion",
         );
@@ -251,6 +252,8 @@ class CursosController extends Controller
 
         $id = $request['id'];
         $idDependencia =  $request['idDependencia'];
+        $diasDependencia =  $request['diasDependencia'];
+
         $validar =  DB::table('escuelas_cursos')->where([
             ['id', '<>', $request->id],
         ])->get();
@@ -258,7 +261,7 @@ class CursosController extends Controller
         if (!$validar->isEmpty()) {
             $escuelaCurso = DB::table('escuelas_cursos')->where('id',$id);
 
-            if ( $escuelaCurso->update(["fk_curso_dependencia" => $idDependencia]) ) {
+            if ( $escuelaCurso->update(["fk_curso_dependencia" => $idDependencia, "tiempo_dependencia" => $diasDependencia]) ) {
                 $resp["success"] = true;
 
                 $resp["msj"] = "dependencia".($idDependencia == null ? " des" : " ")."asignada";

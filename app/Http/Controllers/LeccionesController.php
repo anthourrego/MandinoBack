@@ -167,6 +167,7 @@ class LeccionesController extends Controller
             "lecciones_unidades.estado as lecciones_unidades_estado", 
             "lecciones_unidades.orden as lecciones_unidades_orden", 
             "lecciones_unidades.fk_unidad as fk_unidad",
+            "lecciones_unidades.tiempo_dependencia as lecciones_unidades_tiempo_dependencia", 
             "lecciones_unidades.fk_leccion_dependencia as lecciones_unidades_dependencia",
             "lecciones.id as lecciones_id", "lecciones.nombre as lecciones_nombre", 
             "lecciones.tipo as lecciones_tipo"
@@ -298,6 +299,8 @@ class LeccionesController extends Controller
 
         $id = $request['id'];
         $idDependencia =  $request['idDependencia'];
+        $diasDependencia =  $request['diasDependencia'];
+
         $validar =  DB::table('lecciones_unidades')->where([
             ['id', '<>', $request->id],
         ])->get();
@@ -305,7 +308,7 @@ class LeccionesController extends Controller
         if (!$validar->isEmpty()) {
             $escuelaCurso = DB::table('lecciones_unidades')->where('id',$id);
 
-            if ( $escuelaCurso->update(["fk_leccion_dependencia" => $idDependencia]) ) {
+            if ( $escuelaCurso->update(["fk_leccion_dependencia" => $idDependencia, "tiempo_dependencia" => $diasDependencia]) ) {
                 $resp["success"] = true;
 
                 $resp["msj"] = "dependencia".($idDependencia == null ? " des" : " ")."asignada";
