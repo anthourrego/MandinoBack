@@ -379,7 +379,7 @@ class UnidadesController extends Controller
                 "lecciones.Completa AS completaDepende",
                 "lecciones.progresoActual AS progresoActualDepende",
                 "LCT.cantLecciones"
-            )->selectRaw("IF(lecciones.progresoActual = 100, (SELECT LPU.fecha_completado FROM lecciones_unidades LU LEFT JOIN lecciones_progreso_usuarios LPU ON LU.fk_leccion = LPU.fk_leccion WHERE LU.fk_unidad = unidades.id AND LPU.fk_user = $idUser ORDER BY LU.orden DESC LIMIT 1), NULL) AS FechaCompletadoDepende")
+            )->selectRaw("IF(lecciones.progresoActual = 100, (SELECT LPU.fecha_completado FROM lecciones_unidades LU LEFT JOIN lecciones_progreso_usuarios LPU ON LU.fk_leccion = LPU.fk_leccion WHERE LU.fk_unidad = unidades_cursos.fk_unidad_dependencia AND LPU.fk_user = $idUser ORDER BY LU.orden DESC LIMIT 1), NULL) AS FechaCompletadoDepende")
             ->orderBy('unidades_cursos.orden','asc');
         
         $query = $query->get(); 
