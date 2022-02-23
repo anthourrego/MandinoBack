@@ -327,22 +327,31 @@ class UnidadesController extends Controller
             ->where('lecciones_unidades.estado', 1)
             ->groupBy('lecciones_unidades.fk_unidad');
 
+        $lecProg = DB::table('lecciones_progreso_usuarios')
+            ->selectRaw('lecciones_progreso_usuarios.fk_leccion, lecciones_progreso_usuarios.fecha_completado')
+            ->where('lecciones_progreso_usuarios.fk_user', $idUser);
+
         $lecciones = DB::table('lecciones_unidades')
             ->selectRaw('IF(
                 COUNT(*) = (
-                    IF(lecciones_progreso_usuarios.fecha_completado, COUNT(*), 0)
+                    IF(progLec.fecha_completado, COUNT(*), 0)
                 ), 1, 0) AS Completa,
                 (
                     (
                         IF(
-                            COUNT(lecciones_progreso_usuarios.fecha_completado) IS NULL, 0, COUNT(lecciones_progreso_usuarios.fecha_completado)
+                            COUNT(progLec.fecha_completado) IS NULL, 0, COUNT(progLec.fecha_completado)
                         ) * 100
                     ) / COUNT(*)
                 ) AS progresoActual,
                 lecciones_unidades.fk_unidad
             ')
-            ->leftJoin('lecciones_progreso_usuarios', 'lecciones_unidades.fk_leccion', '=', 'lecciones_progreso_usuarios.fk_leccion')
-            ->where('lecciones_progreso_usuarios.fk_user', $idUser)
+            ->leftJoinSub($lecProg, "progLec", function ($join) {
+                $join->on("lecciones_unidades.fk_leccion", "=", "progLec.fk_leccion");
+            })
+            ->leftJoinSub($cantLecciones, "lecCant", function ($join) {
+                $join->on("lecciones_unidades.fk_unidad", "=", "lecCant.fk_unidad");
+            })
+            ->where('lecciones_unidades.estado', 1)
             ->groupBy('lecciones_unidades.fk_unidad');
 
         $query = DB::table('unidades_cursos')
