@@ -548,7 +548,9 @@ class UserController extends Controller {
                         ) / IF(ECT.cantCursos IS NULL, 0, ECT.cantCursos)
                     ) AS progresoActual"
                 )
-                ->join("escuelas AS E", "PS.fk_escuelas", "=", "E.id") 
+                ->join("escuelas AS E", function ($join) {
+                    $join->on('PS.fk_escuelas', 'E.id')->where('E.estado', 1);
+                })
                 ->leftJoinSub($cantCursos, "CTC", function ($join) {
                     $join->on("E.id", "=", "CTC.fk_escuela");
                 })
