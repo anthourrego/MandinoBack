@@ -362,7 +362,9 @@ class LeccionesController extends Controller
                 )->selectRaw(
                     "(IF(lpu.intentos_adicionales IS NULL, 0, lpu.intentos_adicionales) + IF(lecciones.intentos_base IS NULL, 0, lecciones.intentos_base)) AS totalIntentos"
                 )
-                ->join('lecciones', 'lecciones_unidades.fk_leccion', '=', 'lecciones.id')
+                ->join("lecciones", function ($join) {
+                    $join->on('lecciones_unidades.fk_leccion', 'lecciones.id')->where('lecciones.estado', 1);
+                })
                 ->leftJoinSub($progresoAct, "lpu", function ($join) {
                     $join->on("lecciones.id", "=", "lpu.fk_leccion");
                 })
@@ -392,7 +394,9 @@ class LeccionesController extends Controller
                 )->selectRaw(
                     "(IF(lpu.intentos_adicionales IS NULL, 0, lpu.intentos_adicionales) + IF(lecciones.intentos_base IS NULL, 0, lecciones.intentos_base)) AS totalIntentos"
                 )
-                ->join('lecciones', 'lecciones_unidades.fk_leccion', '=', 'lecciones.id')
+                ->join("lecciones", function ($join) {
+                    $join->on('lecciones_unidades.fk_leccion', 'lecciones.id')->where('lecciones.estado', 1);
+                })
                 ->leftJoinSub($progresoAct, "lpu", function ($join) {
                     $join->on("lecciones.id", "=", "lpu.fk_leccion");
                 })
