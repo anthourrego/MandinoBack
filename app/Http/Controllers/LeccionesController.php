@@ -423,18 +423,25 @@ class LeccionesController extends Controller
     }
 
     private function obtenerIntentosLeccion($idProgreso) {
-        return DB::table('intento_leccion_usuario')
+        $intentos = DB::table('intento_leccion_usuario AS ILU')
             ->select(
-                "intento_leccion_usuario.id",
-                "intento_leccion_usuario.num_preguntas_correctas",
-                "intento_leccion_usuario.num_preguntas_totales",
-                "intento_leccion_usuario.fecha_inicio",
-                "intento_leccion_usuario.fecha_final", 
-                "intento_leccion_usuario.captura_pantalla"
-            )
-            ->selectRaw("TIMEDIFF(intento_leccion_usuario.fecha_final, intento_leccion_usuario.fecha_inicio) AS tiempo")
-            ->where('intento_leccion_usuario.fk_leccion_progreso', $idProgreso)
-            ->get();
+                "ILU.id",
+                "ILU.num_preguntas_correctas",
+                "ILU.num_preguntas_totales",
+                "ILU.fecha_inicio",
+                "ILU.fecha_final", 
+                "ILU.captura_pantalla",
+                "LPU.fk_leccion AS Leccion"
+            )->selectRaw("TIMEDIFF(ILU.fecha_final, ILU.fecha_inicio) AS tiempo")
+            ->join('lecciones_progreso_usuarios AS LPU', 'ILU.fk_leccion_progreso', '=', 'LPU.id')
+            ->where('ILU.fk_leccion_progreso', $idProgreso)
+            ->get();    
+        
+        foreach ($intentos as $int) {
+            $int->contenido = $this->evaluacionEstructura($int->Leccion, false, $int->id);
+        }
+    
+        return $intentos;
     }
 
     //guardar cantidad de intentos de exmane por usuario
@@ -952,7 +959,7 @@ class LeccionesController extends Controller
 
     }
 
-    function evaluacionEstructura($idLeccion, $random = false){
+    function evaluacionEstructura($idLeccion, $random = false, $intento = null){
         $preguntas = evaluacion_pregunta::select("id", "pregunta", "tipo_pregunta")->where("fk_leccion", $idLeccion);
 
         if($random == true){
@@ -962,7 +969,20 @@ class LeccionesController extends Controller
         $preguntas = $preguntas->get();
 
         foreach ($preguntas as $pre) {
-            $respuestas = evaluacion_preguntas_opcione::select("id", "descripcion AS respuesta", "correcta")->where("fk_pregunta", $pre->id);
+            $respuestas = evaluacion_preguntas_opcione::select(
+                            "evaluacion_preguntas_opciones.id", 
+                            "evaluacion_preguntas_opciones.descripcion AS respuesta", 
+                            "evaluacion_preguntas_opciones.correcta");
+
+            if ($intento != null && !is_null($intento)) {
+                $respuestas->selectRaw("IF(evaluacion_preguntas_opciones.id = ER.fk_pregunta_respuesta, 1, 0) AS aprobo")
+                            ->leftJoin("evaluacion_respuestass AS ER", function ($join) use ($intento) {
+                                $join->on("ER.fk_pregunta_respuesta", "=", "evaluacion_preguntas_opciones.id")
+                                    ->where("ER.fk_intento_leccion", $intento);
+                            });
+            }
+
+            $respuestas->where("fk_pregunta", $pre->id);
 
             if($random == true){
                 $respuestas->inRandomOrder();
