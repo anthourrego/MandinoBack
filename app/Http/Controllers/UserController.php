@@ -556,7 +556,7 @@ class UserController extends Controller {
         return $resp;
     }
 
-    private function eliminarProgresos($lecciones, $usuario) {
+    public function eliminarProgresos($lecciones, $usuario) {
         $respu["success"] = true;
         try {
 
@@ -571,11 +571,13 @@ class UserController extends Controller {
                         ->where('LPU.fk_leccion', $value->fk_leccion)
                         ->get();
 
-                    foreach ($progresos as $llave => $prog) {
-                        $carpeta = "juegos/$usuario/$prog->captura_pantalla";
-                        Storage::disk('public')->delete($carpeta);
-                        $ids[] = $prog->intento;
-                    }
+                        if (count($progresos) > 0) {
+                            foreach ($progresos as $llave => $prog) {
+                                $carpeta = "juegos/$usuario/$prog->captura_pantalla";
+                                Storage::disk('public')->delete($carpeta);
+                                $ids[] = $prog->intento;
+                            }
+                        }
                 }
                 if ($value->tipo == 2) {
                     $progresos = DB::table('lecciones_progreso_usuarios AS LPU')
@@ -587,11 +589,15 @@ class UserController extends Controller {
                         ->get();
 
                     $idsER = [];
-                    foreach ($progresos as $llave => $prog) {
-                        $ids[] = $prog->intento;
-                        $idsER[] = $prog->idRespuesta;
+                    if (count($progresos) > 0) {
+                        foreach ($progresos as $llave => $prog) {
+                            $ids[] = $prog->intento;
+                            $idsER[] = $prog->idRespuesta;
+                        }
                     }
-                    DB::table('evaluacion_respuestas')->whereIn('evaluacion_respuestas.id', $idsER)->delete();
+                    if (count($idsER) > 0) {
+                        DB::table('evaluacion_respuestas')->whereIn('evaluacion_respuestas.id', $idsER)->delete();
+                    }
                     
                 }
 
@@ -602,10 +608,12 @@ class UserController extends Controller {
                 $leccionesIds[] = $value->fk_leccion;
             }
 
-            DB::table('lecciones_progreso_usuarios')
-                ->where('lecciones_progreso_usuarios.fk_user', $usuario)
-                ->whereIn('lecciones_progreso_usuarios.fk_leccion', $leccionesIds)
-                ->delete();
+            if (count($leccionesIds) > 0) {
+                DB::table('lecciones_progreso_usuarios')
+                    ->where('lecciones_progreso_usuarios.fk_user', $usuario)
+                    ->whereIn('lecciones_progreso_usuarios.fk_leccion', $leccionesIds)
+                    ->delete();
+            }
 
             $respu["msj"] = "Progreso eliminado correctamente.";
             return $respu;
