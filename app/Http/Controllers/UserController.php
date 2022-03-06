@@ -233,15 +233,64 @@ class UserController extends Controller {
         $resp["success"] = false;
         $usuario = User::find($request->id);
         
-        if(!is_null($usuario)){    
-          if ($usuario->delete()) {
-            $resp["success"] = true;
-            $resp["msj"] = "Se ha eliminado el usuario";
-          } else {
-            $resp["msj"] = "No se ha eliminado el usuario";
-          }
+        if(!is_null($usuario)) {
+
+            $lecciones = DB::table('lecciones_progreso_usuarios AS LPU')
+                ->selectRaw('LPU.fk_leccion, L.tipo')
+                ->join("lecciones AS L", "LPU.fk_leccion", "=", "L.id")
+                ->where("LPU.fk_user", $request->id)
+                ->get();
+
+            DB::beginTransaction();
+
+            $resp2 = $this->eliminarProgresos($lecciones, $request->id, false);
+
+            if ($resp2['success'] === true) {
+                try {
+                    Storage::deleteDirectory("public/juegos/$request->id");
+                    Storage::disk('public')->delete("fotosPerfil/$usuario->foto");
+                } catch (\Exception $e) {
+                    DB::rollback();
+                    $resp["msj"] = "Error al eliminar archivos del usuario.";
+                    return $resp;
+                }
+            } else {
+                DB::rollback();
+                $resp["msj"] = $resp2['msj'];
+                return $resp;
+            }
+
+            try {
+                DB::table('permisos_sistema')->where('permisos_sistema.fk_usuario', $request->id)->delete();
+
+            } catch (\Exception $e) {
+                DB::rollback();
+                $resp["msj"] = "Error al eliminar permisos asignados al usuario.";
+                return $resp;
+            }
+
+            try {
+                DB::table('toma_control_comentarios')->where('toma_control_comentarios.fk_user', $request->id)->delete();
+
+                DB::table('toma_control_me_gustas')->where('toma_control_me_gustas.fk_user', $request->id)->delete();
+
+                DB::table('toma_control_visualizaciones')->where('toma_control_visualizaciones.fk_user', $request->id)->delete();
+            } catch (\Exception $e) {
+                DB::rollback();
+                $resp["msj"] = "Error al eliminar los datos de toma el control.";
+                return $resp;
+            }
+
+            if ($usuario->delete()) {
+                DB::commit();
+                $resp["success"] = true;
+                $resp["msj"] = "Se ha eliminado el usuario";
+            } else {
+                DB::rollback();
+                $resp["msj"] = "No se ha podido eliminar el usuario";
+            }
         } else {
-          $resp["msj"] = "No se ha encontrado el usuario";
+            $resp["msj"] = "No se ha encontrado el usuario";
         }
         return $resp; 
     }
@@ -556,7 +605,7 @@ class UserController extends Controller {
         return $resp;
     }
 
-    public function eliminarProgresos($lecciones, $usuario) {
+    public function eliminarProgresos($lecciones, $usuario, $imagen = true) {
         $respu["success"] = true;
         try {
 
@@ -573,8 +622,10 @@ class UserController extends Controller {
 
                         if (count($progresos) > 0) {
                             foreach ($progresos as $llave => $prog) {
-                                $carpeta = "juegos/$usuario/$prog->captura_pantalla";
-                                Storage::disk('public')->delete($carpeta);
+                                if ($imagen === true) {
+                                    $carpeta = "juegos/$usuario/$prog->captura_pantalla";
+                                    Storage::disk('public')->delete($carpeta);
+                                }
                                 $ids[] = $prog->intento;
                             }
                         }
