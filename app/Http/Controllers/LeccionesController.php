@@ -975,8 +975,8 @@ class LeccionesController extends Controller
                             "evaluacion_preguntas_opciones.correcta");
 
             if ($intento != null && !is_null($intento)) {
-                $respuestas->selectRaw("IF(evaluacion_preguntas_opciones.id = ER.fk_pregunta_respuesta, 1, 0) AS aprobo")
-                            ->leftJoin("evaluacion_respuestass AS ER", function ($join) use ($intento) {
+                $respuestas->selectRaw("IF(evaluacion_preguntas_opciones.id = ER.fk_pregunta_respuesta, 1, 0) AS checked")
+                            ->leftJoin("evaluacion_respuestas AS ER", function ($join) use ($intento) {
                                 $join->on("ER.fk_pregunta_respuesta", "=", "evaluacion_preguntas_opciones.id")
                                     ->where("ER.fk_intento_leccion", $intento);
                             });
