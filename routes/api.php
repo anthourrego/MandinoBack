@@ -116,6 +116,7 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::post('setFoto', [UserController::class, 'setFoto']);
         Route::get('categorias/{idUsuario}/{idPerfil}', [UserController::class, 'categorias']);
         Route::get('fotoPerfil/{idUsuario}', [UserController::class, 'fotoPerfil']);
+        Route::post('deshacerProgreso', [UserController::class, 'deshacerProgreso']);
         Route::post('actualizarFotoPerfil', [UserController::class, 'actualizarFotoPerfil']);
         Route::get('listaUnidadesLeccionesAvance/{id}/{idUser}/{tipo}', [UserController::class, 'listaUnidadesLeccionesAvance']);
         Route::get('escuelasSinPerfil/{idUser}/{idPerfil}', [UserController::class, 'escuelasSinPerfil']);
@@ -128,6 +129,7 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::post('crear', [PerfilesController::class, 'crear']);
         Route::post('actualizar', [PerfilesController::class, 'actualizar']);
         Route::post('cambiarEstado', [PerfilesController::class, 'cambiarEstado']);
+        Route::post('reiniciarProgreso', [PerfilesController::class, 'reiniciarProgreso']);
         Route::post('obtener', [PerfilesController::class, 'show']);
         Route::get('arbol/{idPerfil}', [PerfilesController::class, 'arbol']);
         Route::get('permisos/{idPerfil}/{idUsuario}', [PerfilesController::class, 'permisos']);

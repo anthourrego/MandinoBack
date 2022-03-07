@@ -192,6 +192,52 @@ class PerfilesController extends Controller {
         return $query;
     }
 
+    public function reiniciarProgreso(Request $request) {
+        $resp["success"] = false;
+    
+        $usuarios = DB::table('users')->where('fk_perfil', $request->perfil)->where('estado', 1)->get('id');
+
+        if (count($usuarios) > 0) {
+
+            $escuelas = $this->escuelas($request->perfil);
+            
+            $escuelasIds = [];
+            foreach ($escuelas as $esc) $escuelasIds[] = $esc->id;
+
+            $lecciones = DB::table('escuelas_cursos AS EC')
+                ->selectRaw('LU.fk_leccion, L.tipo')
+                ->join("unidades_cursos AS UC", function ($join) {
+                    $join->on('EC.fk_curso', 'UC.fk_curso')->where('UC.estado', 1);
+                })
+                ->join("lecciones_unidades AS LU", function ($join) {
+                    $join->on('UC.fk_unidad', 'LU.fk_unidad')->where('LU.estado', 1);
+                })
+                ->join("lecciones AS L", "LU.fk_leccion", "=", "L.id")
+                ->whereIn('EC.fk_escuela', $escuelasIds)
+                ->where('EC.estado', 1)
+                ->get();
+
+            $user = new UserController();
+
+            DB::beginTransaction();
+
+            foreach ($usuarios as $userid) {
+                $resp = $user->eliminarProgresos($lecciones, $userid->id);
+                if ($resp['success'] === false) {
+                    DB::rollback();
+                    return $resp;
+                }
+            }
+
+            DB::commit();
+            return $resp;
+
+        } else {
+            $resp['msj'] = "No se encontraron usuarios con este perfil.";
+        }
+        return $resp;
+    }
+
     public function guardarPermiso(Request $request){
         $resp["success"] = false;
         $cont = 0;

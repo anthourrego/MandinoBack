@@ -19,8 +19,7 @@ use FFMpeg\Coordinate\TimeCode;
 use FFMpeg\Coordinate\Dimension;
 use FFMpeg\Filters\Frame\FrameFilters;
 
-class LeccionesController extends Controller
-{
+class LeccionesController extends Controller {
 
     /**
      * Show the form for creating a new resource.
@@ -922,8 +921,9 @@ class LeccionesController extends Controller
         $leccion = lecciones::find($request->id);
 
         if(!empty($leccion)){
-            if ($leccion->mensaje_ganar != $mensaje_ganar || $leccion->mensaje_perder != $mensaje_perder || $leccion->porcentaje_ganar != $porcentaje_ganar ) {
+            if ($leccion->mensaje_ganar != $mensaje_ganar || $leccion->mensaje_perder != $mensaje_perder || $leccion->porcentaje_ganar != $porcentaje_ganar || $leccion->nombre != $nombre) {
 
+                $leccion->nombre = $nombre;
                 $leccion->mensaje_ganar = $mensaje_ganar;
                 $leccion->mensaje_perder = $mensaje_perder;
                 $leccion->porcentaje_ganar = $porcentaje_ganar;
@@ -990,7 +990,7 @@ class LeccionesController extends Controller
 
 
         if ($resp['success'] == true) {
-            $resp['msj'] = "Evaluación Actualizada correctamente."; 
+            $resp['msj'] = "Evaluación actualizada correctamente."; 
             DB::commit();
         } else {
             DB::rollBack();
@@ -1017,8 +1017,8 @@ class LeccionesController extends Controller
                             "evaluacion_preguntas_opciones.correcta");
 
             if ($intento != null && !is_null($intento)) {
-                $respuestas->selectRaw("IF(evaluacion_preguntas_opciones.id = ER.fk_pregunta_respuesta, 1, 0) AS aprobo")
-                            ->leftJoin("evaluacion_respuestass AS ER", function ($join) use ($intento) {
+                $respuestas->selectRaw("IF(evaluacion_preguntas_opciones.id = ER.fk_pregunta_respuesta, 1, 0) AS checked")
+                            ->leftJoin("evaluacion_respuestas AS ER", function ($join) use ($intento) {
                                 $join->on("ER.fk_pregunta_respuesta", "=", "evaluacion_preguntas_opciones.id")
                                     ->where("ER.fk_intento_leccion", $intento);
                             });

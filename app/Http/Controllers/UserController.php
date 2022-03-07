@@ -233,15 +233,64 @@ class UserController extends Controller {
         $resp["success"] = false;
         $usuario = User::find($request->id);
         
-        if(!is_null($usuario)){    
-          if ($usuario->delete()) {
-            $resp["success"] = true;
-            $resp["msj"] = "Se ha eliminado el usuario";
-          } else {
-            $resp["msj"] = "No se ha eliminado el usuario";
-          }
+        if(!is_null($usuario)) {
+
+            $lecciones = DB::table('lecciones_progreso_usuarios AS LPU')
+                ->selectRaw('LPU.fk_leccion, L.tipo')
+                ->join("lecciones AS L", "LPU.fk_leccion", "=", "L.id")
+                ->where("LPU.fk_user", $request->id)
+                ->get();
+
+            DB::beginTransaction();
+
+            $resp2 = $this->eliminarProgresos($lecciones, $request->id, false);
+
+            if ($resp2['success'] === true) {
+                try {
+                    Storage::deleteDirectory("public/juegos/$request->id");
+                    Storage::disk('public')->delete("fotosPerfil/$usuario->foto");
+                } catch (\Exception $e) {
+                    DB::rollback();
+                    $resp["msj"] = "Error al eliminar archivos del usuario.";
+                    return $resp;
+                }
+            } else {
+                DB::rollback();
+                $resp["msj"] = $resp2['msj'];
+                return $resp;
+            }
+
+            try {
+                DB::table('permisos_sistema')->where('permisos_sistema.fk_usuario', $request->id)->delete();
+
+            } catch (\Exception $e) {
+                DB::rollback();
+                $resp["msj"] = "Error al eliminar permisos asignados al usuario.";
+                return $resp;
+            }
+
+            try {
+                DB::table('toma_control_comentarios')->where('toma_control_comentarios.fk_user', $request->id)->delete();
+
+                DB::table('toma_control_me_gustas')->where('toma_control_me_gustas.fk_user', $request->id)->delete();
+
+                DB::table('toma_control_visualizaciones')->where('toma_control_visualizaciones.fk_user', $request->id)->delete();
+            } catch (\Exception $e) {
+                DB::rollback();
+                $resp["msj"] = "Error al eliminar los datos de toma el control.";
+                return $resp;
+            }
+
+            if ($usuario->delete()) {
+                DB::commit();
+                $resp["success"] = true;
+                $resp["msj"] = "Se ha eliminado el usuario";
+            } else {
+                DB::rollback();
+                $resp["msj"] = "No se ha podido eliminar el usuario";
+            }
         } else {
-          $resp["msj"] = "No se ha encontrado el usuario";
+            $resp["msj"] = "No se ha encontrado el usuario";
         }
         return $resp; 
     }
@@ -487,6 +536,143 @@ class UserController extends Controller {
         }
 
         return $resp;
+    }
+
+    public function deshacerProgreso(Request $request) {
+        $resp["success"] = false;
+        if ($request->tiene > 0) {
+
+            $lecciones = [];
+
+            if ($request->tipo == 'escuela') {
+                $lecciones = DB::table('escuelas_cursos AS EC')
+                    ->selectRaw('LU.fk_leccion, L.tipo')
+                    ->join("unidades_cursos AS UC", function ($join) {
+                        $join->on('EC.fk_curso', 'UC.fk_curso')->where('UC.estado', 1);
+                    })
+                    ->join("lecciones_unidades AS LU", function ($join) {
+                        $join->on('UC.fk_unidad', 'LU.fk_unidad')->where('LU.estado', 1);
+                    })
+                    ->join("lecciones AS L", "LU.fk_leccion", "=", "L.id")
+                    ->where('EC.fk_escuela', $request->id)
+                    ->where('EC.estado', 1)
+                    ->get();
+            }
+
+            if ($request->tipo == 'curso') {
+                $lecciones = DB::table('unidades_cursos AS UC')
+                    ->selectRaw('LU.fk_leccion, L.tipo')
+                    ->join("lecciones_unidades AS LU", function ($join) {
+                        $join->on('UC.fk_unidad', 'LU.fk_unidad')->where('LU.estado', 1);
+                    })
+                    ->join("lecciones AS L", "LU.fk_leccion", "=", "L.id")
+                    ->where('UC.fk_curso', $request->id)
+                    ->where('UC.estado', 1)
+                    ->get();
+            }
+
+            if ($request->tipo == 'unidad') {
+                $lecciones = DB::table('lecciones_unidades AS LU')
+                    ->selectRaw('LU.fk_leccion, L.tipo')
+                    ->join("lecciones AS L", "LU.fk_leccion", "=", "L.id")
+                    ->where('LU.fk_unidad', $request->id)
+                    ->where('LU.estado', 1)
+                    ->get();
+            }
+
+            if ($request->tipo == 'leccion') {
+                $lecciones = DB::table('lecciones AS L')
+                    ->selectRaw('L.id AS fk_leccion, L.tipo')
+                    ->where('L.id', $request->id)
+                    ->get();
+            }
+
+            DB::beginTransaction();
+
+            $resp = $this->eliminarProgresos($lecciones, $request->usuario);
+
+            if ($resp['success'] === true) {
+                DB::commit();
+            } else {
+                DB::rollback();
+            }
+
+            return $resp;
+
+        } else {
+            $resp['msj'] = "No tiene " . $request->hijo . " disponibles";
+        }
+        return $resp;
+    }
+
+    public function eliminarProgresos($lecciones, $usuario, $imagen = true) {
+        $respu["success"] = true;
+        try {
+
+            $leccionesIds = []; 
+            foreach ($lecciones as $key => $value) {
+                $ids = [];
+                if ($value->tipo == 4) {
+                    $progresos = DB::table('lecciones_progreso_usuarios AS LPU')
+                        ->selectRaw('LPU.id AS idProgreso, ILU.captura_pantalla, ILU.id AS intento')
+                        ->join("intento_leccion_usuario AS ILU", "LPU.id", "=", "ILU.fk_leccion_progreso")
+                        ->where('LPU.fk_user', $usuario)
+                        ->where('LPU.fk_leccion', $value->fk_leccion)
+                        ->get();
+
+                        if (count($progresos) > 0) {
+                            foreach ($progresos as $llave => $prog) {
+                                if ($imagen === true) {
+                                    $carpeta = "juegos/$usuario/$prog->captura_pantalla";
+                                    Storage::disk('public')->delete($carpeta);
+                                }
+                                $ids[] = $prog->intento;
+                            }
+                        }
+                }
+                if ($value->tipo == 2) {
+                    $progresos = DB::table('lecciones_progreso_usuarios AS LPU')
+                        ->selectRaw('LPU.id AS idProgreso, ILU.captura_pantalla, ILU.id AS intento, ER.id AS idRespuesta')
+                        ->join("intento_leccion_usuario AS ILU", "LPU.id", "=", "ILU.fk_leccion_progreso")
+                        ->join("evaluacion_respuestas AS ER", "ILU.id", "=", "ER.fk_intento_leccion")
+                        ->where('LPU.fk_user', $usuario)
+                        ->where('LPU.fk_leccion', $value->fk_leccion)
+                        ->get();
+
+                    $idsER = [];
+                    if (count($progresos) > 0) {
+                        foreach ($progresos as $llave => $prog) {
+                            $ids[] = $prog->intento;
+                            $idsER[] = $prog->idRespuesta;
+                        }
+                    }
+                    if (count($idsER) > 0) {
+                        DB::table('evaluacion_respuestas')->whereIn('evaluacion_respuestas.id', $idsER)->delete();
+                    }
+                    
+                }
+
+                if (count($ids) > 0) {
+                    DB::table('intento_leccion_usuario')->whereIn('intento_leccion_usuario.id', $ids)->delete();
+                }
+
+                $leccionesIds[] = $value->fk_leccion;
+            }
+
+            if (count($leccionesIds) > 0) {
+                DB::table('lecciones_progreso_usuarios')
+                    ->where('lecciones_progreso_usuarios.fk_user', $usuario)
+                    ->whereIn('lecciones_progreso_usuarios.fk_leccion', $leccionesIds)
+                    ->delete();
+            }
+
+            $respu["msj"] = "Progreso eliminado correctamente.";
+            return $respu;
+        } catch (\Exception $e) {
+            $respu["success"] = false;
+            $respu['msj'] = "No fue posible eliminar el progreso";
+            return $respu;
+        }
     }
 
     public function escuelas($idUsuario, $idRol) {

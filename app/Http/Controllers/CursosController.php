@@ -336,7 +336,17 @@ class CursosController extends Controller
                     (
                         IF(CT.cantLeccComple IS NULL, 0, CT.cantLeccComple) * 100
                     ) / IF(CT.cantLecc IS NULL, 0, CT.cantLecc)
-                ) AS progresoActual"
+                ) AS progresoActual,
+                (
+                    (
+                        IF(CT2.cantLeccComple IS NULL, 0, CT2.cantLeccComple) * 100
+                    ) / IF(CT2.cantLecc IS NULL, 0, CT2.cantLecc)
+                ) AS progresoActualDepende,
+                IF((
+                    (
+                        IF(CT2.cantLeccComple IS NULL, 0, CT2.cantLeccComple) * 100
+                    ) / IF(CT2.cantLecc IS NULL, 0, CT2.cantLecc)
+                ) = 100, (SELECT fecha_completado FROM unidades_cursos UC LEFT JOIN lecciones_unidades LU ON UC.fk_unidad = LU.fk_unidad LEFT JOIN lecciones_progreso_usuarios LPU ON LU.fk_leccion = LPU.fk_leccion WHERE UC.fk_curso = escuelas_cursos.fk_curso_dependencia AND LPU.fk_user = $idUser AND UC.estado = 1 AND LU.estado = 1 ORDER BY UC.ORDEN DESC, LU.orden DESC LIMIT 1), NULL) AS FechaCompletadoDepende"
             )
             ->orderBy('escuelas_cursos.orden','asc');
         
