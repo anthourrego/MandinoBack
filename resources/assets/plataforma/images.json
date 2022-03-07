@@ -159,5 +159,41 @@
     "darkDef":false,
     "width":"3842",
     "height":"2562"
+  },
+  {
+    "name":"btnRegreAdmin",
+    "pantalla":"admin",
+    "url":null,
+    "urlDef":"assets\/img\/retorno-btn2.png",
+    "title":"Botón Administravo Retorno",
+    "filtro":true,
+    "dark":false,
+    "darkDef":false,
+    "width":"342",
+    "height":"342"
+  },
+  {
+    "name":"btnRegreTomaControl",
+    "pantalla":"tomaControl",
+    "url":null,
+    "urlDef":"assets\/img\/retorno-btn2.png",
+    "title":"Botón Toma el Control Retorno",
+    "filtro":true,
+    "dark":false,
+    "darkDef":false,
+    "width":"342",
+    "height":"342"
+  },
+  {
+    "name":"btnRegreUniversidad",
+    "pantalla":"universidad",
+    "url":null,
+    "urlDef":"assets\/img\/retorno-btn2.png",
+    "title":"Botón Universidad Retorno",
+    "filtro":true,
+    "dark":false,
+    "darkDef":false,
+    "width":"342",
+    "height":"342"
   }
 ]
