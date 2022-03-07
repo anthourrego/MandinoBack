@@ -33,11 +33,13 @@ class LeccionesController extends Controller
         $estado = $request->estado;
         $tipo = $request->tipo;
         $url_contenido = $request->url_contenido;
+        $mensaje_ganar = $request->mensaje_ganar;
+        $mensaje_perder = $request->mensaje_perder;
 
-        return $this->crearLeccion($nombre, $contenido, $estado, $tipo, $url_contenido);
+        return $this->crearLeccion($nombre, $contenido, $estado, $tipo, $url_contenido, null, null, $mensaje_ganar, $mensaje_perder);
     }
 
-    public function crearLeccion($nombre, $contenido, $estado, $tipo, $url_contenido, $intentos_base = null, $porcentaje_ganar = null){
+    public function crearLeccion($nombre, $contenido, $estado, $tipo, $url_contenido, $intentos_base = null, $porcentaje_ganar = null, $mensaje_ganar = null, $mensaje_perder = null){
         $resp["success"] = false;
     
          
@@ -54,6 +56,8 @@ class LeccionesController extends Controller
             $leccion->url_contenido = $url_contenido;
             $leccion->intentos_base = $intentos_base;
             $leccion->porcentaje_ganar = $porcentaje_ganar;
+            $leccion->mensaje_ganar = $mensaje_ganar;
+            $leccion->mensaje_perder = $mensaje_perder;
 
             if($leccion->save()){
                 $resp["success"] = true;
@@ -77,7 +81,7 @@ class LeccionesController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function show(Request $request) {
-        $query = lecciones::select('id', 'nombre', 'contenido', 'estado', 'tipo','intentos_base', 'porcentaje_ganar','created_at');
+        $query = lecciones::select('id', 'nombre', 'contenido', 'estado', 'tipo','intentos_base', 'porcentaje_ganar','mensaje_ganar', 'mensaje_perder', 'created_at');
         if ($request->estado != '') {
             $query->where("estado", $request->estado);
         }
@@ -103,13 +107,16 @@ class LeccionesController extends Controller
             $leccion = lecciones::find($request->id);
 
             if(!empty($leccion)){
-                if ($leccion->contenido != $request->contenido || $leccion->estado != $request->estado || $leccion->nombre != $request->nombre || $leccion->url_contenido != $request->url_contenido || $leccion->tipo != $request->tipo ) {
+                if ($leccion->contenido != $request->contenido || $leccion->estado != $request->estado || $leccion->nombre != $request->nombre || $leccion->url_contenido != $request->url_contenido || $leccion->tipo != $request->tipo || $leccion->mensaje_ganar != $request->mensaje_ganar || $leccion->mensaje_perder != $request->mensaje_perder || $leccion->porcentaje_ganar != $request->porcentaje_ganar ) {
 
                     $leccion->nombre = $request->nombre;
                     $leccion->contenido = $request->contenido;
                     $leccion->estado = $request->estado;
                     $leccion->tipo = $request->tipo;
                     $leccion->url_contenido = $request->url_contenido;
+                    $leccion->mensaje_ganar = $request->mensaje_ganar;
+                    $leccion->mensaje_perder = $request->mensaje_perder;
+                    $leccion->porcentaje_ganar = $request->porcentaje;
                     
                     if ($leccion->save()) {
                         $resp["success"] = true;
@@ -355,6 +362,9 @@ class LeccionesController extends Controller
                     "lecciones.contenido",
                     "lecciones.nombre as nombre", 
                     "lecciones.tipo as tipo",
+                    "lecciones.porcentaje_ganar",
+                    "lecciones.mensaje_ganar",
+                    "lecciones.mensaje_perder",
                     "lpu.fechProgCompleto",
                     "lpu.tiempoVideoProg",
                     "lpu.idProgreso",
@@ -362,7 +372,9 @@ class LeccionesController extends Controller
                 )->selectRaw(
                     "(IF(lpu.intentos_adicionales IS NULL, 0, lpu.intentos_adicionales) + IF(lecciones.intentos_base IS NULL, 0, lecciones.intentos_base)) AS totalIntentos"
                 )
-                ->join('lecciones', 'lecciones_unidades.fk_leccion', '=', 'lecciones.id')
+                ->join("lecciones", function ($join) {
+                    $join->on('lecciones_unidades.fk_leccion', 'lecciones.id')->where('lecciones.estado', 1);
+                })
                 ->leftJoinSub($progresoAct, "lpu", function ($join) {
                     $join->on("lecciones.id", "=", "lpu.fk_leccion");
                 })
@@ -386,13 +398,18 @@ class LeccionesController extends Controller
                     "lecciones.contenido",
                     "lecciones.nombre as nombre", 
                     "lecciones.tipo as tipo",
+                    "lecciones.porcentaje_ganar",
+                    "lecciones.mensaje_ganar",
+                    "lecciones.mensaje_perder",
                     "lpu.fechProgCompleto",
                     "lpu.tiempoVideoProg",
                     "lpu.idProgreso"
                 )->selectRaw(
                     "(IF(lpu.intentos_adicionales IS NULL, 0, lpu.intentos_adicionales) + IF(lecciones.intentos_base IS NULL, 0, lecciones.intentos_base)) AS totalIntentos"
                 )
-                ->join('lecciones', 'lecciones_unidades.fk_leccion', '=', 'lecciones.id')
+                ->join("lecciones", function ($join) {
+                    $join->on('lecciones_unidades.fk_leccion', 'lecciones.id')->where('lecciones.estado', 1);
+                })
                 ->leftJoinSub($progresoAct, "lpu", function ($join) {
                     $join->on("lecciones.id", "=", "lpu.fk_leccion");
                 })
@@ -419,18 +436,25 @@ class LeccionesController extends Controller
     }
 
     private function obtenerIntentosLeccion($idProgreso) {
-        return DB::table('intento_leccion_usuario')
+        $intentos = DB::table('intento_leccion_usuario AS ILU')
             ->select(
-                "intento_leccion_usuario.id",
-                "intento_leccion_usuario.num_preguntas_correctas",
-                "intento_leccion_usuario.num_preguntas_totales",
-                "intento_leccion_usuario.fecha_inicio",
-                "intento_leccion_usuario.fecha_final", 
-                "intento_leccion_usuario.captura_pantalla"
-            )
-            ->selectRaw("TIMEDIFF(intento_leccion_usuario.fecha_final, intento_leccion_usuario.fecha_inicio) AS tiempo")
-            ->where('intento_leccion_usuario.fk_leccion_progreso', $idProgreso)
-            ->get();
+                "ILU.id",
+                "ILU.num_preguntas_correctas",
+                "ILU.num_preguntas_totales",
+                "ILU.fecha_inicio",
+                "ILU.fecha_final", 
+                "ILU.captura_pantalla",
+                "LPU.fk_leccion AS Leccion"
+            )->selectRaw("TIMEDIFF(ILU.fecha_final, ILU.fecha_inicio) AS tiempo")
+            ->join('lecciones_progreso_usuarios AS LPU', 'ILU.fk_leccion_progreso', '=', 'LPU.id')
+            ->where('ILU.fk_leccion_progreso', $idProgreso)
+            ->get();    
+        
+        foreach ($intentos as $int) {
+            $int->contenido = $this->evaluacionEstructura($int->Leccion, false, $int->id);
+        }
+    
+        return $intentos;
     }
 
     //guardar cantidad de intentos de exmane por usuario
@@ -829,9 +853,10 @@ class LeccionesController extends Controller
         $tipo = $request->tipo;
         $url_contenido = $request->url_contenido;
         $porcentaje_ganar = $request->porcentaje;
+        $mensaje_ganar = $request->mensaje_ganar;
+        $mensaje_perder = $request->mensaje_perder;
 
-
-        $leccion = $this->crearLeccion($nombre, $contenido, $estado, $tipo, $url_contenido, 3, $porcentaje_ganar);
+        $leccion = $this->crearLeccion($nombre, $contenido, $estado, $tipo, $url_contenido, 3, $porcentaje_ganar, $mensaje_ganar, $mensaje_perder);
 
         if($leccion['success'] == true){
             foreach ($request->preguntas as $pre) {
@@ -890,6 +915,34 @@ class LeccionesController extends Controller
         $preguntas = $request->preguntas;
         $respuestasEliminar = $request->respuestasEliminar;
         $preguntasEliminar = $request->preguntasEliminar;
+        $mensaje_ganar = $request->mensaje_ganar;
+        $mensaje_perder = $request->mensaje_perder;
+
+
+        $leccion = lecciones::find($request->id);
+
+        if(!empty($leccion)){
+            if ($leccion->mensaje_ganar != $mensaje_ganar || $leccion->mensaje_perder != $mensaje_perder || $leccion->porcentaje_ganar != $porcentaje_ganar ) {
+
+                $leccion->mensaje_ganar = $mensaje_ganar;
+                $leccion->mensaje_perder = $mensaje_perder;
+                $leccion->porcentaje_ganar = $porcentaje_ganar;
+
+                
+                if ($leccion->save()) {
+                    $resp["success"] = true;
+                    $resp["msj"] = "Se han actualizado los datos";
+                }else{
+                    $resp["msj"] = "No se han guardado cambios";
+                }
+            } else {
+                $resp["msj"] = "no hay cambios";
+            }
+
+        }else{
+            $resp["msj"] = "No se ha encontrado la lección";
+        }
+
 
         // actualización y/o creación de preguntas y respuestas nuevas
         foreach ($request->preguntas as $pre) {
@@ -948,7 +1001,7 @@ class LeccionesController extends Controller
 
     }
 
-    function evaluacionEstructura($idLeccion, $random = false){
+    function evaluacionEstructura($idLeccion, $random = false, $intento = null){
         $preguntas = evaluacion_pregunta::select("id", "pregunta", "tipo_pregunta")->where("fk_leccion", $idLeccion);
 
         if($random == true){
@@ -958,7 +1011,20 @@ class LeccionesController extends Controller
         $preguntas = $preguntas->get();
 
         foreach ($preguntas as $pre) {
-            $respuestas = evaluacion_preguntas_opcione::select("id", "descripcion AS respuesta", "correcta")->where("fk_pregunta", $pre->id);
+            $respuestas = evaluacion_preguntas_opcione::select(
+                            "evaluacion_preguntas_opciones.id", 
+                            "evaluacion_preguntas_opciones.descripcion AS respuesta", 
+                            "evaluacion_preguntas_opciones.correcta");
+
+            if ($intento != null && !is_null($intento)) {
+                $respuestas->selectRaw("IF(evaluacion_preguntas_opciones.id = ER.fk_pregunta_respuesta, 1, 0) AS aprobo")
+                            ->leftJoin("evaluacion_respuestass AS ER", function ($join) use ($intento) {
+                                $join->on("ER.fk_pregunta_respuesta", "=", "evaluacion_preguntas_opciones.id")
+                                    ->where("ER.fk_intento_leccion", $intento);
+                            });
+            }
+
+            $respuestas->where("fk_pregunta", $pre->id);
 
             if($random == true){
                 $respuestas->inRandomOrder();
@@ -971,4 +1037,3 @@ class LeccionesController extends Controller
     }
 
 }
-
