@@ -121,6 +121,8 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::get('listaUnidadesLeccionesAvance/{id}/{idUser}/{tipo}', [UserController::class, 'listaUnidadesLeccionesAvance']);
         Route::get('escuelasSinPerfil/{idUser}/{idPerfil}', [UserController::class, 'escuelasSinPerfil']);
         Route::post('guardarEscualesSinPerfil', [UserController::class, 'guardarEscualesSinPerfil']);
+        Route::get('categoriasSinPerfil/{idUser}/{idPerfil}', [UserController::class, 'categoriasSinPerfil']);
+        Route::post('guardarCategoriasSinPerfil', [UserController::class, 'guardarCategoriasSinPerfil']);
     });
 
     //Perfiles
