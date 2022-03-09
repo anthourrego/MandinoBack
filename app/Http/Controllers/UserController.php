@@ -853,7 +853,7 @@ class UserController extends Controller {
     public function guardarEscualesSinPerfil(Request $request) {
         $user = $request->usuario;
 
-        DB::table('permisos_sistema')->whereNull("fk_permiso")->whereNull("fk_perfil")->where('fk_usuario', $user)->delete();
+        DB::table('permisos_sistema')->whereNull("fk_permiso")->whereNull("fk_categorias_toma_control")->whereNull("fk_perfil")->where('fk_usuario', $user)->delete();
 
         $cont = 0;
         foreach ($request->escuelas as $value) {
@@ -877,6 +877,59 @@ class UserController extends Controller {
         } else {
             DB::rollback();
             $resp["msj"] = "Error al actualizar las escuelas.";
+        }
+        return $resp;
+    }
+
+    public function categoriasSinPerfil($idUser, $idPerfil) {
+
+        $query = DB::table("permisos_sistema AS PS")
+            ->select(
+                "PS.id",
+                "PS.fk_categorias_toma_control",
+                "PS.fk_perfil"
+            )->whereNull("PS.fk_perfil")
+            ->where("PS.estado", 1)
+            ->where("PS.fk_usuario", $idUser)
+            ->orWhere("PS.fk_perfil", $idPerfil);
+        
+        $categorias = DB::table('toma_control_categorias')
+            ->selectRaw('toma_control_categorias.id AS value, toma_control_categorias.nombre AS text, PST.id AS idPermUser, PST.fk_perfil AS perfPermUser')
+            ->leftJoinSub($query, "PST", function ($join) {
+                $join->on("toma_control_categorias.id", "=", "PST.fk_categorias_toma_control");
+            })
+            ->where('toma_control_categorias.estado', 1)
+            ->get();
+        return $categorias;
+    }
+
+    public function guardarCategoriasSinPerfil(Request $request) {
+        $user = $request->usuario;
+
+        DB::table('permisos_sistema')->whereNull("fk_permiso")->whereNull("fk_escuelas")->where('fk_usuario', $user)->delete();
+
+        $cont = 0;
+        foreach ($request->categorias as $value) {
+            try {
+                DB::table('permisos_sistema')->insert([
+                    "fk_usuario" => $user
+                    ,"fk_categorias_toma_control" => $value
+                    ,"tipo" => 0
+                ]);
+            } catch (\Exception $e) {
+                DB::rollback();
+                $cont++;
+                break;
+            }
+        }
+
+        if ($cont == 0) {
+            DB::commit();
+            $resp["success"] = true;
+            $resp["msj"] = "Categorias actualizadas correctamente.";
+        } else {
+            DB::rollback();
+            $resp["msj"] = "Error al actualizar las categorias.";
         }
         return $resp;
     }
