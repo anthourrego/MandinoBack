@@ -45,7 +45,7 @@ class TomaControlVisualizacionesController extends Controller
 
     if(!empty($visualizacion)){
       
-      if ($visualizacion->tiempo < $request->tiempo) {
+      if ($visualizacion->tiempo <= $request->tiempo) {
         $visualizacion->tiempo = $request->tiempo;
         $visualizacion->completo = $request->completo;
         

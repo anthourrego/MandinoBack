@@ -18,6 +18,7 @@ use App\Http\Controllers\TomaControlComentariosController;
 use App\Http\Controllers\TomaControlMeGustaController;
 use App\Http\Controllers\LeccionesController;
 use App\Http\Controllers\PlataformaController;
+use App\Http\Controllers\DashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -97,6 +98,12 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::post('crear', [PermisosController::class, 'crear']);
         Route::post('cambiarEstado', [PermisosController::class, 'cambiarEstado']);
         Route::post('actualizar', [PermisosController::class, 'update']);
+    });
+
+    //Dashboard
+    Route::prefix('dashboard')->group(function () {
+        Route::get('totales', [DashboardController::class, 'obtenerTotales']);
+        Route::post('obtenerComparaciones', [DashboardController::class, 'obtenerComparaciones']);
     });
 
     //Usuarios
