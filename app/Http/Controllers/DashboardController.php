@@ -142,7 +142,7 @@ class DashboardController extends Controller
                 COUNT(*) AS Total
                 , CONVERT(created_at, DATE) AS Fecha
             ")
-            ->whereRaw("completo = 1 AND CONVERT(created_at, DATE) BETWEEN '$request->inicioUltSemana' AND '$request->diaActual'")
+            ->whereRaw("completo = 1 AND CONVERT(created_at, DATE) BETWEEN DATE_ADD('$request->inicioUltSemana', INTERVAL 1 DAY) AND '$request->diaActual'")
             ->groupByRaw("CONVERT(created_at, DATE)")
             ->get();
 
@@ -151,7 +151,7 @@ class DashboardController extends Controller
                 COUNT(*) AS Total
                 , CONVERT(created_at, DATE) AS Fecha
             ")
-            ->whereRaw("completo = 1 AND CONVERT(created_at, DATE) BETWEEN '$request->inicioUltAntes' AND '$request->inicioUltSemana'")
+            ->whereRaw("completo = 1 AND CONVERT(created_at, DATE) BETWEEN DATE_ADD('$request->inicioUltAntes', INTERVAL 1 DAY) AND '$request->inicioUltSemana'")
             ->groupByRaw("CONVERT(created_at, DATE)")
             ->get();
 
