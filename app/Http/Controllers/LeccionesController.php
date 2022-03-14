@@ -81,6 +81,11 @@ class LeccionesController extends Controller {
      */
     public function show(Request $request) {
         $query = lecciones::select('id', 'nombre', 'contenido', 'estado', 'tipo','intentos_base', 'porcentaje_ganar','mensaje_ganar', 'mensaje_perder', 'created_at');
+
+        if ($request->tipo != '') {
+            $query->where("tipo", $request->tipo);
+        }
+
         if ($request->estado != '') {
             $query->where("estado", $request->estado);
         }

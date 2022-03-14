@@ -84,7 +84,7 @@ class DashboardController extends Controller
             "total" => $totalTipoLecciones->TotalTexto,
             "titulo" => "Texto",
             "icono" => "fas fa-text-height",
-            "ir" => "administrativo/lecciones"
+            "ir" => "administrativo/lecciones/1"
         );
 
         $totalesLecciones[] = (object) array(
@@ -92,7 +92,7 @@ class DashboardController extends Controller
             "total" => $totalTipoLecciones->TotalEvaluaciones,
             "titulo" => "Evaluaciones",
             "icono" => "fas fa-question",
-            "ir" => "administrativo/lecciones"
+            "ir" => "administrativo/lecciones/2"
         );
 
         $totalesLecciones[] = (object) array(
@@ -100,7 +100,7 @@ class DashboardController extends Controller
             "total" => $totalTipoLecciones->TotalVideos,
             "titulo" => "Videos",
             "icono" => "fas fa-play",
-            "ir" => "administrativo/lecciones"
+            "ir" => "administrativo/lecciones/3"
         );
 
         $totalesLecciones[] = (object) array(
@@ -108,7 +108,7 @@ class DashboardController extends Controller
             "total" => $totalTipoLecciones->TotalJuegos,
             "titulo" => "Juegos",
             "icono" => "fas fa-layer-group",
-            "ir" => "administrativo/lecciones"
+            "ir" => "administrativo/lecciones/4"
         );
 
         return array(
