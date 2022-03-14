@@ -73,8 +73,6 @@ class DepartamentosController extends Controller {
             $query->where("departamentos.flag", $request->estado);
         }
 
-        $query->where("paises.flag", 1);
-
         return datatables()->eloquent($query)->rawColumns(['departamentos.name', 'nombre_pais'])->make(true);
     }
 
@@ -143,11 +141,10 @@ class DepartamentosController extends Controller {
 
     public function lista(Request $request){
         $query = departamentos::select('departamentos.id', 'departamentos.name')
-            ->join("paises AS p", "departamentos.country_id", "p.id")
-            ->where([
-                ["departamentos.flag", 1]
-                ,["p.flag", 1]
-            ]);
+            ->join("paises AS p", function ($join) {
+                $join->on('departamentos.country_id', 'p.id')->where('p.flag', 1);
+            })
+            ->where("departamentos.flag", 1);
         
         if (isset($request->pais)) {
             $query = $query->whereIn("departamentos.country_id", $request->pais);

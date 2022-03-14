@@ -19,6 +19,7 @@ use App\Http\Controllers\TomaControlMeGustaController;
 use App\Http\Controllers\LeccionesController;
 use App\Http\Controllers\PlataformaController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FormularioController;
 
 /*
 |--------------------------------------------------------------------------
@@ -290,4 +291,15 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::post('actualizar', [LeccionesController::class, 'modificarEvaluacion']);
         Route::get('estructura/{idLeccion}', [LeccionesController::class, 'evaluacionEstructura']);
     });
+
+    //Cuidades
+    Route::prefix('formularios')->group(function () {
+        Route::post('obtener', [FormularioController::class, 'show']);
+        Route::post('cambiarEstado', [FormularioController::class, 'cambiarEstado']);
+        Route::post('crear', [FormularioController::class, 'crear']);
+        Route::post('actualizar', [FormularioController::class, 'actualizar']);
+        Route::post('lista', [FormularioController::class, 'lista']);
+        Route::get('traerFormulario/{id}', [FormularioController::class, 'traerFormulario']);
+    });
+
 });

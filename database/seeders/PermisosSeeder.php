@@ -190,6 +190,15 @@ class PermisosSeeder extends Seeder
                 ,'fk_permiso' => 4
                 ,'created_at' => date('Y-m-d H:m:s')
                 ,'updated_at' => date('Y-m-d H:m:s')
+            ],[
+                'id' => 20
+                ,'nombre' => "formulario"
+                ,'tag' => 'Formularios'
+                ,'icono' => 'fas fa-list'
+                ,'ruta' => 'formularios'
+                ,'fk_permiso' => 1
+                ,'created_at' => date('Y-m-d H:m:s')
+                ,'updated_at' => date('Y-m-d H:m:s')
             ]
         ]);
     }

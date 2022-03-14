@@ -102,16 +102,20 @@ class MunicipiosController extends Controller {
      */
     public function show(Request $request){
         $query = DB::table("municipios AS m")
-                ->select("m.id"
-                    ,"m.name"
-                    ,"d.id AS id_departamento"
-                    ,"d.name AS nombre_departamento"
-                    ,"p.id AS id_pais"
-                    ,"p.name AS nombre_pais"
-                    ,"m.flag"
-                    ,"m.created_at"
-                )->join('departamentos AS d', 'm.state_id', '=', 'd.id')
-                ->join('paises AS p', 'd.country_id', '=', 'p.id');
+            ->select("m.id"
+                ,"m.name"
+                ,"d.id AS id_departamento"
+                ,"d.name AS nombre_departamento"
+                ,"p.id AS id_pais"
+                ,"p.name AS nombre_pais"
+                ,"m.flag"
+                ,"m.created_at"
+            )->join("departamentos AS d", function ($join) {
+                $join->on('m.state_id', 'd.id')->where('d.flag', 1);
+            })
+            ->join("paises AS p", function ($join) {
+                $join->on('d.country_id', 'p.id')->where('d.flag', 1);
+            });
         
         if(isset($request->paises)) {
             $query->whereIn("p.id", $request->paises);
@@ -125,10 +129,7 @@ class MunicipiosController extends Controller {
             $query->where("m.flag", $request->estado);
         }
 
-        $query->where([
-            ["p.flag", 1]
-            ,["d.flag", 1]
-        ])->orderBy('m.name', 'asc');
+        $query->orderBy('m.name', 'asc');
 
         return datatables()->query($query)->rawColumns(['m.name', 'nombre_departamento', 'nombre_pais'])->make(true);
     }
