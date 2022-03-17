@@ -35,6 +35,7 @@ class UserController extends Controller {
                 ,"d.name AS dep_nombre"
                 ,"p.id AS pais_id"
                 ,"p.name AS pais_nombre"
+                ,"users.introduccion"
             )->join("municipios AS m", "users.fk_municipio", "m.id")
             ->join("departamentos AS d", "m.state_id", "d.id")
             ->join("paises AS p", "m.country_id", "p.id")
@@ -173,6 +174,7 @@ class UserController extends Controller {
             ,"users.estado"
             ,"users.fk_municipio"
             ,"users.fk_perfil"
+            ,"users.introduccion"
             ,"m.name AS ciudad_nombre"
             ,"d.id AS dep_id"
             ,"d.name AS dep_nombre"
@@ -328,6 +330,7 @@ class UserController extends Controller {
                             $usuario->estado != $datos->estado ||
                             $usuario->fk_municipio != $datos->fk_municipio ||
                             $usuario->fk_perfil != $datos->fk_perfil ||
+                            $usuario->introduccion != $datos->introduccion ||
                             $usuario->foto != $datos->foto
                         ) {
 
@@ -347,6 +350,7 @@ class UserController extends Controller {
                         $usuario->estado = $datos->estado; 
                         $usuario->fk_municipio = $datos->fk_municipio;
                         $usuario->fk_perfil = $datos->fk_perfil == "null" ? null : $datos->fk_perfil;
+                        $usuario->introduccion = $datos->introduccion;
                         DB::beginTransaction();
                         
                         if ($usuario->save()) {
@@ -829,6 +833,33 @@ class UserController extends Controller {
             return $info;
         }
 
+    }
+
+    public function actualizarIntroduccion(Request $request) {
+        $resp["success"] = false;
+        $resp["msj"] = "No fue posible modificar la información.";
+        try {
+
+            $usuario = DB::table('users')->where('id', $request->user);
+
+            $datActr = [
+                "introduccion" => $request->intro,
+                'updated_at' => now()
+            ];
+
+            if ($usuario->update($datActr)) {
+                $resp["success"] = true;
+                $resp["msj"] = "Datos modificados correctamente";
+                DB::commit();
+                return $resp;
+            } else {
+                DB::rollback();
+                return $resp;
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            return $resp;
+        }
     }
 
     public function escuelasSinPerfil($idUser, $idPerfil) {

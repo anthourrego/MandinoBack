@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Storage;
+use App\Http\VideoStream;
 
 class PlataformaController extends Controller{
     
@@ -39,6 +40,15 @@ class PlataformaController extends Controller{
         $response->header("Content-Type", $type); 
 
         return $response;
+    }
+
+    public function devolverVideo($filename, $navegador){
+        $path = storage_path('app/public/plataforma/' . $filename);
+        if (!File::exists($path)) {
+            $path = resource_path('assets/videos/error.mp4');
+        }
+        $stream = new VideoStream($path);
+        $stream->start();
     }
 
     public function actualizar(Request $request) {

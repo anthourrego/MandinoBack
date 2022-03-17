@@ -131,6 +131,7 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::post('guardarEscualesSinPerfil', [UserController::class, 'guardarEscualesSinPerfil']);
         Route::get('categoriasSinPerfil/{idUser}/{idPerfil}', [UserController::class, 'categoriasSinPerfil']);
         Route::post('guardarCategoriasSinPerfil', [UserController::class, 'guardarCategoriasSinPerfil']);
+        Route::post('actualizarIntroduccion', [UserController::class, 'actualizarIntroduccion']);
     });
 
     //Perfiles
@@ -282,6 +283,7 @@ Route::middleware(['guest', 'cors'])->group(function () {
     Route::prefix('plataforma')->group(function () {
         Route::get('datos', [PlataformaController::class, 'datosJSON']);
         Route::get('img/{nombreImg}', [PlataformaController::class, 'devolverImg']);
+        Route::get('video/{filename}/{navegador}', [PlataformaController::class, 'devolverVideo']);
         Route::post('actualizar', [PlataformaController::class, 'actualizar']);
     });
 

@@ -195,5 +195,19 @@
     "darkDef":false,
     "width":"342",
     "height":"342"
+  },
+  {
+    "name": "videoIntroduccion",
+    "pantalla": "universidad",
+    "url": null,
+    "urlDef": "error.mp4",
+    "title": "Video Introducci\u00f3n",
+    "filtro": true,
+    "dark": false,
+    "darkDef": false,
+    "width": "3300",
+    "height": "2176",
+    "video": true,
+    "colorFondo": false
   }
 ]
