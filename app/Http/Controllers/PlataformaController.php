@@ -78,6 +78,18 @@ class PlataformaController extends Controller{
                 $file[$enc]->url = $request->nombreArchivo;
                 Storage::putFileAs('public/plataforma/', $request->file, $request->nombreArchivo);
             }
+
+            if (isset($request->video)) {
+                if ($request->video == 'true') {
+                    $file[$enc]->url = null;
+                    $file[$enc]->video = true;
+                    $file[$enc]->urlVideo = $request->nombreArchivo;
+                } else {
+                    $file[$enc]->urlVideo = null;
+                    $file[$enc]->video = false;
+                }
+            }
+
             File::replace($path, json_encode($file));
             $resp["msj"] = "Modificado correctamente.";
         } catch (\Exception $e) {
