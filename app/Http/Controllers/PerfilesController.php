@@ -238,6 +238,35 @@ class PerfilesController extends Controller {
         return $resp;
     }
 
+    public function activarIntroduccion(Request $request) {
+        $resp["success"] = false;
+        $resp['msj'] = "Introducción activada correctamente.";
+    
+        $usuarios = DB::table('users')->where('fk_perfil', $request->perfil)->where('estado', 1)->where('introduccion', 0)->get('id');
+
+        if (count($usuarios) > 0) {
+
+            $usersIds = [];
+            foreach ($usuarios as $us) $usersIds[] = $us->id;
+
+            DB::beginTransaction();
+            
+            try {
+                DB::table('users')->whereIn('id', $usersIds)->update(['introduccion' => 1]);
+                DB::commit();
+                $resp["success"] = true;
+            } catch (\Exception $e) {
+                DB::rollback();
+                $resp['msj'] = "No fue posible actualizar la información.";
+                return;
+            }
+
+        } else {
+            $resp['msj'] = "No se encontraron usuarios para actualizar.";
+        }
+        return $resp;
+    }
+
     public function guardarPermiso(Request $request){
         $resp["success"] = false;
         $cont = 0;
