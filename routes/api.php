@@ -20,6 +20,7 @@ use App\Http\Controllers\LeccionesController;
 use App\Http\Controllers\PlataformaController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FormularioController;
+use App\Http\Controllers\CertificadosController;
 
 /*
 |--------------------------------------------------------------------------
@@ -286,6 +287,16 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::get('img/{nombreImg}', [PlataformaController::class, 'devolverImg']);
         Route::get('video/{filename}/{navegador}', [PlataformaController::class, 'devolverVideo']);
         Route::post('actualizar', [PlataformaController::class, 'actualizar']);
+    });
+
+    // Certificados
+    Route::prefix('certificados')->group(function () {
+        Route::get('variables', [CertificadosController::class, 'datosVariables']);
+        Route::post('obtener', [CertificadosController::class, 'show']);
+        Route::post('cambiarEstado', [CertificadosController::class, 'cambiarEstado']);
+        Route::post('crear', [CertificadosController::class, 'crear']);
+        Route::post('actualizar', [CertificadosController::class, 'update']);
+        Route::post('lista', [CertificadosController::class, 'lista']);
     });
 
     // Evaluaciones
