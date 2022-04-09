@@ -1109,7 +1109,7 @@ class UserController extends Controller {
         return $resp;
     }
 
-    public function migracion(){
+    public function migracion($cantidad){
         set_time_limit(0);
         $cont = 0;
         $usuarios = DB::connection('otra')
@@ -1130,6 +1130,7 @@ class UserController extends Controller {
                         ->whereNotIn('MU.u_id', [1, 2, 402])
                         ->where("MU.u_activo", 1)
                         ->orderBy('MU.u_id', 'ASC')
+                        ->skip($cantidad)->take(50)
                         ->get();
 
         DB::beginTransaction();
