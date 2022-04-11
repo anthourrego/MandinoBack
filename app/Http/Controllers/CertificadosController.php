@@ -7,6 +7,11 @@ use Illuminate\Http\Request;
 use App\Http\Requests\StorecertificadosRequest;
 use App\Http\Requests\UpdatecertificadosRequest;
 use DB;
+use Illuminate\Http\File as FileDos;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\Storage;
+use Barryvdh\DomPDF\Facade\PDF;
 
 class CertificadosController extends Controller
 {
@@ -55,7 +60,6 @@ class CertificadosController extends Controller
             ->select("c.id"
                 ,"c.nombre"
                 ,"c.estado"
-                ,"c.ruta"
                 ,"c.fk_escuela"
                 ,"c.fk_curso"
                 ,"c.fk_unidad"
@@ -103,16 +107,21 @@ class CertificadosController extends Controller
         //
     }
 
-    function datosVariables() {
+    public function datosVariables($retornar = 0) {
         $path = resource_path($this->urlVar);
 
         $file = File::get($path);
-        $type = File::mimeType($path);
 
-        $response = Response::make($file, 200);
-        $response->header("Content-Type", $type); 
-
-        return $response;
+        if ($retornar == 1) {
+            return $file;
+        } else {
+            $type = File::mimeType($path);
+    
+            $response = Response::make($file, 200);
+            $response->header("Content-Type", $type); 
+    
+            return $response;
+        }
     }
 
     public function cambiarEstado(Request $request){
@@ -150,11 +159,30 @@ class CertificadosController extends Controller
             $certificado->fk_unidad = $request->fk_unidad;
             $certificado->fk_curso = $request->fk_curso;
             $certificado->estado = $request->estado;
-            $certificado->ruta = $request->ruta;
 
             if($certificado->save()){
-                $resp["success"] = true;
-                $resp["msj"] = "Se ha creado el certificado correctamente.";
+
+                try {
+                    $pathView = base_path("resources/views/certificados");
+
+                    if (!file_exists($pathView)) {
+                        mkdir($pathView, 0777, true);
+                    }
+
+                    $pathView .= "/$certificado->id.php";
+
+                    $file = fopen($pathView, "w");
+
+                    fwrite($file, '');
+
+                    fclose($file);
+
+                    $resp["success"] = true;
+                    $resp["msj"] = "Se ha creado el certificado correctamente.";
+                } catch (Exception $e) {
+                    $resp["msj"] = "No se ha creado el certificado " . $request->nombre;
+                }
+
             }else{
                 $resp["msj"] = "No se ha creado el certificado " . $request->nombre;
             }
@@ -184,7 +212,6 @@ class CertificadosController extends Controller
                     $certificado->fk_unidad = $request->fk_unidad;
                     $certificado->fk_curso = $request->fk_curso;
                     $certificado->estado = $request->estado;
-                    $certificado->ruta = $request->ruta;
                     
                     if ($certificado->save()) {
                         $resp["success"] = true;
@@ -221,4 +248,204 @@ class CertificadosController extends Controller
 
         return $query;
     }
+
+    public function guardarEstructura(Request $request) {
+
+        $data = json_decode($this->datosVariables(1));
+
+        $path = storage_path("app/public/certificados/$request->idCertificado/vista.php");
+        
+        try {
+            Storage::put("public/certificados/$request->idCertificado/estructura.tpl", $request->estructura);
+        
+            foreach($data as $key => $var) {
+                $request->estructura = str_replace($var->valorRepor, "<?= $$var->valorDB; ?>", $request->estructura);
+            }
+
+            Storage::put("public/certificados/$request->idCertificado/vista.php", $request->estructura);
+
+            $pathView = base_path("resources/views/certificados");
+
+            if (!file_exists($pathView)) {
+                mkdir($pathView, 0777, true);
+            }
+
+            $pathView .= "/$request->idCertificado.php";
+
+            $file = fopen($pathView, "w");
+
+            fwrite($file, $request->estructura);
+
+            fclose($file);
+
+        } catch (Exception $e) {
+            return array(
+                "valido" => 0,
+                "mensaje" => "No fue posible modificar el certificado",
+                "error" => $e
+            );
+        }
+        
+        return array(
+            "valido" => 1,
+            "mensaje" => "Modificado correctamente"
+        );
+    }
+
+    public function obtenerEstructura($id) {
+
+        $contents = "";
+
+        if (Storage::disk('public')->exists("certificados/$id/estructura.tpl")) {
+            $contents = Storage::get("public/certificados/$id/estructura.tpl");
+        }
+
+        return array(
+            "valido" => 1,
+            "contenido" => $contents
+        );
+
+    }
+
+    public function verCertificado($id, $download, $prueba) {
+        
+        $path = "certificados/$id";
+
+        $info = [
+            "NombreCurso" => "Hoalita",
+            "CantUnidades" => 2,
+            "DocumentoEstudiante" => 1234567890,
+            "FechaFinalizacion" => "2022-04-08",
+            "NombreEstudiante" => "Alejandro"
+        ];
+
+        $vars = [];
+
+        foreach ($info as $key => $value) {
+            $text = $value;
+            if ($prueba == 1) {
+                $text = "xxxxx";
+            }
+            $vars[$key] = $text;
+        }
+
+        if ($download == 1) {
+            return PDF::loadView($path, $vars)->download();
+        } else {
+            return PDF::loadView($path, $vars)->stream();
+        }
+    }
+
+    // listado certificados
+    public function listarCertificadosDisponibles($idUser) {
+
+        $lecProg = DB::table('lecciones_progreso_usuarios')
+            ->selectRaw('
+                lecciones_progreso_usuarios.fk_leccion
+                , lecciones_progreso_usuarios.fecha_completado'
+            )->where('lecciones_progreso_usuarios.fk_user', $idUser)
+            ->whereNotNull('lecciones_progreso_usuarios.fecha_completado');
+
+        $lecciones = DB::table('lecciones_unidades')
+            ->selectRaw('IF(
+                COUNT(*) = (
+                    IF(progLec.fecha_completado, COUNT(*), 0)
+                ), 1, 0) AS Completa,
+                lecciones_unidades.fk_unidad
+            ')
+            ->leftJoinSub($lecProg, "progLec", function ($join) {
+                $join->on("lecciones_unidades.fk_leccion", "=", "progLec.fk_leccion");
+            })
+            ->where('lecciones_unidades.estado', 1)
+            ->groupBy('lecciones_unidades.fk_unidad');
+
+        $resultado = DB::table('unidades_cursos')
+            ->select(
+                "unidades_cursos.fk_curso",
+                "unidades.id AS unidadId",
+                "unidades.nombre AS text",
+                "unidades.color AS color",
+                "lecciones.Completa",
+                "certificados.id AS idCertificado"
+            )
+            ->selectRaw("CONCAT('uni', unidades.id) AS idList")
+            ->join("unidades", function ($join) {
+                $join->on('unidades_cursos.fk_unidad', 'unidades.id')->where('unidades.estado', 1);
+            })
+            ->leftjoin("certificados", function ($join) {
+                $join->on('unidades_cursos.fk_unidad', 'certificados.fk_unidad')->where('certificados.estado', 1);
+            })
+            ->joinSub($lecciones, "lecciones", function ($join) {
+                $join->on("unidades_cursos.fk_unidad", "lecciones.fk_unidad")->where("lecciones.Completa", 1);
+            })
+            ->where('unidades_cursos.estado', 1)
+            ->get();
+            
+        $cursos = array();
+
+        foreach ($resultado as $key => $result) {
+
+            $enc = array_search($result->fk_curso, array_column($cursos, 'cursoId'));
+
+            if ($enc == false) {
+
+                $curso = DB::table('escuelas_cursos')
+                    ->select(
+                        "escuelas_cursos.fk_escuela",
+                        "cursos.id AS cursoId",
+                        "cursos.nombre AS text",
+                        "certificados.id AS idCertificado"
+                    )
+                    ->selectRaw("CONCAT('cur', cursos.id) AS idList")
+                    ->join("cursos", function ($join) use ($result) {
+                        $join->on('escuelas_cursos.fk_curso', 'cursos.id')->where('cursos.estado', 1)->where("cursos.id", $result->fk_curso);
+                    })
+                    ->leftjoin("certificados", function ($join) use ($result) {
+                        $join->on('escuelas_cursos.fk_curso', 'certificados.fk_curso')->where('certificados.estado', 1)->where("certificados.fk_unidad", $result->unidadId);
+                    })
+                    ->where('escuelas_cursos.estado', 1)
+                    ->get()->first();
+
+                $curso->totalHijos = DB::table('unidades_cursos')->where('unidades_cursos.fk_curso', $result->fk_curso)->where('unidades_cursos.estado', 1)->count();
+
+                $curso->children = [];
+                array_push($curso->children, $result);
+                array_push($cursos, $curso);
+            } else {
+                array_push($cursos[$enc]->children, $result);
+            }
+        }
+
+        $escuelas = array();
+        foreach ($cursos as $llave => $cur) {
+
+            $enc = array_search($cur->fk_escuela, array_column($escuelas, 'escuelaId'));
+
+            if ($enc == false) {
+
+                $escuela = DB::table('escuelas')
+                    ->select(
+                        "escuelas.id AS escuelaId",
+                        "escuelas.nombre AS text",
+                        "certificados.id AS idCertificado"
+                    )
+                    ->selectRaw("CONCAT('esc', escuelas.id) AS idList")
+                    ->leftjoin("certificados", function ($join) use ($cur) {
+                        $join->on('escuelas.id', 'certificados.fk_escuela')->where('certificados.estado', 1)->where("certificados.fk_curso", $cur->cursoId);
+                    })
+                    ->where('escuelas.estado', 1)
+                    ->get()->first();
+
+                $escuela->totalHijos = DB::table('escuelas_cursos')->where('escuelas_cursos.fk_escuela', $cur->fk_escuela)->where('escuelas_cursos.estado', 1)->count();
+
+                $escuela->children = [];
+                array_push($escuela->children, $cur);
+                array_push($escuelas, $escuela);
+            } else {
+                array_push($escuelas[$enc]->children, $cur);
+            }
+        }
+        return $escuelas;
+    }
+
 }

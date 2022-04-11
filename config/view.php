@@ -14,6 +14,7 @@ return [
     */
 
     'paths' => [
+        storage_path(),
         resource_path('views'),
     ],
 

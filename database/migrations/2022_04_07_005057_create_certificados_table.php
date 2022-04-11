@@ -20,7 +20,6 @@ class CreateCertificadosTable extends Migration
             $table->foreignId('fk_unidad')->nullable();
             $table->foreignId('fk_curso')->nullable();
             $table->boolean("estado")->default(1);
-            $table->text('ruta')->nullable();
             
             $table->foreign('fk_escuela')->references('id')->on('escuelas');
             $table->foreign('fk_unidad')->references('id')->on('unidades');
