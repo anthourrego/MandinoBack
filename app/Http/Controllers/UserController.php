@@ -1108,4 +1108,219 @@ class UserController extends Controller {
         }
         return $resp;
     }
+
+    public function migracion($cantidad){
+        set_time_limit(0);
+        $cont = 0;
+        $usuarios = DB::connection('otra')
+                        ->table("mandino_usuarios AS MU")
+                        ->select(
+                            "MU.u_nro_documento"
+                            ,"MU.u_usuario"
+                            ,"MU.u_nombre1"
+                            ,"MU.u_nombre2"
+                            ,"MU.u_apellido1"
+                            ,"MU.u_apellido2"
+                            ,"MU.u_correo"
+                            ,"MU.u_telefono"
+                            ,"MU.u_activo"
+                            ,"MU.fk_ciudad"
+                            ,"EU.fk_empresa"
+                        )->leftjoin("empresas_usuarios AS EU", "MU.u_id", "EU.fk_usuario")
+                        ->whereNotIn('MU.u_id', [1, 2, 402])
+                        ->where("MU.u_activo", 1)
+                        ->orderBy('MU.u_id', 'ASC')
+                        ->skip($cantidad)->take(50)
+                        ->get();
+
+        DB::beginTransaction();
+        
+        foreach ($usuarios as $usr) {
+
+            switch ($usr->fk_ciudad) {
+                case 6:
+                    $usr->fk_ciudad = 20512;
+                    break;
+                case 8:
+                    $usr->fk_ciudad = 20520;
+                    break;
+                case 13:
+                    $usr->fk_ciudad = 20529;
+                    break;
+                case 22:
+                    $usr->fk_ciudad = 20711;
+                    break;
+                case 33:
+                    $usr->fk_ciudad = 20666;
+                    break;
+                case 51:
+                    $usr->fk_ciudad = 20888;
+                    break;
+                case 70:
+                    $usr->fk_ciudad = 21074;
+                    break;
+                case 81:
+                    $usr->fk_ciudad = 21234;
+                    break;
+                case 86:
+                    $usr->fk_ciudad = 21293;
+                    break;
+                case 117:
+                    $usr->fk_ciudad = 21574;
+                    break;
+                case 128:
+                    $usr->fk_ciudad = 20536;
+                    break;
+                case 132:
+                    $usr->fk_ciudad = 21253;
+                    break;
+                case 136:
+                    $usr->fk_ciudad = 20574;
+                    break;
+                case 166:
+                    $usr->fk_ciudad = 20659;
+                    break;
+                case 298:
+                    $usr->fk_ciudad = 21470;
+                    break;
+                case 317:
+                    $usr->fk_ciudad = 21553;
+                    break;
+                case 336:
+                    $usr->fk_ciudad = 21059;
+                    break;
+                case 360:
+                    $usr->fk_ciudad = 20849;
+                    break;
+                case 414:
+                    $usr->fk_ciudad = 21219;
+                    break;
+                case 431:
+                    $usr->fk_ciudad = 20492;
+                    break;
+                case 455:
+                    $usr->fk_ciudad = 21582;
+                    break;
+                case 477:
+                    $usr->fk_ciudad = 21272;
+                    break;
+                case 500:
+                    $usr->fk_ciudad = 21102;
+                    break;
+                case 525:
+                    $usr->fk_ciudad = 143873;
+                    break;
+                case 536:
+                    $usr->fk_ciudad = 20705;
+                    break;
+                case 544:
+                    $usr->fk_ciudad = 20842;
+                    break;
+                case 547:
+                    $usr->fk_ciudad = 20867;
+                    break;
+                case 554:
+                    $usr->fk_ciudad = 20886;
+                    break;
+                case 576:
+                    $usr->fk_ciudad = 21109;
+                    break;
+                case 632:
+                    $usr->fk_ciudad = 21636;
+                    break;
+                case 655:
+                    $usr->fk_ciudad = 143894;
+                    break;
+                case 662:
+                    $usr->fk_ciudad = 143900;
+                    break;
+                case 686:
+                    $usr->fk_ciudad = 21291;
+                    break;
+                case 716:
+                    $usr->fk_ciudad = 21421;
+                    break;
+                case 748:
+                    $usr->fk_ciudad = 21612;
+                    break;
+                case 823:
+                    $usr->fk_ciudad = 20772;
+                    break;
+                case 867:
+                    $usr->fk_ciudad = 20550;
+                    break;
+                case 882:
+                    $usr->fk_ciudad = 20782;
+                    break;
+                case 888:
+                    $usr->fk_ciudad = 21195;
+                    break;
+
+                case 899:
+                    $usr->fk_ciudad = 20570;
+                    break;
+                case 902:
+                    $usr->fk_ciudad = 20603;
+                    break;
+                case 1002:
+                    $usr->fk_ciudad = 21461;
+                    break;
+                case 1028:
+                    $usr->fk_ciudad = 20944;
+                    break;
+                case 1059:
+                    $usr->fk_ciudad = 20605;
+                    break;
+                case 1060:
+                    $usr->fk_ciudad = 20900;
+                    break;
+                case 1064:
+                    $usr->fk_ciudad = 20634;
+                    break;
+                case 1066:
+                    $usr->fk_ciudad = 20661;
+                    break;
+                case 1080:
+                    $usr->fk_ciudad = 21173;
+                    break;
+                case 1089:
+                    $usr->fk_ciudad = 21551;
+                    break;
+                default:
+                    $usr->fk_ciudad = 21195;
+                    break;
+            }
+
+            $newUsr = new User;
+            $newUsr->nro_documento = $usr->u_nro_documento;
+            $newUsr->usuario = $usr->u_usuario;
+            $newUsr->password = Hash::make($usr->u_nro_documento, ['rounds' => 15]);
+            $newUsr->nombre = $usr->u_nombre1 . ' ' . (strlen($usr->u_nombre2) > 0 ? $usr->u_nombre2 . ' ' : '') . $usr->u_apellido1 . (strlen($usr->u_apellido2) > 0 ? ' ' . $usr->u_apellido2 : '');
+            $newUsr->nombre1 = $usr->u_nombre1;
+            $newUsr->nombre2 = $usr->u_nombre2;
+            $newUsr->apellido1 = $usr->u_apellido1;
+            $newUsr->apellido2 = $usr->u_apellido2;
+            $newUsr->email = $usr->u_correo;
+            $newUsr->telefono = $usr->u_telefono;
+            $newUsr->estado = $usr->u_activo;
+            $newUsr->fk_municipio = $usr->fk_ciudad;
+            $newUsr->fk_perfil = $usr->fk_empresa == 1 ? 2 : 3;
+            
+            if($newUsr->save()){
+                $cont++;
+                echo $newUsr->nombre . "<br>";
+            } else {
+                break;
+            }
+
+        }
+
+        if($cont == count($usuarios)){
+            DB::commit();
+            echo "Usuarios migrados correctamente";
+        } else {
+            DB::rollback();
+            echo "Error al migrar los usuarios";
+        }
+    }
 }
