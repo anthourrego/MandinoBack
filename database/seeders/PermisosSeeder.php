@@ -199,6 +199,15 @@ class PermisosSeeder extends Seeder
                 ,'fk_permiso' => 1
                 ,'created_at' => date('Y-m-d H:m:s')
                 ,'updated_at' => date('Y-m-d H:m:s')
+            ],[
+                'id' => 21
+                ,'nombre' => "certificados"
+                ,'tag' => 'Certificados'
+                ,'icono' => 'fas fa-certificate'
+                ,'ruta' => 'certificados'
+                ,'fk_permiso' => 1
+                ,'created_at' => date('Y-m-d H:m:s')
+                ,'updated_at' => date('Y-m-d H:m:s')
             ]
         ]);
     }

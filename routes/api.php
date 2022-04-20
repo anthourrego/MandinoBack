@@ -299,7 +299,7 @@ Route::middleware(['guest', 'cors'])->group(function () {
         Route::post('lista', [CertificadosController::class, 'lista']);
         Route::get('obtenerEstructura/{id}', [CertificadosController::class, 'obtenerEstructura']);
         Route::post('guardarEstructura', [CertificadosController::class, 'guardarEstructura']);
-        Route::get('verCertificado/{id}/{download}/{prueba}', [CertificadosController::class, 'verCertificado']);
+        Route::get('verCertificado/{id}/{download}/{prueba}/{usuario}', [CertificadosController::class, 'verCertificado']);
         Route::get('listarCertificadosDisponibles/{idUser}', [CertificadosController::class, 'listarCertificadosDisponibles']);
     });
 

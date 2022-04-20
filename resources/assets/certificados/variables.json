@@ -1,39 +1,57 @@
 [
   {
-    "visible": true,
-    "titulo": "Nombre Curso",
-    "valorRepor": "{NombreCurso}",
-    "valorDB": "NombreCurso"
-  },
-  {
-    "visible": true,
-    "titulo": "Fecha Finalización",
-    "valorRepor": "{FechaFinalizacion}",
-    "valorDB": "FechaFinalizacion"
-  },
-  {
-    "visible": true,
-    "titulo": "Cantidad Unidades",
-    "valorRepor": "{CantUnidades}",
-    "valorDB": "CantUnidades"
-  },
-  {
-    "visible": true,
     "titulo": "Nombre Estudiante",
     "valorRepor": "{NombreEstudiante}",
     "valorDB": "NombreEstudiante"
   },
   {
-    "visible": true,
     "titulo": "Documento Estudiante",
     "valorRepor": "{DocumentoEstudiante}",
     "valorDB": "DocumentoEstudiante"
   },
   {
-    "visible": true,
-    "archivo": "",
-    "titulo": "Foto Estudiante",
-    "valorRepor": "{FotoEstudiante}",
-    "valorDB": "FotoEstudiante"
+    "titulo": "Correo electronico Estudiante",
+    "valorRepor": "{EmailEstudiante}",
+    "valorDB": "EmailEstudiante"
+  },
+  {
+    "titulo": "Telefono Estudiante",
+    "valorRepor": "{TelefonoEstudiante}",
+    "valorDB": "TelefonoEstudiante"
+  },
+  {
+    "titulo": "Nombre Unidad",
+    "valorRepor": "{NombreUnidad}",
+    "valorDB": "NombreUnidad"
+  },
+  {
+    "titulo": "Cantidad Lecciones",
+    "valorRepor": "{CantidadLecciones}",
+    "valorDB": "CantidadLecciones"
+  },
+  {
+    "titulo": "Nombre Curso",
+    "valorRepor": "{NombreCurso}",
+    "valorDB": "NombreCurso"
+  },
+  {
+    "titulo": "Cantidad Unidades",
+    "valorRepor": "{CantidadUnidades}",
+    "valorDB": "CantidadUnidades"
+  },
+  {
+    "titulo": "Nombre Escuela",
+    "valorRepor": "{NombreEscuela}",
+    "valorDB": "NombreEscuela"
+  },
+  {
+    "titulo": "Cantidad Cursos",
+    "valorRepor": "{CantidadCursos}",
+    "valorDB": "CantidadCursos"
+  },
+  {
+    "titulo": "Fecha Generado",
+    "valorRepor": "{FechaGenerado}",
+    "valorDB": "FechaGenerado"
   }
 ]
