@@ -64,7 +64,7 @@ class DepartamentosController extends Controller {
                 ,"departamentos.flag"
                 ,"departamentos.created_at"
             );
-        $query->join('paises', 'departamentos.country_id', '=', 'paises.id');
+        $query->join('paises', 'departamentos.country_id', '=', 'paises.id')->where('paises.flag', 1);
         if(isset($request->paises)) {
             $query->whereIn("departamentos.country_id", $request->paises);
         }

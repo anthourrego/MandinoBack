@@ -115,7 +115,7 @@ class MunicipiosController extends Controller {
             })
             ->join("paises AS p", function ($join) {
                 $join->on('d.country_id', 'p.id')->where('d.flag', 1);
-            });
+            })->where("p.flag", 1);
         
         if(isset($request->paises)) {
             $query->whereIn("p.id", $request->paises);
